@@ -343,7 +343,7 @@ function applyGreeting(html) {
 }
 
 // ── LOAD ───────────────────────────────────────────────────────────────────
-fetch('./scripts.json')
+fetch('scripts.json')
   .then(function(r) { return r.json(); })
   .then(function(data) {
     scripts = data;
