@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1,
+    "cat": "Guias de Pagamento",
+    "title": "Enviando guia (singular)",
+    "html": "<p><saudacao>, ____.</p><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 2,
+    "cat": "Guias de Pagamento",
+    "title": "Enviando guias (plural)",
+    "html": "<p><saudacao>, ____.</p><p>Seguem, anexas a este e-mail, as guias para pagamento dos preços públicos referentes à sua solicitação. Responda essa mensagem anexando os comprovantes de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 3,
+    "cat": "Guias de Pagamento",
+    "title": "Enviando guia de autuação",
+    "html": "<p><saudacao>, ____.</p><p>Segue, anexa a esse e-mail, a guia para pagamento do preço público de recepção de documentos para autuação de processo eletrônico (<strong>Até 50 megabytes — R$ 30,20 / por megabyte adicional — R$ 2,90</strong>). Responda essa mensagem anexando o comprovante de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 4,
+    "cat": "Guias de Pagamento",
+    "title": "Enviando guia para Alvará de Autorização",
+    "html": "<p><saudacao>, _____.</p><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento para seguirmos com o protocolo do processo.</p><p>A lista de bancos credenciados está disponível através do link: <a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p><strong>Importante:</strong> Encaminhar o comprovante de pagamento até as <strong>15h do dia ??/??/????</strong>.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 5,
+    "cat": "Protocolos",
+    "title": "Enviando Protocolo",
+    "html": "<p><saudacao>, ____.</p><p>Encaminhamos em anexo o protocolo referente ao processo <strong>________</strong>, gerado conforme sua solicitação.</p><p>Não há estimativa de prazo para conclusão, mas você pode acompanhar o andamento pelo Portal de Processos: 🔗 <a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos estão com acesso restrito em cumprimento à <strong>LGPD</strong> (Lei Federal nº 13.709/2018) e ao Decreto Municipal nº 59.767/2020.</p><p>Caso queira, conte-nos sua opinião sobre este atendimento por meio de nossa <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\"><strong>Pesquisa de Satisfação</strong></a> — sua contribuição é fundamental para o aprimoramento dos nossos serviços.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 6,
+    "cat": "Protocolos",
+    "title": "Enviando protocolos (Revalidação e Pedido de Isenção)",
+    "html": "<p><saudacao>, _____.</p><p>Seguem anexos a esse e-mail os protocolos dos processos abaixo, gerados conforme sua solicitação:</p><p>Revalidação: ___________<br>Pedido de Isenção: ___________</p><p>Você pode acompanhar o andamento por meio do Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos de seus processos encontram-se restritos em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal 13.709/2018 e Decreto Municipal 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento através de uma breve pesquisa de satisfação para melhorias dos serviços prestados; para responder a pesquisa, <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\"><strong>clique aqui</strong></a>.<br>Agradecemos pela colaboração!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 7,
+    "cat": "Comprovantes",
+    "title": "Envie o comprovante em resposta (singular)",
+    "html": "<p><saudacao>, ________.</p><p>Pedimos que envie o comprovante de pagamento <strong>em resposta ao e-mail</strong> pelo qual lhe enviamos a guia. Dessa forma saberemos de qual atendimento se trata e garantimos que todos os documentos serão anexados ao processo.</p><p>Aguardamos seu retorno conforme orientado.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 8,
+    "cat": "Comprovantes",
+    "title": "Envie os comprovantes em resposta (plural)",
+    "html": "<p><saudacao>, ________.</p><p>Pedimos que envie os comprovantes de pagamento <strong>em resposta ao e-mail</strong> pelo qual lhe enviamos as guias. Dessa forma saberemos de qual atendimento se trata e garantimos que todos os documentos serão anexados ao processo.</p><p>Aguardamos seu retorno conforme orientado.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 9,
+    "cat": "Comprovantes",
+    "title": "Comprovante C6 Bank "em processo de autenticação"",
+    "html": "<p>Bom dia!</p><p>O comprovante enviado por você indica que o pagamento está <strong>\"em processo de autenticação\"</strong>.</p><p>Pedimos por gentileza que envie o comprovante assim que o pagamento for de fato concluído.</p><p>Aguardamos seu retorno.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 10,
+    "cat": "Comprovantes",
+    "title": "Comprovante sem código de barras ou autenticação (singular)",
+    "html": "<p>Bom dia, ____.</p><p>O comprovante precisa ter todos os dados do pagamento para que seja considerado válido, incluindo o <strong>código de barras e autenticação bancária</strong>.</p><p>Como o comprovante apresentado por você não atende a essas condições, infelizmente não é possível aceitá-lo. Neste caso, recomendamos que entre em contato com a instituição financeira responsável pelo pagamento para obter orientações sobre como emitir o comprovante de pagamento completo.</p><p>Aguardamos seu retorno.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 11,
+    "cat": "Comprovantes",
+    "title": "Comprovantes sem código de barras ou autenticação (plural)",
+    "html": "<p>Bom dia, _____.</p><p>Os comprovantes precisam ter todos os dados do pagamento para que sejam considerados válidos, incluindo o <strong>código de barras e autenticação bancária</strong>.</p><p>Como os comprovantes apresentados por você não atendem a essas condições, infelizmente não é possível aceitá-los. Neste caso, recomendamos que entre em contato com a instituição financeira responsável pelos pagamentos para obter orientações sobre como emitir os comprovantes de pagamento completos.</p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 12,
+    "cat": "Comprovantes",
+    "title": "Comprovante do Itaú com código de barras divergente",
+    "html": "<p>Boa tarde, ____.</p><p>A linha digitável de código de barras do comprovante de pagamento <strong>não confere com o boleto</strong>. As divergências estão destacadas em amarelo nas imagens abaixo:</p><p>[IMAGEM 1]<br>[IMAGEM 2]</p><p>Recomendamos que verifique os detalhes de conclusão dessa transação junto à instituição financeira. Caso consiga acesso a um comprovante de pagamento com informações correspondentes ao boleto, envie-o em resposta a esse e-mail para que possamos seguir com a autuação do processo.</p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 13,
+    "cat": "Andamento de Processo",
+    "title": "Munícipe solicita informação sobre andamento (resposta 1)",
+    "html": "<p>Boa tarde!</p><p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba <strong>\"Localização Atual\"</strong> após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 14,
+    "cat": "Andamento de Processo",
+    "title": "Andamento do processo (resposta 2)",
+    "html": "<p>Para acompanhar o andamento do processo você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba <strong>\"Localização Atual\"</strong>.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 15,
+    "cat": "Encaminhamentos",
+    "title": "Sala Arthur Saboya",
+    "html": "<p>Bom dia, _____.</p><p>Recomendamos que envie sua mensagem para <a href=\"mailto:saboya_atendimento@prefeitura.sp.gov.br\">saboya_atendimento@prefeitura.sp.gov.br</a>, com as seguintes informações:</p><ul><li>Nome completo e CPF de todas as pessoas que participarão do atendimento, indicando se são técnicos (engenheiro civil ou arquiteto) ou não;</li><li>Um breve resumo das dúvidas ou assuntos a serem tratados.</li></ul><p>Acesse o link abaixo para mais informações sobre o Atendimento ao Público da Secretaria Municipal de Urbanismo e Licenciamento (SMUL):</p><p><a href=\"https://prefeitura.sp.gov.br/web/licenciamento/w/servicos/295355\">https://prefeitura.sp.gov.br/web/licenciamento/w/servicos/295355</a></p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 16,
+    "cat": "Encaminhamentos",
+    "title": "Atendimento de Comunique-se",
+    "html": "<p>Bom dia, _____.</p><p>O atendimento de comunique-se é de competência da <strong>Divisão de Processos Comunicados e Indeferidos — CAP/DPCI</strong> (<a href=\"mailto:capdpci@prefeitura.sp.gov.br\">capdpci@prefeitura.sp.gov.br</a>).</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+  },
+  {
+    "id": 17,
+    "cat": "Encaminhamentos",
+    "title": "Encaminhamento interno",
+    "html": "<p>Prezados,</p><p>Encaminhamos a presente solicitação recebida em <strong>CAP/DEPROT</strong> para ciência e providências, no que couber.</p><p>Atenciosamente,</p>"
+  },
+  {
+    "id": 18,
+    "cat": "Modelos Formais",
+    "title": "Evento solicitado fora de prazo (Minuta)",
+    "html": "<p>Prezado(a) Senhor(a),</p><p>Em atenção à solicitação de protocolo de <strong>Alvará de Autorização para Evento Temporário</strong>, informamos que o pedido não poderá ser recepcionado, tendo em vista o não atendimento ao prazo mínimo exigido.</p><p>Nos termos do <strong>Decreto Municipal nº 49.969/2008</strong>, o requerimento deve ser protocolado com antecedência mínima de <strong>30 (trinta) dias</strong> da data do evento, condição indispensável para análise pelos órgãos competentes.</p><p>Assim, por determinação da gestão desta Pasta, em consonância com as normas vigentes e com as diretrizes de governança, integridade e padronização de procedimentos administrativos, não é possível a flexibilização do prazo estabelecido, sob pena de violação aos princípios que regem a Administração Pública, especialmente os da isonomia, impessoalidade e segurança jurídica.</p><p>Orientamos que novos pedidos sejam apresentados dentro do prazo regulamentar.</p><p>Atenciosamente,</p><p><strong>Divisão de Protocolo – DEPROT<br>Coordenadoria de Atendimento ao Público – CAP<br>Secretaria Municipal de Urbanismo e Licenciamento – SMUL</strong></p><p>E-mail: <a href=\"mailto:capdeprot@prefeitura.sp.gov.br\">capdeprot@prefeitura.sp.gov.br</a><br>Telefone: (11) 5466-1920</p>"
+  }
+]
