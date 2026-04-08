@@ -51,55 +51,55 @@
     "id": 9,
     "cat": "Comprovantes",
     "title": "Comprovante C6 Bank (em processo de autenticação)",
-    "html": "<p>Bom dia!</p><p>O comprovante enviado por você indica que o pagamento está <strong>\"em processo de autenticação\"</strong>.</p><p>Pedimos por gentileza que envie o comprovante assim que o pagamento for de fato concluído.</p><p>Aguardamos seu retorno.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>!</p><p>O comprovante enviado por você indica que o pagamento está <strong>\"em processo de autenticação\"</strong>.</p><p>Pedimos por gentileza que envie o comprovante assim que o pagamento for de fato concluído.</p><p>Aguardamos seu retorno.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 10,
     "cat": "Comprovantes",
     "title": "Comprovante sem código de barras ou autenticação (singular)",
-    "html": "<p>Bom dia, ____.</p><p>O comprovante precisa ter todos os dados do pagamento para que seja considerado válido, incluindo o <strong>código de barras e autenticação bancária</strong>.</p><p>Como o comprovante apresentado por você não atende a essas condições, infelizmente não é possível aceitá-lo. Neste caso, recomendamos que entre em contato com a instituição financeira responsável pelo pagamento para obter orientações sobre como emitir o comprovante de pagamento completo.</p><p>Aguardamos seu retorno.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>, ____.</p><p>O comprovante precisa ter todos os dados do pagamento para que seja considerado válido, incluindo o <strong>código de barras e autenticação bancária</strong>.</p><p>Como o comprovante apresentado por você não atende a essas condições, infelizmente não é possível aceitá-lo. Neste caso, recomendamos que entre em contato com a instituição financeira responsável pelo pagamento para obter orientações sobre como emitir o comprovante de pagamento completo.</p><p>Aguardamos seu retorno.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 11,
     "cat": "Comprovantes",
     "title": "Comprovantes sem código de barras ou autenticação (plural)",
-    "html": "<p>Bom dia, _____.</p><p>Os comprovantes precisam ter todos os dados do pagamento para que sejam considerados válidos, incluindo o <strong>código de barras e autenticação bancária</strong>.</p><p>Como os comprovantes apresentados por você não atendem a essas condições, infelizmente não é possível aceitá-los. Neste caso, recomendamos que entre em contato com a instituição financeira responsável pelos pagamentos para obter orientações sobre como emitir os comprovantes de pagamento completos.</p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>, _____.</p><p>Os comprovantes precisam ter todos os dados do pagamento para que sejam considerados válidos, incluindo o <strong>código de barras e autenticação bancária</strong>.</p><p>Como os comprovantes apresentados por você não atendem a essas condições, infelizmente não é possível aceitá-los. Neste caso, recomendamos que entre em contato com a instituição financeira responsável pelos pagamentos para obter orientações sobre como emitir os comprovantes de pagamento completos.</p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 12,
     "cat": "Comprovantes",
     "title": "Comprovante do Itaú com código de barras divergente",
-    "html": "<p>Boa tarde, ____.</p><p>A linha digitável de código de barras do comprovante de pagamento <strong>não confere com o boleto</strong>. As divergências estão destacadas em amarelo nas imagens abaixo:</p><p>[IMAGEM 1]<br>[IMAGEM 2]</p><p>Recomendamos que verifique os detalhes de conclusão dessa transação junto à instituição financeira. Caso consiga acesso a um comprovante de pagamento com informações correspondentes ao boleto, envie-o em resposta a esse e-mail para que possamos seguir com a autuação do processo.</p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>, ____.</p><p>A linha digitável de código de barras do comprovante de pagamento <strong>não confere com o boleto</strong>. As divergências estão destacadas em amarelo nas imagens abaixo:</p><p>[IMAGEM 1]<br>[IMAGEM 2]</p><p>Recomendamos que verifique os detalhes de conclusão dessa transação junto à instituição financeira. Caso consiga acesso a um comprovante de pagamento com informações correspondentes ao boleto, envie-o em resposta a esse e-mail para que possamos seguir com a autuação do processo.</p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 13,
     "cat": "Andamento de Processo",
     "title": "Munícipe solicita informação sobre andamento (resposta 1)",
-    "html": "<p>Boa tarde!</p><p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba <strong>\"Localização Atual\"</strong> após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>!</p><p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba <strong>\"Localização Atual\"</strong> após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 14,
     "cat": "Andamento de Processo",
     "title": "Andamento do processo (resposta 2)",
-    "html": "<p>Para acompanhar o andamento do processo você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba <strong>\"Localização Atual\"</strong>.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>!</p><p>Para acompanhar o andamento do processo você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba <strong>\"Localização Atual\"</strong>.</p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 15,
     "cat": "Encaminhamentos",
     "title": "Sala Arthur Saboya",
-    "html": "<p>Bom dia, _____.</p><p>Recomendamos que envie sua mensagem para <a href=\"mailto:saboya_atendimento@prefeitura.sp.gov.br\">saboya_atendimento@prefeitura.sp.gov.br</a>, com as seguintes informações:</p><ul><li>Nome completo e CPF de todas as pessoas que participarão do atendimento, indicando se são técnicos (engenheiro civil ou arquiteto) ou não;</li><li>Um breve resumo das dúvidas ou assuntos a serem tratados.</li></ul><p>Acesse o link abaixo para mais informações sobre o Atendimento ao Público da Secretaria Municipal de Urbanismo e Licenciamento (SMUL):</p><p><a href=\"https://prefeitura.sp.gov.br/web/licenciamento/w/servicos/295355\">https://prefeitura.sp.gov.br/web/licenciamento/w/servicos/295355</a></p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>, _____.</p><p>Recomendamos que envie sua mensagem para <a href=\"mailto:saboya_atendimento@prefeitura.sp.gov.br\">saboya_atendimento@prefeitura.sp.gov.br</a>, com as seguintes informações:</p><ul><li>Nome completo e CPF de todas as pessoas que participarão do atendimento, indicando se são técnicos (engenheiro civil ou arquiteto) ou não;</li><li>Um breve resumo das dúvidas ou assuntos a serem tratados.</li></ul><p>Acesse o link abaixo para mais informações sobre o Atendimento ao Público da Secretaria Municipal de Urbanismo e Licenciamento (SMUL):</p><p><a href=\"https://prefeitura.sp.gov.br/web/licenciamento/w/servicos/295355\">https://prefeitura.sp.gov.br/web/licenciamento/w/servicos/295355</a></p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 16,
     "cat": "Encaminhamentos",
     "title": "Atendimento de Comunique-se",
-    "html": "<p>Bom dia, _____.</p><p>O atendimento de comunique-se é de competência da <strong>Divisão de Processos Comunicados e Indeferidos — CAP/DPCI</strong> (<a href=\"mailto:capdpci@prefeitura.sp.gov.br\">capdpci@prefeitura.sp.gov.br</a>).</p><p>Atenciosamente,<br>Anderson Andrade</p>"
+    "html": "<p><saudacao>, _____.</p><p>O atendimento de comunique-se é de competência da <strong>Divisão de Processos Comunicados e Indeferidos — CAP/DPCI</strong> (<a href=\"mailto:capdpci@prefeitura.sp.gov.br\">capdpci@prefeitura.sp.gov.br</a>).</p><p>Atenciosamente,<br>Anderson Andrade</p>"
   },
   {
     "id": 17,
     "cat": "Encaminhamentos",
     "title": "Encaminhamento interno",
-    "html": "<p>Prezados,</p><p>Encaminhamos a presente solicitação recebida em <strong>CAP/DEPROT</strong> para ciência e providências, no que couber.</p><p>Atenciosamente,</p>"
+    "html": "<p><saudacao>,</p><p>Encaminhamos a presente solicitação recebida em <strong>CAP/DEPROT</strong> para ciência e providências, no que couber.</p><p>Atenciosamente,</p>"
   },
   {
     "id": 18,
