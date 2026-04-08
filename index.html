@@ -344,25 +344,21 @@ function applyGreeting(html) {
 
 // ── LOAD ───────────────────────────────────────────────────────────────────
 fetch('scripts.json')
-  .then(function(r) { 
+  .then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.text();  // Primeiro pega como texto
+    return r.json();
   })
-  .then(function(text) {
-    try {
-      var data = JSON.parse(text);  // Depois parseia manualmente
-      scripts = data;
-      nextId = Math.max.apply(null, scripts.map(function(s){ return s.id; })) + 1;
-      buildSidebar();
-      render();
-    } catch(e) {
-      throw new Error('JSON inválido');
-    }
+  .then(function(data) {
+    scripts = data;
+    nextId = Math.max.apply(null, scripts.map(function(s){ return s.id; })) + 1;
+    buildSidebar();
+    render();
   })
-  .catch(function() {
+  .catch(function(err) {
     document.getElementById('cards').innerHTML =
-      '<div class="empty"><p>Não foi possível carregar <strong>scripts.json</strong>.<br>' +
-      'Certifique-se de que o arquivo está na mesma pasta que o index.html e é um JSON válido.</p></div>';
+      '<div class="empty"><p>Não foi possível carregar <strong>scripts.json</strong>.<br>'
+      + 'Verifique se o arquivo está na mesma pasta e se o repositório está publicado via GitHub Pages.</p>'
+      + '<p style="font-size:11px;margin-top:8px;opacity:.6">Erro: ' + err + '</p></div>';
   });
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
