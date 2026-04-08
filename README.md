@@ -19,13 +19,6 @@ Gerenciador de modelos de e-mail para uso interno da **Coordenadoria de Atendime
 └── scripts.json     # Base de dados dos scripts (editável)
 ```
 
-## Como hospedar no GitHub Pages
-
-1. Crie um repositório no GitHub (pode ser privado ou público)
-2. Faça upload dos dois arquivos (`index.html` e `scripts.json`)
-3. Acesse **Settings → Pages → Source** e selecione `main` / `root`
-4. O GitHub fornecerá a URL da página (ex: `https://seuusuario.github.io/nome-do-repo/`)
-
 ## Como persistir edições
 
 1. Faça as edições ou adições de scripts na interface
