@@ -641,35 +641,27 @@ async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
   
-  // Gera o HTML limpo para cópia (com saudação aplicada)
-  const cleanHTML = cleanHtmlForCopy(s.html);
-  
-  // Extrai texto puro para fallback
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = cleanHTML;
-  const plainText = tempDiv.textContent || tempDiv.innerText;
+  // Pega o HTML da prévia (já com saudação e formatação)
+  const previewElement = document.getElementById('pv' + id);
+  const renderedHTML = previewElement.innerHTML;
+  const plainText = previewElement.innerText || previewElement.textContent;
   
   try {
-    // Tenta copiar como HTML formatado
-    const blob = new Blob([cleanHTML], { type: 'text/html' });
+    const blob = new Blob([renderedHTML], { type: 'text/html' });
     const blobPlain = new Blob([plainText], { type: 'text/plain' });
     await navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html': blob,
-        'text/plain': blobPlain
-      })
+      new ClipboardItem({ 'text/html': blob, 'text/plain': blobPlain })
     ]);
     
     const btn = document.getElementById('cb' + s.id);
     btn.classList.add('ok');
-    btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Copiado!';
+    btn.innerHTML = '✓ Copiado!';
     setTimeout(() => {
       btn.classList.remove('ok');
-      btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar';
+      btn.innerHTML = '📋 Copiar';
     }, 2000);
-    toast('Texto copiado com formatação limpa!');
+    toast('Texto copiado com formatação!');
   } catch(err) {
-    // Fallback: copia só texto puro
     navigator.clipboard.writeText(plainText);
     toast('Copiado (somente texto)');
   }
