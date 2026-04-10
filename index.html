@@ -114,10 +114,10 @@ main { padding: 34px 42px; max-width: 840px; }
 .card-info { flex: 1; min-width: 0; }
 .card-title { font-size: 13.5px; font-weight: 600; line-height: 1.3; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .greeting-icon {
-  font-size: 12px;
+  font-size: 11px;
   background: var(--accent-lt);
   color: var(--accent);
-  padding: 2px 6px;
+  padding: 2px 8px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
@@ -144,15 +144,18 @@ main { padding: 34px 42px; max-width: 840px; }
 
 .preview {
   padding: 18px 22px; background: #FDFCFB;
-  font-size: 13.5px; line-height: 1.85; color: var(--text);
+  font-size: 13.5px; line-height: 1.6;
+  color: var(--text);
   border-radius: 0 0 var(--r) var(--r);
 }
 .preview.editing-mode { display: none; }
-.preview p { margin-bottom: .75em; }
+.preview p { margin-bottom: 0.8em; }
 .preview p:last-child { margin-bottom: 0; }
-.preview a { color: var(--accent); }
-.preview ul { padding-left: 1.4em; margin-bottom: .75em; }
-.preview li { margin-bottom: .3em; }
+.preview a { color: var(--accent); text-decoration: none; }
+.preview a:hover { text-decoration: underline; }
+.preview ul { padding-left: 1.5em; margin-bottom: 0.8em; }
+.preview li { margin-bottom: 0.2em; }
+.preview br { display: block; margin: 0; }
 
 .editor-wrap { display: none; flex-direction: column; }
 .editor-wrap.visible { display: flex; }
@@ -179,15 +182,16 @@ main { padding: 34px 42px; max-width: 840px; }
 .link-row.hidden { display: none; }
 
 [contenteditable] {
-  padding: 18px 22px; min-height: 160px;
-  font-family: 'DM Sans', sans-serif; font-size: 13.5px; line-height: 1.85;
+  padding: 18px 22px; min-height: 180px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; line-height: 1.6;
   color: var(--text); background: #FDFCFB; outline: none;
 }
-[contenteditable] p { margin-bottom: .75em; }
+[contenteditable] p { margin-bottom: 0.8em; }
 [contenteditable] p:last-child { margin-bottom: 0; }
 [contenteditable] a { color: var(--accent); }
-[contenteditable] ul { padding-left: 1.4em; margin-bottom: .75em; }
-[contenteditable] li { margin-bottom: .3em; }
+[contenteditable] ul { padding-left: 1.5em; margin-bottom: 0.8em; }
+[contenteditable] li { margin-bottom: 0.2em; }
 [contenteditable]:empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; }
 
 .edit-bar {
@@ -228,7 +232,7 @@ main { padding: 34px 42px; max-width: 840px; }
   transition: border-color var(--dur), background var(--dur);
 }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); background: #fff; }
-.field textarea { min-height: 100px; resize: vertical; line-height: 1.7; }
+.field textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
 .checkbox-field { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
 .checkbox-field input { width: auto; margin: 0; }
 .checkbox-field label { margin: 0; cursor: pointer; text-transform: none; font-weight: normal; color: var(--text); }
@@ -314,7 +318,7 @@ main { padding: 34px 42px; max-width: 840px; }
       <label for="newGreeting">🕐 Incluir saudação automática ("Bom dia / Boa tarde / Boa noite")</label>
     </div>
     <div class="field">
-      <label>Texto do script</label>
+      <label>Texto do script (você pode usar a tag &lt;saudacao&gt; onde quiser)</label>
       <textarea id="newText" placeholder="Cole ou escreva o texto aqui…"></textarea>
     </div>
     <div class="modal-btns">
@@ -341,12 +345,33 @@ function saudacao() {
   return 'Boa noite';
 }
 
-function applyGreeting(html) {
+// Aplica a saudação no HTML para EXIBIÇÃO (substitui a tag)
+function applyGreetingForDisplay(html) {
   return html.replace(/<saudacao>/g, saudacao());
 }
 
+// Verifica se o HTML contém a tag de saudação (para o selo)
 function hasGreetingTag(html) {
   return html.includes('<saudacao>');
+}
+
+// Remove formatação excessiva para cópia limpa
+function cleanHtmlForCopy(html) {
+  // Primeiro aplica a saudação
+  let processed = applyGreetingForDisplay(html);
+  
+  // Remove quebras de linha desnecessárias entre tags
+  processed = processed.replace(/>\s+</g, '><');
+  
+  // Garante espaçamento normal entre palavras
+  processed = processed.replace(/\s+/g, ' ');
+  
+  // Re-adiciona espaçamento mínimo entre tags e texto
+  processed = processed.replace(/>([^<]+)</g, (match, text) => {
+    return '>' + text.trim() + '<';
+  });
+  
+  return processed;
 }
 
 // ==================== INSERIR SAUDAÇÃO NO EDITOR ====================
@@ -354,25 +379,27 @@ function insertGreeting(editorId) {
   const editor = document.getElementById(editorId);
   if (!editor) return;
   
-  // Salva a seleção atual
-  const selection = window.getSelection();
-  const range = selection.getRangeAt(0);
-  
-  // Cria o nó com a saudação
-  const greetingNode = document.createTextNode(`<saudacao>, `);
-  
-  // Insere no cursor
-  range.deleteContents();
-  range.insertNode(greetingNode);
-  
-  // Move o cursor para depois da saudação
-  range.setStartAfter(greetingNode);
-  range.setEndAfter(greetingNode);
-  selection.removeAllRanges();
-  selection.addRange(range);
-  
   editor.focus();
-  toast('Tag de saudação inserida!');
+  
+  // Insere a tag <saudacao> no cursor
+  const selection = window.getSelection();
+  if (selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    const textNode = document.createTextNode('<saudacao>');
+    range.deleteContents();
+    range.insertNode(textNode);
+    
+    // Move cursor para depois da tag
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } else {
+    // Se não houver seleção, insere no final
+    editor.appendChild(document.createTextNode('<saudacao>'));
+  }
+  
+  toast('Tag <saudacao> inserida!');
 }
 
 // ==================== CARREGAR DADOS ====================
@@ -486,7 +513,7 @@ function escapeHtml(str) {
 }
 
 function cardHTML(s) {
-  const previewHTML = applyGreeting(s.html);
+  const displayHTML = applyGreetingForDisplay(s.html);
   const hasGreeting = hasGreetingTag(s.html);
   
   return '<div class="card" id="c' + s.id + '">' +
@@ -512,24 +539,24 @@ function cardHTML(s) {
       '<svg class="chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>' +
     '</div>' +
     '<div class="card-body">' +
-      '<div class="preview" id="pv' + s.id + '">' + previewHTML + '</div>' +
+      '<div class="preview" id="pv' + s.id + '">' + displayHTML + '</div>' +
       '<div class="editor-wrap" id="ew' + s.id + '">' +
         '<div class="fmt-bar">' +
           '<button class="fmt-btn" title="Negrito" onmousedown="event.preventDefault();document.execCommand(\'bold\')"><strong>B</strong></button>' +
           '<button class="fmt-btn" title="Itálico" onmousedown="event.preventDefault();document.execCommand(\'italic\')"><em>I</em></button>' +
           '<button class="fmt-btn" title="Sublinhado" onmousedown="event.preventDefault();document.execCommand(\'underline\')"><u>U</u></button>' +
           '<div class="fmt-sep"></div>' +
-          '<button class="fmt-btn" title="Inserir saudação automática" onmousedown="event.preventDefault();insertGreeting(\'ce' + s.id + '\')">🕐</button>' +
+          '<button class="fmt-btn" title="Inserir tag de saudação (&lt;saudacao&gt;)" onmousedown="event.preventDefault();insertGreeting(\'ce' + s.id + '\')">🕐</button>' +
           '<div class="fmt-sep"></div>' +
           '<button class="fmt-btn" title="Lista" onmousedown="event.preventDefault();document.execCommand(\'insertUnorderedList\')">' +
             '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div contenteditable="true" id="ce' + s.id + '" data-placeholder="Texto do script…"></div>' +
+        '<div contenteditable="true" id="ce' + s.id + '" data-placeholder="Texto do script… (use &lt;saudacao&gt; para saudação automática)"></div>' +
         '<div class="edit-bar">' +
           '<button class="btn btn-save" onclick="saveEdit(' + s.id + ')">✓ Salvar</button>' +
           '<button class="btn btn-ghost" onclick="cancelEdit(' + s.id + ')">Cancelar</button>' +
-          '<input class="title-field" id="tt' + s.id + '" placeholder="Título do script">' +
+          '<input class="title-field" id="tt' + s.id + '" placeholder="Título do script" value="' + escapeHtml(s.title) + '">' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -547,8 +574,8 @@ function startEdit(id) {
   document.getElementById('pv' + id).classList.add('editing-mode');
   document.getElementById('ew' + id).classList.add('visible');
   const ce = document.getElementById('ce' + id);
+  // Mostra o HTML BRUTO (com a tag <saudacao>) para edição
   ce.innerHTML = s.html;
-  document.getElementById('tt' + id).value = s.title;
   ce.focus();
 }
 
@@ -560,20 +587,45 @@ function cancelEdit(id) {
 function saveEdit(id) {
   const idx = scripts.findIndex(x => x.id === id);
   const ce = document.getElementById('ce' + id);
-  const newHTML = ce.innerHTML;
+  let newHTML = ce.innerHTML;
   const newTitle = document.getElementById('tt' + id).value.trim();
+  
+  // Limpa formatação excessiva do contenteditable
+  newHTML = cleanEditorHtml(newHTML);
   
   scripts[idx].html = newHTML;
   if (newTitle) scripts[idx].title = newTitle;
   
-  document.getElementById('pv' + id).innerHTML = applyGreeting(newHTML);
-  document.getElementById('c' + id).querySelector('.card-title').innerHTML = escapeHtml(scripts[idx].title) + 
+  // Atualiza a prévia (com saudação aplicada)
+  document.getElementById('pv' + id).innerHTML = applyGreetingForDisplay(newHTML);
+  
+  // Atualiza o título e o selo de saudação
+  const titleSpan = document.getElementById('c' + id).querySelector('.card-title');
+  titleSpan.innerHTML = escapeHtml(scripts[idx].title) + 
     (hasGreetingTag(newHTML) ? '<span class="greeting-icon">🕐 Saudação automática</span>' : '');
   
   cancelEdit(id);
   saveToLocal();
   buildSidebar();
   render();
+  toast('Script salvo!');
+}
+
+// Função para limpar HTML vindo do contenteditable
+function cleanEditorHtml(html) {
+  // Remove spans e estilos desnecessários
+  let cleaned = html.replace(/<span style="[^"]*">/g, '');
+  cleaned = cleaned.replace(/<\/span>/g, '');
+  
+  // Remove tags vazias
+  cleaned = cleaned.replace(/<p><\/p>/g, '');
+  cleaned = cleaned.replace(/<br>$/g, '');
+  
+  // Garante que <saudacao> não seja envolvido por tags extras
+  cleaned = cleaned.replace(/<p><saudacao><\/p>/g, '<saudacao>');
+  cleaned = cleaned.replace(/<saudacao>/g, '<saudacao>');
+  
+  return cleaned;
 }
 
 function deleteScript(id) {
@@ -589,24 +641,35 @@ async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
   
-  const processedHTML = applyGreeting(s.html);
-  const tmp = document.createElement('div');
-  tmp.innerHTML = processedHTML;
-  const plainText = tmp.innerText || tmp.textContent;
+  // Gera o HTML limpo para cópia (com saudação aplicada)
+  const cleanHTML = cleanHtmlForCopy(s.html);
+  
+  // Extrai texto puro para fallback
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = cleanHTML;
+  const plainText = tempDiv.textContent || tempDiv.innerText;
   
   try {
-    const blob = new Blob([processedHTML], { type: 'text/html' });
+    // Tenta copiar como HTML formatado
+    const blob = new Blob([cleanHTML], { type: 'text/html' });
     const blobPlain = new Blob([plainText], { type: 'text/plain' });
-    await navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': blobPlain })]);
-    const btn = document.getElementById('cb' + id);
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': blob,
+        'text/plain': blobPlain
+      })
+    ]);
+    
+    const btn = document.getElementById('cb' + s.id);
     btn.classList.add('ok');
     btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Copiado!';
     setTimeout(() => {
       btn.classList.remove('ok');
       btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar';
     }, 2000);
-    toast('Texto copiado!');
+    toast('Texto copiado com formatação limpa!');
   } catch(err) {
+    // Fallback: copia só texto puro
     navigator.clipboard.writeText(plainText);
     toast('Copiado (somente texto)');
   }
@@ -630,13 +693,14 @@ function closeModal() {
 }
 
 function textToHTML(txt, includeGreeting) {
+  // Converte texto puro em HTML com parágrafos
   let html = txt.split(/\n\n+/).map(block => {
     const lines = block.split('\n').map(l => escapeHtml(l)).join('<br>');
     return '<p>' + lines + '</p>';
   }).join('');
   
   if (includeGreeting && !html.includes('<saudacao>')) {
-    html = '<p><saudacao>, </p>' + html;
+    html = '<p><saudacao></p>' + html;
   }
   
   return html;
@@ -654,7 +718,13 @@ function addScript() {
     return;
   }
   
-  scripts.push({ id: nextId++, cat: cat, title: title, html: textToHTML(text, includeGreeting) });
+  scripts.push({ 
+    id: nextId++, 
+    cat: cat, 
+    title: title, 
+    html: textToHTML(text, includeGreeting) 
+  });
+  
   closeModal();
   activeCat = cat;
   searchQ = '';
