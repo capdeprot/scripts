@@ -3,55 +3,55 @@
     "id": 1,
     "cat": "Guias de Pagamento",
     "title": "Enviando guia (singular)",
-    "html": "<p><saudacao>, ____.</p><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>, ____.</p><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 2,
     "cat": "Guias de Pagamento",
     "title": "Enviando guias (plural)",
-    "html": "<p><saudacao>, ____.</p><p>Seguem, anexas a este e-mail, as guias para pagamento dos preços públicos referentes à sua solicitação. Responda essa mensagem anexando os comprovantes de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>, ____.</p><p>Seguem, anexas a este e-mail, as guias para pagamento dos preços públicos referentes à sua solicitação. Responda essa mensagem anexando os comprovantes de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 3,
     "cat": "Guias de Pagamento",
     "title": "Enviando guia de autuação",
-    "html": "<p><saudacao>, ____.</p><p>Segue, anexa a esse e-mail, a guia para pagamento do preço público de recepção de documentos para autuação de processo eletrônico (<strong>Até 50 megabytes — R$ 30,20 / por megabyte adicional — R$ 2,90</strong>). Responda essa mensagem anexando o comprovante de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>, ____.</p><p>Segue, anexa a esse e-mail, a guia para pagamento do preço público de recepção de documentos para autuação de processo eletrônico (<strong>Até 50 megabytes — R$ 30,20 / por megabyte adicional — R$ 2,90</strong>). Responda essa mensagem anexando o comprovante de pagamento com <strong>código de barras e autenticação bancária</strong> para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 4,
     "cat": "Guias de Pagamento",
     "title": "Enviando guia para Alvará de Autorização",
-    "html": "<p><saudacao>, _____.</p><p><strong>Data limite para protocolo do processo: ??/??/????</strong></p><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento <strong>até às 15h</strong> da data limite informada acima para seguirmos com o protocolo do processo.</p><p>A lista de bancos credenciados está disponível através do link: <a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>, _____.</p><p><strong>Data limite para protocolo do processo: ??/??/????</strong></p><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento <strong>até às 15h</strong> da data limite informada acima para seguirmos com o protocolo do processo.</p><p>A lista de bancos credenciados está disponível através do link: <a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 5,
     "cat": "Protocolos",
     "title": "Enviando Protocolo",
-    "html": "<p><saudacao>, ____.</p><p>Encaminhamos em anexo o protocolo referente ao processo <strong>________</strong>, gerado conforme sua solicitação.</p><p>Não há estimativa de prazo para conclusão, mas você pode acompanhar o andamento pelo Portal de Processos: 🔗 <a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação. <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\"><strong>Clique aqui</strong></a> para participar — sua contribuição é fundamental para o aprimoramento dos nossos serviços.</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>, ____.</p><p>Encaminhamos em anexo o protocolo referente ao processo <strong>________</strong>, gerado conforme sua solicitação.</p><p>Não há estimativa de prazo para conclusão, mas você pode acompanhar o andamento pelo Portal de Processos: 🔗 <a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação. <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\"><strong>Clique aqui</strong></a> para participar — sua contribuição é fundamental para o aprimoramento dos nossos serviços.</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 6,
     "cat": "Protocolos",
     "title": "Enviando protocolos (Revalidação e Pedido de Isenção)",
-    "html": "<p><saudacao>, _____.</p><p>Encaminhamos em anexo os protocolos dos processos abaixo, gerados conforme sua solicitação:</p><p>Revalidação: ___________<br>Pedido de Isenção: ___________</p><p>Você pode acompanhar o andamento por meio do Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos de seus processos encontram-se restritos em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal 13.709/2018 e Decreto Municipal 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação. <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\"><strong>Clique aqui</strong></a> para participar — sua contribuição é fundamental para o aprimoramento dos nossos serviços.</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>, _____.</p><p>Encaminhamos em anexo os protocolos dos processos abaixo, gerados conforme sua solicitação:</p><p>Revalidação: ___________<br>Pedido de Isenção: ___________</p><p>Você pode acompanhar o andamento por meio do Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos de seus processos encontram-se restritos em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal 13.709/2018 e Decreto Municipal 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação. <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\"><strong>Clique aqui</strong></a> para participar — sua contribuição é fundamental para o aprimoramento dos nossos serviços.</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 7,
     "cat": "Andamento de Processo",
     "title": "Munícipe solicita informação sobre andamento do processo",
-    "html": "<p><saudacao>, ____.</p><p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba <strong>\"Localização Atual\"</strong> após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>, ____.</p><p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba <strong>\"Localização Atual\"</strong> após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 8,
     "cat": "Andamento de Processo",
     "title": "Andamento do processo (resposta 2)",
-    "html": "<p><saudacao>!</p><p>Para acompanhar o andamento do processo você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba <strong>\"Localização Atual\"</strong>.</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>!</p><p>Para acompanhar o andamento do processo você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba <strong>\"Localização Atual\"</strong>.</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 9,
     "cat": "Encaminhamentos",
     "title": "Encaminhamento interno",
-    "html": "<p><saudacao>,</p><p>Prezados,</p><p>Encaminhamos a presente solicitação recebida em <strong>CAP/DEPROT</strong> para ciência e providências, no que couber.</p><p>Atenciosamente,<br>_</p>"
+    "html": "<p><saudacao>,</p><p>Prezados,</p><p>Encaminhamos a presente solicitação recebida em <strong>CAP/DEPROT</strong> para ciência e providências, no que couber.</p><p>Atenciosamente,<br>[NOME_USUARIO]</p>"
   },
   {
     "id": 10,
