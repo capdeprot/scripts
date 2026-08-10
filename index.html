@@ -72,6 +72,31 @@ nav ul li a.active { background: rgba(255,255,255,.12); color: #F4F1EC; font-wei
   border-top: 1px solid rgba(255,255,255,.06);
   font-size: 11px; color: rgba(232,227,216,.2);
 }
+.sb-foot button {
+  width: 100%;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px;
+  color: #E8E3D8;
+  padding: 6px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background var(--dur), border-color var(--dur);
+}
+.sb-foot button:hover {
+  background: rgba(255,255,255,.15);
+  border-color: rgba(255,255,255,.25);
+}
+.sb-foot .btn-reset {
+  color: #f5b041;
+  border-color: rgba(245, 176, 65, 0.3);
+  margin-top: 8px;
+}
+.sb-foot .btn-reset:hover {
+  background: rgba(245, 176, 65, 0.15);
+  border-color: rgba(245, 176, 65, 0.5);
+}
 
 main { padding: 34px 42px; max-width: 840px; }
 
@@ -233,9 +258,6 @@ main { padding: 34px 42px; max-width: 840px; }
 }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); background: #fff; }
 .field textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
-.checkbox-field { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
-.checkbox-field input { width: auto; margin: 0; }
-.checkbox-field label { margin: 0; cursor: pointer; text-transform: none; font-weight: normal; color: var(--text); }
 .modal-btns { display: flex; gap: 7px; justify-content: flex-end; margin-top: 16px; }
 .btn-primary { background: var(--accent); color: #fff; padding: 8px 17px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: background var(--dur); }
 .btn-primary:hover { background: #183F62; }
@@ -274,7 +296,9 @@ main { padding: 34px 42px; max-width: 840px; }
       <input type="text" id="searchInput" placeholder="Buscar script…" oninput="onSearch(this.value)">
     </div>
     <div id="sidebarNav"></div>
-    <div class="sb-foot">Anderson Andrade &middot; SMUL</div>
+    <div class="sb-foot">
+      <button onclick="resetLocalData()" class="btn-reset">🔄 Resetar alterações locais</button>
+    </div>
   </aside>
 
   <main>
@@ -313,12 +337,8 @@ main { padding: 34px 42px; max-width: 840px; }
       <label>Nova categoria (opcional)</label>
       <input type="text" id="newCatCustom" placeholder="Deixe em branco para usar a categoria acima">
     </div>
-    <div class="checkbox-field">
-      <input type="checkbox" id="newGreeting">
-      <label for="newGreeting">🕐 Incluir saudação automática ("Bom dia / Boa tarde / Boa noite")</label>
-    </div>
     <div class="field">
-      <label>Texto do script (você pode usar a tag &lt;saudacao&gt; onde quiser)</label>
+      <label>Texto do script (a saudação automática será inserida no início)</label>
       <textarea id="newText" placeholder="Cole ou escreva o texto aqui…"></textarea>
     </div>
     <div class="modal-btns">
@@ -336,6 +356,7 @@ let scripts = [];
 let nextId = 100;
 let activeCat = 'all';
 let searchQ = '';
+let originalScripts = [];
 
 // ==================== SAUDAÇÃO AUTOMÁTICA ====================
 function saudacao() {
@@ -381,31 +402,50 @@ function insertGreeting(editorId) {
 // ==================== CARREGAR DADOS ====================
 async function loadData() {
   try {
-    const local = localStorage.getItem('scripts_capdeprot');
-    if (local) {
-      scripts = JSON.parse(local);
-      nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
-      buildSidebar();
-      render();
-      toast('Dados carregados do cache local');
-      return;
-    }
-    
+    // Primeiro carrega os dados originais do JSON
     const response = await fetch('scripts.json');
     if (!response.ok) throw new Error('HTTP ' + response.status);
     
     const text = await response.text();
-    scripts = JSON.parse(text);
+    originalScripts = JSON.parse(text);
+    
+    // Verifica se há dados no localStorage
+    const local = localStorage.getItem('scripts_capdeprot');
+    if (local) {
+      scripts = JSON.parse(local);
+      toast('Dados carregados do cache local');
+    } else {
+      scripts = JSON.parse(JSON.stringify(originalScripts));
+      toast('Scripts carregados com sucesso');
+    }
+    
     nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
     buildSidebar();
     render();
-    toast('Scripts carregados com sucesso');
   } catch (err) {
     console.error('Erro ao carregar:', err);
     document.getElementById('cards').innerHTML = 
       '<div class="empty"><p>❌ Erro ao carregar scripts.json<br>' +
       'Verifique se o arquivo existe e é um JSON válido.</p></div>';
   }
+}
+
+// ==================== RESETAR DADOS LOCAIS ====================
+function resetLocalData() {
+  if (!confirm('⚠️ Isso vai apagar todas as suas alterações locais e recarregar os templates originais. Continuar?')) {
+    return;
+  }
+  
+  // Remove os dados do localStorage
+  localStorage.removeItem('scripts_capdeprot');
+  
+  // Recarrega os dados originais
+  scripts = JSON.parse(JSON.stringify(originalScripts));
+  nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
+  
+  buildSidebar();
+  render();
+  toast('🔄 Alterações locais removidas! Templates originais recarregados.');
 }
 
 function saveToLocal() {
@@ -602,12 +642,11 @@ function deleteScript(id) {
   toast('Script excluído');
 }
 
-// ==================== FUNÇÃO COPIAR CORRIGIDA ====================
+// ==================== FUNÇÃO COPIAR ====================
 async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
   
-  // Pega o HTML renderizado da prévia (já com saudação aplicada)
   const previewElement = document.getElementById('pv' + id);
   const renderedHTML = previewElement.innerHTML;
   const plainText = previewElement.innerText || previewElement.textContent;
@@ -642,7 +681,6 @@ function openModal() {
   document.getElementById('newTitle').value = '';
   document.getElementById('newCatCustom').value = '';
   document.getElementById('newText').value = '';
-  document.getElementById('newGreeting').checked = false;
   document.getElementById('overlay').classList.add('show');
 }
 
@@ -650,15 +688,15 @@ function closeModal() {
   document.getElementById('overlay').classList.remove('show');
 }
 
-function textToHTML(txt, includeGreeting) {
+function textToHTML(txt) {
+  // Converte texto puro em HTML com parágrafos
   let html = txt.split(/\n\n+/).map(block => {
     const lines = block.split('\n').map(l => escapeHtml(l)).join('<br>');
     return '<p>' + lines + '</p>';
   }).join('');
   
-  if (includeGreeting && !html.includes('<saudacao>')) {
-    html = '<p><saudacao>, </p>' + html;
-  }
+  // SEMPRE adiciona a saudação no início (obrigatória)
+  html = '<p><saudacao>, </p>' + html;
   
   return html;
 }
@@ -668,7 +706,6 @@ function addScript() {
   const text = document.getElementById('newText').value.trim();
   const cat = document.getElementById('newCatCustom').value.trim() || 
               document.getElementById('newCat').value || 'Geral';
-  const includeGreeting = document.getElementById('newGreeting').checked;
   
   if (!title || !text) {
     alert('Preencha o título e o texto do script.');
@@ -679,7 +716,7 @@ function addScript() {
     id: nextId++, 
     cat: cat, 
     title: title, 
-    html: textToHTML(text, includeGreeting) 
+    html: textToHTML(text) 
   });
   
   closeModal();
