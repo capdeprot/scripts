@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
+/* ===== ESTILOS ===== */
 :root {
   --bg: #F4F1EC;
   --surface: #FFFFFF;
@@ -329,7 +330,7 @@ main { padding: 34px 42px; max-width: 840px; }
     <div class="sb-foot">
       <div class="config-section">
         <label for="userNameInput">👤 Seu nome (assinatura)</label>
-        <input type="text" id="userNameInput" placeholder="" oninput="updateSignature()">
+        <input type="text" id="userNameInput" placeholder="Ex: Anderson Andrade" oninput="updateSignature()">
       </div>
       <button onclick="resetLocalData()" class="btn-reset">🔄 Resetar alterações locais</button>
     </div>
@@ -391,7 +392,6 @@ let nextId = 100;
 let activeCat = 'all';
 let searchQ = '';
 let originalScripts = [];
-let userName = '';
 
 // ==================== SAUDAÇÃO AUTOMÁTICA ====================
 function saudacao() {
@@ -412,20 +412,18 @@ function hasGreetingTag(html) {
 // ==================== ASSINATURA PERSONALIZADA ====================
 function getSignature() {
   const name = document.getElementById('userNameInput').value.trim();
-  return name || '';
+  return name || 'Anderson Andrade';
 }
 
 function applySignature(html) {
   const name = getSignature();
-  return html.replace(/_/g, name);
+  // Substitui APENAS o placeholder [NOME_USUARIO] na assinatura
+  return html.replace(/\[NOME_USUARIO\]/g, name);
 }
 
 function updateSignature() {
-  // Salva o nome no localStorage
   const name = document.getElementById('userNameInput').value.trim();
   localStorage.setItem('user_signature', name);
-  
-  // Re-renderiza todos os cards para atualizar a assinatura
   render();
   toast('Assinatura atualizada!');
 }
@@ -446,7 +444,6 @@ async function loadData() {
     const text = await response.text();
     originalScripts = JSON.parse(text);
     
-    // Carrega o nome do usuário
     loadUserName();
     
     const local = localStorage.getItem('scripts_capdeprot');
@@ -565,7 +562,6 @@ function escapeHtml(str) {
 }
 
 function cardHTML(s) {
-  // Aplica a saudação E a assinatura personalizada
   let displayHTML = applyGreetingForDisplay(s.html);
   displayHTML = applySignature(displayHTML);
   
@@ -644,15 +640,19 @@ function saveEdit(id) {
   
   newHTML = cleanEditorHtml(newHTML);
   
-  // Garante a saudação
+  // Garante a saudação (se não existir, adiciona no início)
   if (!newHTML.includes('<saudacao>')) {
     newHTML = '<p><saudacao>, </p>' + newHTML;
+  }
+  
+  // Garante o placeholder da assinatura (se não existir, adiciona no final)
+  if (!newHTML.includes('[NOME_USUARIO]')) {
+    newHTML = newHTML + '<p>Atenciosamente,<br>[NOME_USUARIO]</p>';
   }
   
   scripts[idx].html = newHTML;
   if (newTitle) scripts[idx].title = newTitle;
   
-  // Atualiza a prévia com saudação E assinatura
   let displayHTML = applyGreetingForDisplay(newHTML);
   displayHTML = applySignature(displayHTML);
   document.getElementById('pv' + id).innerHTML = displayHTML;
@@ -691,7 +691,6 @@ async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
   
-  // Aplica saudação E assinatura antes de copiar
   let processedHTML = applyGreetingForDisplay(s.html);
   processedHTML = applySignature(processedHTML);
   
@@ -742,8 +741,8 @@ function textToHTML(txt) {
     return '<p>' + lines + '</p>';
   }).join('');
   
-  // Saudação obrigatória + underline para assinatura
-  html = '<p><saudacao>, </p>' + html + '<p>Atenciosamente,<br>_</p>';
+  // Saudação obrigatória + assinatura com placeholder
+  html = '<p><saudacao>, </p>' + html + '<p>Atenciosamente,<br>[NOME_USUARIO]</p>';
   
   return html;
 }
