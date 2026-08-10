@@ -345,33 +345,12 @@ function saudacao() {
   return 'Boa noite';
 }
 
-// Aplica a saudação no HTML para EXIBIÇÃO (substitui a tag)
 function applyGreetingForDisplay(html) {
   return html.replace(/<saudacao>/g, saudacao());
 }
 
-// Verifica se o HTML contém a tag de saudação (para o selo)
 function hasGreetingTag(html) {
   return html.includes('<saudacao>');
-}
-
-// Remove formatação excessiva para cópia limpa
-function cleanHtmlForCopy(html) {
-  // Primeiro aplica a saudação
-  let processed = applyGreetingForDisplay(html);
-  
-  // Remove quebras de linha desnecessárias entre tags
-  processed = processed.replace(/>\s+</g, '><');
-  
-  // Garante espaçamento normal entre palavras
-  processed = processed.replace(/\s+/g, ' ');
-  
-  // Re-adiciona espaçamento mínimo entre tags e texto
-  processed = processed.replace(/>([^<]+)</g, (match, text) => {
-    return '>' + text.trim() + '<';
-  });
-  
-  return processed;
 }
 
 // ==================== INSERIR SAUDAÇÃO NO EDITOR ====================
@@ -381,7 +360,6 @@ function insertGreeting(editorId) {
   
   editor.focus();
   
-  // Insere a tag <saudacao> no cursor
   const selection = window.getSelection();
   if (selection.rangeCount > 0) {
     const range = selection.getRangeAt(0);
@@ -389,13 +367,11 @@ function insertGreeting(editorId) {
     range.deleteContents();
     range.insertNode(textNode);
     
-    // Move cursor para depois da tag
     range.setStartAfter(textNode);
     range.setEndAfter(textNode);
     selection.removeAllRanges();
     selection.addRange(range);
   } else {
-    // Se não houver seleção, insere no final
     editor.appendChild(document.createTextNode('<saudacao>'));
   }
   
@@ -574,7 +550,6 @@ function startEdit(id) {
   document.getElementById('pv' + id).classList.add('editing-mode');
   document.getElementById('ew' + id).classList.add('visible');
   const ce = document.getElementById('ce' + id);
-  // Mostra o HTML BRUTO (com a tag <saudacao>) para edição
   ce.innerHTML = s.html;
   ce.focus();
 }
@@ -590,16 +565,13 @@ function saveEdit(id) {
   let newHTML = ce.innerHTML;
   const newTitle = document.getElementById('tt' + id).value.trim();
   
-  // Limpa formatação excessiva do contenteditable
   newHTML = cleanEditorHtml(newHTML);
   
   scripts[idx].html = newHTML;
   if (newTitle) scripts[idx].title = newTitle;
   
-  // Atualiza a prévia (com saudação aplicada)
   document.getElementById('pv' + id).innerHTML = applyGreetingForDisplay(newHTML);
   
-  // Atualiza o título e o selo de saudação
   const titleSpan = document.getElementById('c' + id).querySelector('.card-title');
   titleSpan.innerHTML = escapeHtml(scripts[idx].title) + 
     (hasGreetingTag(newHTML) ? '<span class="greeting-icon">🕐 Saudação automática</span>' : '');
@@ -611,20 +583,13 @@ function saveEdit(id) {
   toast('Script salvo!');
 }
 
-// Função para limpar HTML vindo do contenteditable
 function cleanEditorHtml(html) {
-  // Remove spans e estilos desnecessários
   let cleaned = html.replace(/<span style="[^"]*">/g, '');
   cleaned = cleaned.replace(/<\/span>/g, '');
-  
-  // Remove tags vazias
   cleaned = cleaned.replace(/<p><\/p>/g, '');
   cleaned = cleaned.replace(/<br>$/g, '');
-  
-  // Garante que <saudacao> não seja envolvido por tags extras
   cleaned = cleaned.replace(/<p><saudacao><\/p>/g, '<saudacao>');
   cleaned = cleaned.replace(/<saudacao>/g, '<saudacao>');
-  
   return cleaned;
 }
 
@@ -637,11 +602,12 @@ function deleteScript(id) {
   toast('Script excluído');
 }
 
+// ==================== FUNÇÃO COPIAR CORRIGIDA ====================
 async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
   
-  // Pega o HTML da prévia (já com saudação e formatação)
+  // Pega o HTML renderizado da prévia (já com saudação aplicada)
   const previewElement = document.getElementById('pv' + id);
   const renderedHTML = previewElement.innerHTML;
   const plainText = previewElement.innerText || previewElement.textContent;
@@ -685,14 +651,13 @@ function closeModal() {
 }
 
 function textToHTML(txt, includeGreeting) {
-  // Converte texto puro em HTML com parágrafos
   let html = txt.split(/\n\n+/).map(block => {
     const lines = block.split('\n').map(l => escapeHtml(l)).join('<br>');
     return '<p>' + lines + '</p>';
   }).join('');
   
   if (includeGreeting && !html.includes('<saudacao>')) {
-    html = '<p><saudacao></p>' + html;
+    html = '<p><saudacao>, </p>' + html;
   }
   
   return html;
