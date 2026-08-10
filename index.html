@@ -72,6 +72,36 @@ nav ul li a.active { background: rgba(255,255,255,.12); color: #F4F1EC; font-wei
   border-top: 1px solid rgba(255,255,255,.06);
   font-size: 11px; color: rgba(232,227,216,.2);
 }
+.sb-foot .config-section {
+  margin-bottom: 12px;
+}
+.sb-foot .config-section label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: rgba(232,227,216,.5);
+  margin-bottom: 4px;
+}
+.sb-foot .config-section input {
+  width: 100%;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #E8E3D8;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color var(--dur), background var(--dur);
+}
+.sb-foot .config-section input:focus {
+  border-color: rgba(255,255,255,.25);
+  background: rgba(255,255,255,.15);
+}
+.sb-foot .config-section input::placeholder {
+  color: rgba(232,227,216,.3);
+}
 .sb-foot button {
   width: 100%;
   background: rgba(255,255,255,.08);
@@ -297,6 +327,10 @@ main { padding: 34px 42px; max-width: 840px; }
     </div>
     <div id="sidebarNav"></div>
     <div class="sb-foot">
+      <div class="config-section">
+        <label for="userNameInput">👤 Seu nome (assinatura)</label>
+        <input type="text" id="userNameInput" placeholder="Ex: Anderson Andrade" oninput="updateSignature()">
+      </div>
       <button onclick="resetLocalData()" class="btn-reset">🔄 Resetar alterações locais</button>
     </div>
   </aside>
@@ -338,7 +372,7 @@ main { padding: 34px 42px; max-width: 840px; }
       <input type="text" id="newCatCustom" placeholder="Deixe em branco para usar a categoria acima">
     </div>
     <div class="field">
-      <label>Texto do script (a saudação automática será inserida no início)</label>
+      <label>Texto do script</label>
       <textarea id="newText" placeholder="Cole ou escreva o texto aqui…"></textarea>
     </div>
     <div class="modal-btns">
@@ -357,6 +391,7 @@ let nextId = 100;
 let activeCat = 'all';
 let searchQ = '';
 let originalScripts = [];
+let userName = '';
 
 // ==================== SAUDAÇÃO AUTOMÁTICA ====================
 function saudacao() {
@@ -374,42 +409,46 @@ function hasGreetingTag(html) {
   return html.includes('<saudacao>');
 }
 
-// ==================== INSERIR SAUDAÇÃO NO EDITOR ====================
-function insertGreeting(editorId) {
-  const editor = document.getElementById(editorId);
-  if (!editor) return;
+// ==================== ASSINATURA PERSONALIZADA ====================
+function getSignature() {
+  const name = document.getElementById('userNameInput').value.trim();
+  return name || 'Anderson Andrade';
+}
+
+function applySignature(html) {
+  const name = getSignature();
+  return html.replace(/_/g, name);
+}
+
+function updateSignature() {
+  // Salva o nome no localStorage
+  const name = document.getElementById('userNameInput').value.trim();
+  localStorage.setItem('user_signature', name);
   
-  editor.focus();
-  
-  const selection = window.getSelection();
-  if (selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0);
-    const textNode = document.createTextNode('<saudacao>');
-    range.deleteContents();
-    range.insertNode(textNode);
-    
-    range.setStartAfter(textNode);
-    range.setEndAfter(textNode);
-    selection.removeAllRanges();
-    selection.addRange(range);
-  } else {
-    editor.appendChild(document.createTextNode('<saudacao>'));
+  // Re-renderiza todos os cards para atualizar a assinatura
+  render();
+  toast('Assinatura atualizada!');
+}
+
+function loadUserName() {
+  const saved = localStorage.getItem('user_signature');
+  if (saved) {
+    document.getElementById('userNameInput').value = saved;
   }
-  
-  toast('Tag <saudacao> inserida!');
 }
 
 // ==================== CARREGAR DADOS ====================
 async function loadData() {
   try {
-    // Primeiro carrega os dados originais do JSON
     const response = await fetch('scripts.json');
     if (!response.ok) throw new Error('HTTP ' + response.status);
     
     const text = await response.text();
     originalScripts = JSON.parse(text);
     
-    // Verifica se há dados no localStorage
+    // Carrega o nome do usuário
+    loadUserName();
+    
     const local = localStorage.getItem('scripts_capdeprot');
     if (local) {
       scripts = JSON.parse(local);
@@ -436,10 +475,7 @@ function resetLocalData() {
     return;
   }
   
-  // Remove os dados do localStorage
   localStorage.removeItem('scripts_capdeprot');
-  
-  // Recarrega os dados originais
   scripts = JSON.parse(JSON.stringify(originalScripts));
   nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
   
@@ -529,7 +565,10 @@ function escapeHtml(str) {
 }
 
 function cardHTML(s) {
-  const displayHTML = applyGreetingForDisplay(s.html);
+  // Aplica a saudação E a assinatura personalizada
+  let displayHTML = applyGreetingForDisplay(s.html);
+  displayHTML = applySignature(displayHTML);
+  
   const hasGreeting = hasGreetingTag(s.html);
   
   return '<div class="card" id="c' + s.id + '">' +
@@ -562,13 +601,11 @@ function cardHTML(s) {
           '<button class="fmt-btn" title="Itálico" onmousedown="event.preventDefault();document.execCommand(\'italic\')"><em>I</em></button>' +
           '<button class="fmt-btn" title="Sublinhado" onmousedown="event.preventDefault();document.execCommand(\'underline\')"><u>U</u></button>' +
           '<div class="fmt-sep"></div>' +
-          '<button class="fmt-btn" title="Inserir tag de saudação (&lt;saudacao&gt;)" onmousedown="event.preventDefault();insertGreeting(\'ce' + s.id + '\')">🕐</button>' +
-          '<div class="fmt-sep"></div>' +
           '<button class="fmt-btn" title="Lista" onmousedown="event.preventDefault();document.execCommand(\'insertUnorderedList\')">' +
             '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div contenteditable="true" id="ce' + s.id + '" data-placeholder="Texto do script… (use &lt;saudacao&gt; para saudação automática)"></div>' +
+        '<div contenteditable="true" id="ce' + s.id + '" data-placeholder="Texto do script…"></div>' +
         '<div class="edit-bar">' +
           '<button class="btn btn-save" onclick="saveEdit(' + s.id + ')">✓ Salvar</button>' +
           '<button class="btn btn-ghost" onclick="cancelEdit(' + s.id + ')">Cancelar</button>' +
@@ -607,14 +644,22 @@ function saveEdit(id) {
   
   newHTML = cleanEditorHtml(newHTML);
   
+  // Garante a saudação
+  if (!newHTML.includes('<saudacao>')) {
+    newHTML = '<p><saudacao>, </p>' + newHTML;
+  }
+  
   scripts[idx].html = newHTML;
   if (newTitle) scripts[idx].title = newTitle;
   
-  document.getElementById('pv' + id).innerHTML = applyGreetingForDisplay(newHTML);
+  // Atualiza a prévia com saudação E assinatura
+  let displayHTML = applyGreetingForDisplay(newHTML);
+  displayHTML = applySignature(displayHTML);
+  document.getElementById('pv' + id).innerHTML = displayHTML;
   
   const titleSpan = document.getElementById('c' + id).querySelector('.card-title');
   titleSpan.innerHTML = escapeHtml(scripts[idx].title) + 
-    (hasGreetingTag(newHTML) ? '<span class="greeting-icon">🕐 Saudação automática</span>' : '');
+    '<span class="greeting-icon">🕐 Saudação automática</span>';
   
   cancelEdit(id);
   saveToLocal();
@@ -642,17 +687,20 @@ function deleteScript(id) {
   toast('Script excluído');
 }
 
-// ==================== FUNÇÃO COPIAR ====================
 async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
   
-  const previewElement = document.getElementById('pv' + id);
-  const renderedHTML = previewElement.innerHTML;
-  const plainText = previewElement.innerText || previewElement.textContent;
+  // Aplica saudação E assinatura antes de copiar
+  let processedHTML = applyGreetingForDisplay(s.html);
+  processedHTML = applySignature(processedHTML);
+  
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = processedHTML;
+  const plainText = tempDiv.innerText || tempDiv.textContent;
   
   try {
-    const blob = new Blob([renderedHTML], { type: 'text/html' });
+    const blob = new Blob([processedHTML], { type: 'text/html' });
     const blobPlain = new Blob([plainText], { type: 'text/plain' });
     await navigator.clipboard.write([
       new ClipboardItem({ 'text/html': blob, 'text/plain': blobPlain })
@@ -689,14 +737,13 @@ function closeModal() {
 }
 
 function textToHTML(txt) {
-  // Converte texto puro em HTML com parágrafos
   let html = txt.split(/\n\n+/).map(block => {
     const lines = block.split('\n').map(l => escapeHtml(l)).join('<br>');
     return '<p>' + lines + '</p>';
   }).join('');
   
-  // SEMPRE adiciona a saudação no início (obrigatória)
-  html = '<p><saudacao>, </p>' + html;
+  // Saudação obrigatória + underline para assinatura
+  html = '<p><saudacao>, </p>' + html + '<p>Atenciosamente,<br>_</p>';
   
   return html;
 }
