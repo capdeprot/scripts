@@ -655,7 +655,7 @@ main { padding: 32px 40px; max-width: 1000px; }
     <div class="sb-foot">
       <div class="config-section">
         <label>👤 Sua assinatura</label>
-        <input type="text" id="userNameInput" placeholder="(seu nome)" oninput="updateSignature()">
+        <input type="text" id="userNameInput" placeholder="Escreva aqui seu nome" oninput="updateSignature()">
       </div>
       <button onclick="resetLocalData()" class="btn-reset">🔄 Resetar alterações locais</button>
       <div class="drop-zone" id="dropZone" onclick="document.getElementById('importFile').click()">
@@ -725,6 +725,7 @@ let searchQ = '';
 let originalScripts = [];
 let sortBy = 'title';
 let customCategoryOrder = [];
+let isCustomOrderActive = false;
 
 // ============================================================
 //  TEMA (DARK MODE)
@@ -794,16 +795,26 @@ function loadCustomOrder() {
   if (saved) {
     try {
       customCategoryOrder = JSON.parse(saved);
+      isCustomOrderActive = customCategoryOrder.length > 0;
     } catch (e) {
       customCategoryOrder = [];
+      isCustomOrderActive = false;
     }
   } else {
     customCategoryOrder = [];
+    isCustomOrderActive = false;
   }
 }
 
 function saveCustomOrder() {
   localStorage.setItem('category_order', JSON.stringify(customCategoryOrder));
+  isCustomOrderActive = customCategoryOrder.length > 0;
+  if (isCustomOrderActive) {
+    // Ativa automaticamente a ordenação personalizada
+    sortBy = 'custom';
+    document.getElementById('sortSelect').value = 'custom';
+    render();
+  }
 }
 
 function getOrderedCategories(cats) {
@@ -843,6 +854,12 @@ async function loadData() {
     } else {
       scripts = JSON.parse(JSON.stringify(originalScripts));
       showToast('✅', 'Scripts carregados com sucesso');
+    }
+
+    // Se há ordem personalizada salva, ativa automaticamente
+    if (isCustomOrderActive) {
+      sortBy = 'custom';
+      document.getElementById('sortSelect').value = 'custom';
     }
 
     nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
@@ -934,12 +951,12 @@ function initDragDrop() {
     
     item.addEventListener('dragend', () => {
       item.classList.remove('dragging');
-      // Restaura o cursor padrão (grab)
       item.style.cursor = 'grab';
       document.querySelectorAll('#sidebarNav ul li').forEach(el => {
         el.classList.remove('drag-over');
       });
-      // Reseta o estado do drag
+      // Atualiza a ordem e ativa o modo personalizado
+      updateCustomOrderFromDOM();
       draggedItem = null;
       draggedCategory = null;
     });
@@ -971,10 +988,7 @@ function initDragDrop() {
         parent.insertBefore(draggedItem, item);
       }
       
-      updateCustomOrderFromDOM();
-      
-      draggedItem = null;
-      draggedCategory = null;
+      // A ordem será salva no dragend
     });
   });
 }
@@ -989,9 +1003,16 @@ function updateCustomOrderFromDOM() {
       newOrder.push(catName);
     }
   });
-  customCategoryOrder = newOrder;
-  saveCustomOrder();
-  showToast('✨', 'Ordem das categorias salva!');
+  
+  // Verifica se a ordem mudou
+  const currentOrderStr = JSON.stringify(customCategoryOrder);
+  const newOrderStr = JSON.stringify(newOrder);
+  
+  if (currentOrderStr !== newOrderStr && newOrder.length > 0) {
+    customCategoryOrder = newOrder;
+    saveCustomOrder(); // Isso ativa automaticamente a ordenação personalizada
+    showToast('✨', 'Ordem personalizada ativada!');
+  }
 }
 
 // ============================================================
