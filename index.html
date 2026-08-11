@@ -472,9 +472,20 @@ main { padding: 32px 40px; max-width: 1000px; }
   background: var(--bg);
   color: var(--text);
   outline: none;
-  width: 200px;
-  margin-left: auto;
+  width: 180px;
 }
+.edit-bar .category-select {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  width: 160px;
+}
+.edit-bar .category-select:focus { border-color: var(--accent); }
 .edit-bar .title-field:focus { border-color: var(--accent); }
 .btn-save { background: var(--green); color: #fff; }
 .btn-save:hover { background: var(--green-hover); }
@@ -635,6 +646,7 @@ main { padding: 32px 40px; max-width: 1000px; }
   .card-btns { margin-top: 6px; flex-wrap: wrap; }
   .edit-bar { flex-direction: column; align-items: stretch; }
   .edit-bar .title-field { width: 100%; margin-left: 0; }
+  .edit-bar .category-select { width: 100%; }
 }
 </style>
 </head>
@@ -655,7 +667,7 @@ main { padding: 32px 40px; max-width: 1000px; }
     <div class="sb-foot">
       <div class="config-section">
         <label>👤 Sua assinatura</label>
-        <input type="text" id="userNameInput" placeholder="Escreva aqui seu nome" oninput="updateSignature()">
+        <input type="text" id="userNameInput" placeholder="Escreva seu nome aqui" oninput="updateSignature()">
       </div>
       <button onclick="resetLocalData()" class="btn-reset">🔄 Resetar alterações locais</button>
       <div class="drop-zone" id="dropZone" onclick="document.getElementById('importFile').click()">
@@ -810,7 +822,6 @@ function saveCustomOrder() {
   localStorage.setItem('category_order', JSON.stringify(customCategoryOrder));
   isCustomOrderActive = customCategoryOrder.length > 0;
   if (isCustomOrderActive) {
-    // Ativa automaticamente a ordenação personalizada
     sortBy = 'custom';
     document.getElementById('sortSelect').value = 'custom';
     render();
@@ -856,7 +867,6 @@ async function loadData() {
       showToast('✅', 'Scripts carregados com sucesso');
     }
 
-    // Se há ordem personalizada salva, ativa automaticamente
     if (isCustomOrderActive) {
       sortBy = 'custom';
       document.getElementById('sortSelect').value = 'custom';
@@ -955,7 +965,6 @@ function initDragDrop() {
       document.querySelectorAll('#sidebarNav ul li').forEach(el => {
         el.classList.remove('drag-over');
       });
-      // Atualiza a ordem e ativa o modo personalizado
       updateCustomOrderFromDOM();
       draggedItem = null;
       draggedCategory = null;
@@ -987,8 +996,6 @@ function initDragDrop() {
       } else {
         parent.insertBefore(draggedItem, item);
       }
-      
-      // A ordem será salva no dragend
     });
   });
 }
@@ -1004,13 +1011,12 @@ function updateCustomOrderFromDOM() {
     }
   });
   
-  // Verifica se a ordem mudou
   const currentOrderStr = JSON.stringify(customCategoryOrder);
   const newOrderStr = JSON.stringify(newOrder);
   
   if (currentOrderStr !== newOrderStr && newOrder.length > 0) {
     customCategoryOrder = newOrder;
-    saveCustomOrder(); // Isso ativa automaticamente a ordenação personalizada
+    saveCustomOrder();
     showToast('✨', 'Ordem personalizada ativada!');
   }
 }
@@ -1090,9 +1096,21 @@ function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function getCategoryOptions(selected) {
+  const cats = getCategories().filter(c => c !== 'all');
+  let html = '';
+  cats.forEach(c => {
+    html += `<option value="${escapeHtml(c)}" ${c === selected ? 'selected' : ''}>${escapeHtml(c)}</option>`;
+  });
+  // Opção para nova categoria
+  html += `<option value="__new__">➕ Nova categoria...</option>`;
+  return html;
+}
+
 function cardHTML(s) {
   let displayHTML = applyGreetingForDisplay(s.html);
   displayHTML = applySignature(displayHTML);
+  const catOptions = getCategoryOptions(s.cat);
 
   return `
   <div class="card" id="c${s.id}">
@@ -1129,7 +1147,10 @@ function cardHTML(s) {
         <div class="edit-bar">
           <button class="btn btn-save" onclick="saveEdit(${s.id})">💾 Salvar</button>
           <button class="btn btn-ghost" onclick="cancelEdit(${s.id})">Cancelar</button>
-          <input class="title-field" id="tt${s.id}" placeholder="Título do script" value="${escapeHtml(s.title)}">
+          <input class="title-field" id="tt${s.id}" placeholder="Título" value="${escapeHtml(s.title)}">
+          <select class="category-select" id="cat${s.id}" onchange="onCategoryChange(${s.id})">
+            ${catOptions}
+          </select>
         </div>
       </div>
     </div>
@@ -1138,6 +1159,59 @@ function cardHTML(s) {
 
 function toggleCard(id) {
   document.getElementById('c' + id).classList.toggle('open');
+}
+
+// ============================================================
+//  MUDANÇA DE CATEGORIA
+// ============================================================
+function onCategoryChange(id) {
+  const select = document.getElementById('cat' + id);
+  const value = select.value;
+  
+  if (value === '__new__') {
+    // Cria nova categoria
+    const newCat = prompt('Digite o nome da nova categoria:');
+    if (newCat && newCat.trim()) {
+      const catName = newCat.trim();
+      // Verifica se a categoria já existe
+      const exists = scripts.some(s => s.cat === catName);
+      if (!exists) {
+        // Adiciona a nova categoria à lista de opções
+        const option = document.createElement('option');
+        option.value = catName;
+        option.textContent = catName;
+        select.insertBefore(option, select.querySelector('option[value="__new__"]'));
+        select.value = catName;
+        showToast('✨', 'Nova categoria criada!');
+      } else {
+        select.value = catName;
+        showToast('ℹ️', 'Categoria já existe');
+      }
+    } else {
+      // Se cancelou, volta para a categoria anterior
+      const currentScript = scripts.find(s => s.id === id);
+      if (currentScript) select.value = currentScript.cat;
+      return;
+    }
+  }
+  
+  // Salva a alteração da categoria
+  const idx = scripts.findIndex(s => s.id === id);
+  if (idx !== -1) {
+    const newCat = select.value;
+    if (scripts[idx].cat !== newCat) {
+      scripts[idx].cat = newCat;
+      saveToLocal();
+      buildSidebar();
+      // Atualiza a tag no card
+      const card = document.getElementById('c' + id);
+      if (card) {
+        const tag = card.querySelector('.card-tag');
+        if (tag) tag.textContent = newCat;
+      }
+      showToast('📂', 'Categoria atualizada!');
+    }
+  }
 }
 
 // ============================================================
@@ -1177,6 +1251,7 @@ function saveEdit(id) {
   const ce = document.getElementById('ce' + id);
   let newHTML = ce.innerHTML;
   const newTitle = document.getElementById('tt' + id).value.trim();
+  const newCat = document.getElementById('cat' + id).value;
 
   newHTML = cleanEditorHtml(newHTML);
 
@@ -1189,6 +1264,7 @@ function saveEdit(id) {
 
   scripts[idx].html = newHTML;
   if (newTitle) scripts[idx].title = newTitle;
+  if (newCat && newCat !== '__new__') scripts[idx].cat = newCat;
 
   let displayHTML = applyGreetingForDisplay(newHTML);
   displayHTML = applySignature(displayHTML);
@@ -1198,6 +1274,7 @@ function saveEdit(id) {
   saveToLocal();
   buildSidebar();
   render();
+  showToast('💾', 'Script salvo!');
 }
 
 function cleanEditorHtml(html) {
