@@ -141,6 +141,10 @@ aside {
   font-weight: 600;
 }
 nav ul { list-style: none; padding: 0 12px; }
+
+nav ul li {
+  margin-bottom: 2px;
+}
 nav ul li a {
   display: flex;
   justify-content: space-between;
@@ -149,12 +153,23 @@ nav ul li a {
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   font-size: 13px;
-  cursor: pointer;
+  cursor: grab;
   transition: all var(--transition);
   text-decoration: none;
+  user-select: none;
 }
 nav ul li a:hover { background: var(--surface2); color: var(--text); }
+nav ul li a:active { cursor: grabbing; }
 nav ul li a.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+nav ul li.dragging a {
+  opacity: .4;
+  cursor: grabbing;
+}
+nav ul li.drag-over a {
+  background: var(--accent-light);
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-sm);
+}
 .nav-count {
   font-size: 11px;
   background: var(--surface2);
@@ -163,6 +178,7 @@ nav ul li a.active { background: var(--accent-light); color: var(--accent); font
   font-weight: 500;
   color: var(--text-secondary);
   transition: all var(--transition);
+  pointer-events: none;
 }
 nav ul li a.active .nav-count {
   background: var(--accent);
@@ -639,7 +655,7 @@ main { padding: 32px 40px; max-width: 1000px; }
     <div class="sb-foot">
       <div class="config-section">
         <label>👤 Sua assinatura</label>
-        <input type="text" id="userNameInput" placeholder="-------" oninput="updateSignature()">
+        <input type="text" id="userNameInput" placeholder="(seu nome)" oninput="updateSignature()">
       </div>
       <button onclick="resetLocalData()" class="btn-reset">🔄 Resetar alterações locais</button>
       <div class="drop-zone" id="dropZone" onclick="document.getElementById('importFile').click()">
@@ -657,6 +673,7 @@ main { padding: 32px 40px; max-width: 1000px; }
         <option value="title">Ordenar por: Título</option>
         <option value="category">Ordenar por: Categoria</option>
         <option value="id">Ordenar por: Data (criação)</option>
+        <option value="custom">✨ Ordem personalizada</option>
       </select>
       <button class="btn-export" onclick="exportJSON()">📤 Exportar JSON</button>
       <button class="btn-add" onclick="openModal()">➕ Novo script</button>
@@ -707,6 +724,7 @@ let activeCat = 'all';
 let searchQ = '';
 let originalScripts = [];
 let sortBy = 'title';
+let customCategoryOrder = [];
 
 // ============================================================
 //  TEMA (DARK MODE)
@@ -750,7 +768,7 @@ function hasGreetingTag(html) {
 // ============================================================
 function getSignature() {
   const name = document.getElementById('userNameInput').value.trim();
-  return name || '-------';
+  return name || '------';
 }
 
 function applySignature(html) {
@@ -769,6 +787,44 @@ function loadUserName() {
 }
 
 // ============================================================
+//  ORDEM PERSONALIZADA DAS CATEGORIAS
+// ============================================================
+function loadCustomOrder() {
+  const saved = localStorage.getItem('category_order');
+  if (saved) {
+    try {
+      customCategoryOrder = JSON.parse(saved);
+    } catch (e) {
+      customCategoryOrder = [];
+    }
+  } else {
+    customCategoryOrder = [];
+  }
+}
+
+function saveCustomOrder() {
+  localStorage.setItem('category_order', JSON.stringify(customCategoryOrder));
+}
+
+function getOrderedCategories(cats) {
+  if (sortBy !== 'custom' || customCategoryOrder.length === 0) {
+    return cats;
+  }
+  const ordered = [];
+  const remaining = [];
+  const catSet = new Set(cats);
+  
+  customCategoryOrder.forEach(cat => {
+    if (catSet.has(cat)) {
+      ordered.push(cat);
+      catSet.delete(cat);
+    }
+  });
+  catSet.forEach(cat => ordered.push(cat));
+  return ordered;
+}
+
+// ============================================================
 //  CARREGAR DADOS
 // ============================================================
 async function loadData() {
@@ -778,6 +834,7 @@ async function loadData() {
     const text = await response.text();
     originalScripts = JSON.parse(text);
     loadUserName();
+    loadCustomOrder();
 
     const local = localStorage.getItem('scripts_capdeprot');
     if (local) {
@@ -843,32 +900,135 @@ function applySortFn(list) {
   if (s === 'title') return [...list].sort((a,b) => a.title.localeCompare(b.title));
   if (s === 'category') return [...list].sort((a,b) => a.cat.localeCompare(b.cat));
   if (s === 'id') return [...list].sort((a,b) => a.id - b.id);
+  if (s === 'custom') return list;
   return list;
 }
 
 function applySort() {
   sortBy = document.getElementById('sortSelect').value;
+  if (sortBy === 'custom') {
+    loadCustomOrder();
+  }
   render();
 }
 
+// ============================================================
+//  DRAG & DROP DAS CATEGORIAS
+// ============================================================
+let draggedItem = null;
+let draggedCategory = null;
+
+function initDragDrop() {
+  const items = document.querySelectorAll('#sidebarNav ul li');
+  items.forEach(item => {
+    item.setAttribute('draggable', 'true');
+    item.style.cursor = 'grab';
+    
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      draggedCategory = item.querySelector('a').textContent.trim().split(' ')[0];
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+    });
+    
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      // Restaura o cursor padrão (grab)
+      item.style.cursor = 'grab';
+      document.querySelectorAll('#sidebarNav ul li').forEach(el => {
+        el.classList.remove('drag-over');
+      });
+      // Reseta o estado do drag
+      draggedItem = null;
+      draggedCategory = null;
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      item.classList.add('drag-over');
+    });
+    
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+    
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      
+      if (!draggedItem || draggedItem === item) return;
+      
+      const parent = item.parentNode;
+      const items = Array.from(parent.querySelectorAll('li'));
+      const draggedIndex = items.indexOf(draggedItem);
+      const targetIndex = items.indexOf(item);
+      
+      if (draggedIndex < targetIndex) {
+        parent.insertBefore(draggedItem, item.nextSibling);
+      } else {
+        parent.insertBefore(draggedItem, item);
+      }
+      
+      updateCustomOrderFromDOM();
+      
+      draggedItem = null;
+      draggedCategory = null;
+    });
+  });
+}
+
+function updateCustomOrderFromDOM() {
+  const items = document.querySelectorAll('#sidebarNav ul li a');
+  const newOrder = [];
+  items.forEach(a => {
+    const text = a.textContent.trim();
+    const catName = text.replace(/\s*\(\d+\)\s*$/, '').trim();
+    if (catName && catName !== 'Todos') {
+      newOrder.push(catName);
+    }
+  });
+  customCategoryOrder = newOrder;
+  saveCustomOrder();
+  showToast('✨', 'Ordem das categorias salva!');
+}
+
+// ============================================================
+//  BUILD SIDEBAR
+// ============================================================
 function buildSidebar() {
   const nav = document.getElementById('sidebarNav');
   const cats = getCategories();
   const counts = {};
   scripts.forEach(s => { counts[s.cat] = (counts[s.cat] || 0) + 1; });
 
+  const categoryList = cats.filter(c => c !== 'all');
+  
+  let orderedCats = categoryList;
+  if (sortBy === 'custom' && customCategoryOrder.length > 0) {
+    orderedCats = getOrderedCategories(categoryList);
+  }
+
   let html = '<div class="cat-lbl">Visão geral</div><ul>' +
     `<li><a onclick="setCat('all')" class="${activeCat === 'all' ? 'active' : ''}">
       📋 Todos <span class="nav-count">${scripts.length}</span></a></li></ul>`;
 
-  cats.forEach(cat => {
-    if (cat === 'all') return;
-    html += `<div class="cat-lbl">${cat}</div><ul><li>
-      <a onclick="setCat('${cat.replace(/'/g, "\\'")}')" class="${activeCat === cat ? 'active' : ''}">
-        ${cat} <span class="nav-count">${counts[cat] || 0}</span></a></li></ul>`;
+  html += '<div class="cat-lbl">Categorias</div><ul>';
+  orderedCats.forEach(cat => {
+    const count = counts[cat] || 0;
+    const isActive = activeCat === cat;
+    html += `<li draggable="true" style="cursor:grab;">
+      <a onclick="setCat('${cat.replace(/'/g, "\\'")}')" class="${isActive ? 'active' : ''}">
+        ${cat} <span class="nav-count">${count}</span>
+      </a>
+    </li>`;
   });
+  html += '</ul>';
 
   nav.innerHTML = html;
+  
+  setTimeout(initDragDrop, 50);
 }
 
 function setCat(cat) {
@@ -1156,7 +1316,7 @@ function handleImport(event) {
 }
 
 // ============================================================
-//  DRAG & DROP
+//  DRAG & DROP (arquivo JSON)
 // ============================================================
 const dropZone = document.getElementById('dropZone');
 if (dropZone) {
