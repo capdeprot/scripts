@@ -407,7 +407,6 @@ main { padding: 32px 40px; max-width: 1000px; }
   margin-top: 2px;
 }
 
-/* ===== BOTÕES OCULTOS ATÉ EXPANDIR ===== */
 .card-btns {
   display: flex;
   gap: 4px;
@@ -454,7 +453,6 @@ main { padding: 32px 40px; max-width: 1000px; }
   color: #fff;
 }
 
-/* ===== FAVORITO MAIS VISÍVEL ===== */
 .fav-star {
   background: none;
   border: none;
@@ -496,7 +494,6 @@ main { padding: 32px 40px; max-width: 1000px; }
 .card-body { display: none; border-top: 1px solid var(--border); }
 .card.open .card-body { display: block; }
 
-/* ===== PRÉVIA SEMPRE VISÍVEL ===== */
 .preview-wrapper {
   padding: 12px 18px 4px 18px;
 }
@@ -525,7 +522,6 @@ main { padding: 32px 40px; max-width: 1000px; }
 .preview-container .preview ul { padding-left: 1.5em; margin-bottom: 0.8em; }
 .preview-container .preview li { margin-bottom: 0.2em; }
 
-/* ===== EDITOR COM FUNDO DIFERENTE ===== */
 .editor-wrap {
   display: none;
   flex-direction: column;
@@ -644,7 +640,7 @@ main { padding: 32px 40px; max-width: 1000px; }
 
 .edit-bar {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   padding: 8px 14px;
   background: var(--surface2);
@@ -679,21 +675,22 @@ main { padding: 32px 40px; max-width: 1000px; }
 .edit-bar .title-field:focus { border-color: var(--accent); }
 .edit-bar .editor-checkboxes {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   margin-left: auto;
   align-items: center;
 }
 .edit-bar .editor-checkboxes label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   cursor: pointer;
+  font-weight: 500;
 }
 .edit-bar .editor-checkboxes input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
 }
 .btn-save { background: var(--green); color: #fff; }
@@ -885,7 +882,6 @@ main { padding: 32px 40px; max-width: 1000px; }
   color: var(--accent);
 }
 
-/* ===== MODAL GERENCIAR CATEGORIAS ===== */
 .modal-category {
     max-width: 500px;
 }
