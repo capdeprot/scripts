@@ -827,26 +827,24 @@ function getCategoryOptions(selected) {
 }
 
 function buildFullText(script) {
-  let text = script.html;
-  let plainText = text.replace(/<[^>]*>/g, '');
+  let htmlContent = script.html;
   
   if (hasGreeting(script)) {
     const greeting = saudacao();
-    plainText = greeting + ', ______.\n\n' + plainText;
+    htmlContent = '<p>' + greeting + ', ______.</p>' + htmlContent;
   }
   
   if (hasSignature(script)) {
     const signature = getSignature();
-    plainText = plainText + '\n\nAtenciosamente,\n' + signature;
+    htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
   }
   
-  return plainText;
+  return htmlContent;
 }
 
 function cardHTML(s) {
   const plainText = s.html.replace(/<[^>]*>/g, '');
-  const fullText = buildFullText(s);
-  const previewText = fullText.replace(/\n/g, '<br>');
+  const fullHTML = buildFullText(s);
   
   const hasGreetingFeature = hasGreeting(s);
   const hasSignatureFeature = hasSignature(s);
@@ -873,7 +871,7 @@ function cardHTML(s) {
     <div class="card-body">
       <div class="preview-wrapper">
         <div class="preview-container" id="pc${s.id}">
-          <div class="preview" id="pv${s.id}">${previewText}</div>
+          <div class="preview" id="pv${s.id}">${fullHTML}</div>
         </div>
       </div>
       <div class="editor-wrap" id="ew${s.id}">
@@ -987,21 +985,19 @@ function livePreview(id) {
   const chkGreeting = document.getElementById('chkGreeting' + id);
   const chkSignature = document.getElementById('chkSignature' + id);
   
-  let html = ce.innerHTML;
-  let plainText = html.replace(/<[^>]*>/g, '');
-  let fullText = plainText;
+  let htmlContent = ce.innerHTML;
   
   if (chkGreeting && chkGreeting.checked) {
     const greeting = saudacao();
-    fullText = greeting + ', ______.\n\n' + fullText;
+    htmlContent = '<p>' + greeting + ', ______.</p>' + htmlContent;
   }
   
   if (chkSignature && chkSignature.checked) {
     const signature = getSignature();
-    fullText = fullText + '\n\nAtenciosamente,\n' + signature;
+    htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
   }
   
-  content.innerHTML = fullText.replace(/\n/g, '<br>') || '<span style="color:var(--text-secondary);opacity:.5;">Nenhum conteúdo ainda</span>';
+  content.innerHTML = htmlContent || '<span style="color:var(--text-secondary);opacity:.5;">Nenhum conteúdo ainda</span>';
 }
 
 function saveEdit(id) {
@@ -1021,8 +1017,8 @@ function saveEdit(id) {
   if (newTitle) scripts[idx].title = newTitle;
   if (newCat && newCat !== '__new__') scripts[idx].cat = newCat;
 
-  const fullText = buildFullText(scripts[idx]);
-  document.getElementById('pv' + id).innerHTML = fullText.replace(/\n/g, '<br>');
+  const fullHTML = buildFullText(scripts[idx]);
+  document.getElementById('pv' + id).innerHTML = fullHTML;
 
   cancelEdit(id);
   saveToLocal();
