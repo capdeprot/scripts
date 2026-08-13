@@ -40,11 +40,6 @@ function saudacao() {
   return 'Boa noite';
 }
 
-function applyGreeting(text) {
-  const nome = '______';
-  return saudacao() + ', ' + nome + '.\n\n' + text;
-}
-
 function hasGreeting(script) {
   return script.hasGreeting !== false;
 }
@@ -55,10 +50,6 @@ function hasGreeting(script) {
 function getSignature() {
   const name = document.getElementById('userNameInput').value.trim();
   return name || '------';
-}
-
-function applySignature(text) {
-  return text + '\n\nAtenciosamente,\n' + getSignature();
 }
 
 function hasSignature(script) {
@@ -744,7 +735,7 @@ function createCategoryFromModal() {
 }
 
 // ============================================================
-//  INSERIR LINK (CORRIGIDO)
+//  INSERIR LINK
 // ============================================================
 function toggleLinkInput(id) {
     const container = document.getElementById('li' + id);
@@ -840,11 +831,13 @@ function buildFullText(script) {
   let plainText = text.replace(/<[^>]*>/g, '');
   
   if (hasGreeting(script)) {
-    plainText = applyGreeting(plainText);
+    const greeting = saudacao();
+    plainText = greeting + ', ______.\n\n' + plainText;
   }
   
   if (hasSignature(script)) {
-    plainText = applySignature(plainText);
+    const signature = getSignature();
+    plainText = plainText + '\n\nAtenciosamente,\n' + signature;
   }
   
   return plainText;
@@ -907,8 +900,8 @@ function cardHTML(s) {
             ${catOptions}
           </select>
           <div class="editor-checkboxes">
-            <label><input type="checkbox" id="chkGreeting${s.id}" ${hasGreetingFeature ? 'checked' : ''}> 🕐</label>
-            <label><input type="checkbox" id="chkSignature${s.id}" ${hasSignatureFeature ? 'checked' : ''}> ✍️</label>
+            <label><input type="checkbox" id="chkGreeting${s.id}" ${hasGreetingFeature ? 'checked' : ''}> 🕐 Saudação automática</label>
+            <label><input type="checkbox" id="chkSignature${s.id}" ${hasSignatureFeature ? 'checked' : ''}> ✍️ Assinatura</label>
           </div>
         </div>
       </div>
@@ -999,11 +992,13 @@ function livePreview(id) {
   let fullText = plainText;
   
   if (chkGreeting && chkGreeting.checked) {
-    fullText = applyGreeting(fullText);
+    const greeting = saudacao();
+    fullText = greeting + ', ______.\n\n' + fullText;
   }
   
   if (chkSignature && chkSignature.checked) {
-    fullText = applySignature(fullText);
+    const signature = getSignature();
+    fullText = fullText + '\n\nAtenciosamente,\n' + signature;
   }
   
   content.innerHTML = fullText.replace(/\n/g, '<br>') || '<span style="color:var(--text-secondary);opacity:.5;">Nenhum conteúdo ainda</span>';
@@ -1054,7 +1049,7 @@ function deleteScript(id) {
 }
 
 // ============================================================
-//  COPIAR (preserva formatação)
+//  COPIAR (preserva formatação - sem negrito)
 // ============================================================
 async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
@@ -1062,14 +1057,16 @@ async function copyScript(id) {
 
   let htmlContent = s.html;
   
+  // Aplica saudação se ativa (sem negrito)
   if (hasGreeting(s)) {
     const greeting = saudacao();
-    htmlContent = '<p><strong>' + greeting + ', ______.</strong></p>' + htmlContent;
+    htmlContent = '<p>' + greeting + ', ______.</p>' + htmlContent;
   }
   
+  // Aplica assinatura se ativa (sem negrito)
   if (hasSignature(s)) {
     const signature = getSignature();
-    htmlContent = htmlContent + '<p><strong>Atenciosamente,</strong><br>' + signature + '</p>';
+    htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
   }
   
   htmlContent = htmlContent.replace(/^\s+/, '');
