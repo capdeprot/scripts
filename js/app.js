@@ -211,6 +211,12 @@ function getCategories() {
 
 function getFilteredScripts() {
   let filtered = activeCat === 'all' ? scripts : scripts.filter(s => s.cat === activeCat);
+  
+  // Se a ordenação for por favoritos, mostra APENAS os favoritos
+  if (sortBy === 'favorite') {
+    filtered = filtered.filter(s => isFavorite(s));
+  }
+  
   if (searchQ) {
     const q = searchQ.toLowerCase();
     filtered = filtered.filter(s =>
@@ -227,7 +233,10 @@ function applySortFn(list) {
   if (s === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
   if (s === 'category') return [...list].sort((a, b) => a.cat.localeCompare(b.cat));
   if (s === 'id') return [...list].sort((a, b) => a.id - b.id);
-  if (s === 'favorite') return [...list].sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0));
+  if (s === 'favorite') {
+    // Mantém a ordenação por favoritos (já filtrados, apenas ordena por título)
+    return [...list].sort((a, b) => a.title.localeCompare(b.title));
+  }
   if (s === 'custom') return list;
   return list;
 }
@@ -324,7 +333,7 @@ function updateCustomOrderFromDOM() {
 }
 
 // ============================================================
-//  BUILD SIDEBAR
+//  BUILD SIDEBAR (CORRIGIDA)
 // ============================================================
 function buildSidebar() {
   const nav = document.getElementById('sidebarNav');
