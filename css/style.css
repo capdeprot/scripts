@@ -135,7 +135,6 @@ aside {
   font-weight: 600;
 }
 
-/* ===== CATEGORIAS COMO BOTÕES RETANGULARES ===== */
 nav ul {
   list-style: none;
   padding: 0 12px;
@@ -151,15 +150,15 @@ nav ul li a.cat-btn {
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  border-radius: 8px;              /* ← BORDAS ARREDONDADAS */
+  border-radius: 8px;
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
-  cursor: pointer;                  /* ← MÃO COM DEDO INDICADOR */
+  cursor: pointer;
   transition: all var(--transition);
   text-decoration: none;
-  background: var(--bg);            /* ← FUNDO SÓLIDO */
-  border: 1.5px solid var(--border); /* ← BORDA VISÍVEL */
+  background: var(--bg);
+  border: 1.5px solid var(--border);
   user-select: none;
 }
 
@@ -192,7 +191,6 @@ nav ul li a.cat-btn.active .nav-count {
   pointer-events: none;
 }
 
-/* ===== MODO DE REORDENAÇÃO ===== */
 nav ul li.reorder-mode a.cat-btn {
   cursor: grab;
   border-style: dashed;
@@ -813,6 +811,125 @@ main { padding: 32px 40px; max-width: 1000px; }
   color: var(--accent);
 }
 
+/* ===== MODAL GERENCIAR CATEGORIAS ===== */
+.modal-category {
+    max-width: 500px;
+}
+.modal-category .category-list-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+}
+#categoryListContainer {
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    background: var(--bg);
+}
+.category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 4px;
+    cursor: grab;
+    transition: all var(--transition);
+}
+.category-item:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-hover);
+}
+.category-item.dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+}
+.category-item.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+.category-item .category-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background var(--transition);
+}
+.category-item .category-name:hover {
+    background: var(--accent-light);
+}
+.category-item .category-name.editing {
+    background: var(--accent-light);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.category-item .category-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--surface2);
+    padding: 0px 8px;
+    border-radius: 12px;
+    margin: 0 8px;
+}
+.category-item .category-actions {
+    display: flex;
+    gap: 4px;
+}
+.category-item .category-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all var(--transition);
+}
+.category-item .category-actions .btn-rename {
+    color: var(--accent);
+}
+.category-item .category-actions .btn-rename:hover {
+    background: var(--accent-light);
+}
+.category-item .category-actions .btn-delete {
+    color: var(--red);
+}
+.category-item .category-actions .btn-delete:hover {
+    background: var(--red-light);
+}
+.category-modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.category-modal-actions input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: all var(--transition);
+}
+.category-modal-actions input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(30,79,122,.12);
+}
+.category-modal-actions .btn-primary {
+    padding: 8px 16px;
+    white-space: nowrap;
+}
+
 @media (max-width: 820px) {
   .layout { grid-template-columns: 1fr; }
   aside { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
@@ -827,4 +944,6 @@ main { padding: 32px 40px; max-width: 1000px; }
   .edit-bar .title-field { width: 100%; margin-left: 0; }
   .edit-bar .category-select { width: 100%; }
   .edit-bar .editor-checkboxes { margin-left: 0; width: 100%; justify-content: flex-start; }
+  .modal { padding: 20px; }
+  .modal-category { max-width: 100%; }
 }
