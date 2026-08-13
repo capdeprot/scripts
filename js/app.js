@@ -684,6 +684,7 @@ function saveEdit(id) {
   const titleSpan = document.getElementById('c' + id).querySelector('.card-title');
   let badges = '';
   const isFav = isFavorite(scripts[idx]);
+  if (isFav) badges += '<span class="feature-badge favorite">⭐ Favorito</span>';
   if (hasGreetingFeature) badges += '<span class="feature-badge greeting">🕐 Saudação automática</span>';
   if (hasSignatureFeature) badges += '<span class="feature-badge signature">✍️ Assinatura</span>';
   titleSpan.innerHTML = escapeHtml(scripts[idx].title) + badges;
