@@ -662,7 +662,6 @@ function confirmRenameCategory(oldName, newName) {
         return;
     }
     
-    // Renomeia a categoria em todos os scripts
     scripts.forEach(s => {
         if (s.cat === oldName) {
             s.cat = newName;
@@ -745,7 +744,7 @@ function createCategoryFromModal() {
 }
 
 // ============================================================
-//  INSERIR LINK
+//  INSERIR LINK (CORRIGIDO)
 // ============================================================
 function toggleLinkInput(id) {
     const container = document.getElementById('li' + id);
@@ -758,39 +757,48 @@ function toggleLinkInput(id) {
 function applyLink(id) {
     const input = document.getElementById('liInput' + id);
     const url = input.value.trim();
-    if (!url) return;
+    if (!url) {
+        showToast('⚠️', 'Digite uma URL válida');
+        return;
+    }
+    
+    let finalUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        finalUrl = 'https://' + url;
+    }
     
     const editor = document.getElementById('ce' + id);
     editor.focus();
-    document.execCommand('createLink', false, url);
     
-    // Adiciona target="_blank" para abrir em nova aba
     const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const container = range.commonAncestorContainer;
-        const link = container.parentElement?.closest('a') || container.closest?.('a');
-        if (link && link.tagName === 'A') {
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-        }
+    if (!selection.rangeCount || selection.isCollapsed) {
+        showToast('⚠️', 'Selecione o texto que deseja transformar em link');
+        input.value = '';
+        document.getElementById('li' + id).classList.remove('visible');
+        return;
+    }
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    
+    if (!selectedText.trim()) {
+        showToast('⚠️', 'Selecione o texto que deseja transformar em link');
+        return;
+    }
+    
+    document.execCommand('createLink', false, finalUrl);
+    
+    const link = range.commonAncestorContainer?.parentElement?.closest?.('a') || 
+                 range.commonAncestorContainer?.closest?.('a');
+    if (link && link.tagName === 'A') {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
     }
     
     input.value = '';
     document.getElementById('li' + id).classList.remove('visible');
     livePreview(id);
-    showToast('🔗', 'Link inserido!');
-}
-
-// ============================================================
-//  ALTERNAR PRÉVIA
-// ============================================================
-function togglePreview(id) {
-    const container = document.getElementById('pc' + id);
-    const btn = container.parentElement.querySelector('.preview-toggle');
-    container.classList.toggle('visible');
-    btn.classList.toggle('active');
-    btn.textContent = container.classList.contains('visible') ? '📄 Ocultar prévia' : '📄 Ver prévia';
+    showToast('🔗', 'Link inserido com sucesso!');
 }
 
 // ============================================================
@@ -871,7 +879,6 @@ function cardHTML(s) {
     </div>
     <div class="card-body">
       <div class="preview-wrapper">
-        <button class="preview-toggle" onclick="togglePreview(${s.id})">📄 Ver prévia</button>
         <div class="preview-container" id="pc${s.id}">
           <div class="preview" id="pv${s.id}">${previewText}</div>
         </div>
@@ -910,7 +917,8 @@ function cardHTML(s) {
 }
 
 function toggleCard(id) {
-  document.getElementById('c' + id).classList.toggle('open');
+  const card = document.getElementById('c' + id);
+  card.classList.toggle('open');
 }
 
 // ============================================================
@@ -978,13 +986,11 @@ function startEdit(id) {
 function cancelEdit(id) {
   document.getElementById('pv' + id).classList.remove('editing-mode');
   document.getElementById('ew' + id).classList.remove('visible');
-  document.getElementById('lp' + id).classList.remove('visible');
 }
 
 function livePreview(id) {
   const ce = document.getElementById('ce' + id);
-  const lp = document.getElementById('lp' + id);
-  const content = document.getElementById('lpContent' + id);
+  const content = document.getElementById('pv' + id);
   const chkGreeting = document.getElementById('chkGreeting' + id);
   const chkSignature = document.getElementById('chkSignature' + id);
   
@@ -1001,7 +1007,6 @@ function livePreview(id) {
   }
   
   content.innerHTML = fullText.replace(/\n/g, '<br>') || '<span style="color:var(--text-secondary);opacity:.5;">Nenhum conteúdo ainda</span>';
-  lp.classList.add('visible');
 }
 
 function saveEdit(id) {
@@ -1021,7 +1026,6 @@ function saveEdit(id) {
   if (newTitle) scripts[idx].title = newTitle;
   if (newCat && newCat !== '__new__') scripts[idx].cat = newCat;
 
-  // Atualiza o conteúdo da prévia se estiver visível
   const fullText = buildFullText(scripts[idx]);
   document.getElementById('pv' + id).innerHTML = fullText.replace(/\n/g, '<br>');
 
@@ -1056,31 +1060,25 @@ async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
 
-  // Constrói o texto completo com formatação HTML
   let htmlContent = s.html;
   
-  // Aplica saudação se ativa (como HTML)
   if (hasGreeting(s)) {
     const greeting = saudacao();
     htmlContent = '<p><strong>' + greeting + ', ______.</strong></p>' + htmlContent;
   }
   
-  // Aplica assinatura se ativa (como HTML)
   if (hasSignature(s)) {
     const signature = getSignature();
     htmlContent = htmlContent + '<p><strong>Atenciosamente,</strong><br>' + signature + '</p>';
   }
   
-  // Remove espaçamento excessivo
   htmlContent = htmlContent.replace(/^\s+/, '');
 
-  // Extrai texto puro para fallback
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = htmlContent;
   const plainText = tempDiv.innerText || tempDiv.textContent;
 
   try {
-    // Copia como HTML e texto puro
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const blobPlain = new Blob([plainText], { type: 'text/plain' });
     await navigator.clipboard.write([
