@@ -134,43 +134,53 @@ aside {
   color: var(--text-secondary);
   font-weight: 600;
 }
-nav ul { list-style: none; padding: 0 12px; }
+
+/* ===== CATEGORIAS COMO BOTÕES RETANGULARES ===== */
+nav ul {
+  list-style: none;
+  padding: 0 12px;
+}
 
 nav ul li {
   margin-bottom: 6px;
   list-style: none;
 }
+
 nav ul li a.cat-btn {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 8px;              /* ← BORDAS ARREDONDADAS */
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
-  cursor: pointer;
+  cursor: pointer;                  /* ← MÃO COM DEDO INDICADOR */
   transition: all var(--transition);
   text-decoration: none;
-  background: var(--bg);
-  border: 1.5px solid var(--border);
+  background: var(--bg);            /* ← FUNDO SÓLIDO */
+  border: 1.5px solid var(--border); /* ← BORDA VISÍVEL */
   user-select: none;
 }
+
 nav ul li a.cat-btn:hover {
   background: var(--surface2);
   border-color: var(--text-secondary);
   color: var(--text);
 }
+
 nav ul li a.cat-btn.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
   font-weight: 600;
 }
+
 nav ul li a.cat-btn.active .nav-count {
   background: rgba(255,255,255,.2);
   color: #fff;
 }
+
 .nav-count {
   font-size: 11px;
   background: var(--surface2);
@@ -182,24 +192,29 @@ nav ul li a.cat-btn.active .nav-count {
   pointer-events: none;
 }
 
+/* ===== MODO DE REORDENAÇÃO ===== */
 nav ul li.reorder-mode a.cat-btn {
   cursor: grab;
   border-style: dashed;
   border-color: var(--accent);
   background: var(--accent-light);
 }
+
 nav ul li.reorder-mode a.cat-btn:active {
   cursor: grabbing;
 }
+
 nav ul li.reorder-mode.drag-over a.cat-btn {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
 }
+
 nav ul li.reorder-mode.drag-over .nav-count {
   background: rgba(255,255,255,.2);
   color: #fff;
 }
+
 nav ul li.reorder-mode.dragging a.cat-btn {
   opacity: .4;
   cursor: grabbing;
@@ -383,7 +398,6 @@ main { padding: 32px 40px; max-width: 1000px; }
   flex-wrap: wrap;
 }
 
-/* ===== INDICADORES PADRONIZADOS EM AZUL CLARO ===== */
 .feature-badge {
   font-size: 10px;
   padding: 2px 10px;
@@ -444,7 +458,6 @@ main { padding: 32px 40px; max-width: 1000px; }
 }
 .btn-del:hover { background: var(--red); color: #fff; }
 
-/* ===== ESTRELA DE FAVORITO NO CANTO DIREITO ===== */
 .fav-star {
   background: none;
   border: none;
@@ -756,7 +769,6 @@ main { padding: 32px 40px; max-width: 1000px; }
   background: var(--accent-light);
 }
 
-/* ===== AUTOCOMPLETE ===== */
 .category-input-wrapper {
   position: relative;
 }
