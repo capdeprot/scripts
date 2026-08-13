@@ -662,7 +662,7 @@ function confirmRenameCategory(oldName, newName) {
         return;
     }
     
-    // ✅ RENOMEIA A CATEGORIA EM TODOS OS SCRIPTS
+    // Renomeia a categoria em todos os scripts
     scripts.forEach(s => {
         if (s.cat === oldName) {
             s.cat = newName;
@@ -695,7 +695,6 @@ function deleteCategory(cat) {
         const confirmMsg = `A categoria "${cat}" possui ${count} ${count === 1 ? 'script' : 'scripts'}.\n\nExcluí-la fará com que esses scripts fiquem sem categoria (categoria "Geral").\n\nDeseja continuar?`;
         if (!confirm(confirmMsg)) return;
         
-        // ✅ Move todos os scripts para a categoria "Geral"
         scripts.forEach(s => {
             if (s.cat === cat) {
                 s.cat = 'Geral';
@@ -743,6 +742,55 @@ function createCategoryFromModal() {
     buildSidebar();
     renderCategoryList();
     showToast('✨', 'Categoria "' + name + '" criada!');
+}
+
+// ============================================================
+//  INSERIR LINK
+// ============================================================
+function toggleLinkInput(id) {
+    const container = document.getElementById('li' + id);
+    container.classList.toggle('visible');
+    if (container.classList.contains('visible')) {
+        document.getElementById('liInput' + id).focus();
+    }
+}
+
+function applyLink(id) {
+    const input = document.getElementById('liInput' + id);
+    const url = input.value.trim();
+    if (!url) return;
+    
+    const editor = document.getElementById('ce' + id);
+    editor.focus();
+    document.execCommand('createLink', false, url);
+    
+    // Adiciona target="_blank" para abrir em nova aba
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        const link = container.parentElement?.closest('a') || container.closest?.('a');
+        if (link && link.tagName === 'A') {
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+        }
+    }
+    
+    input.value = '';
+    document.getElementById('li' + id).classList.remove('visible');
+    livePreview(id);
+    showToast('🔗', 'Link inserido!');
+}
+
+// ============================================================
+//  ALTERNAR PRÉVIA
+// ============================================================
+function togglePreview(id) {
+    const container = document.getElementById('pc' + id);
+    const btn = container.parentElement.querySelector('.preview-toggle');
+    container.classList.toggle('visible');
+    btn.classList.toggle('active');
+    btn.textContent = container.classList.contains('visible') ? '📄 Ocultar prévia' : '📄 Ver prévia';
 }
 
 // ============================================================
@@ -810,34 +858,40 @@ function cardHTML(s) {
       <div class="card-info">
         <div class="card-title">
           ${escapeHtml(s.title)}
-          ${hasGreetingFeature ? '<span class="feature-badge greeting">🕐 Saudação automática</span>' : ''}
-          ${hasSignatureFeature ? '<span class="feature-badge signature">✍️ Assinatura</span>' : ''}
         </div>
         <span class="card-tag">${escapeHtml(s.cat)}</span>
       </div>
       <div class="card-btns" onclick="event.stopPropagation()">
         <button class="btn btn-copy" id="cb${s.id}" onclick="copyScript(${s.id})">📋 Copiar</button>
         <button class="btn btn-ghost" onclick="startEdit(${s.id})">✏️ Editar</button>
-        <button class="btn btn-del" onclick="deleteScript(${s.id})">🗑️</button>
+        <button class="btn btn-del" onclick="deleteScript(${s.id})">🗑️ Excluir</button>
         <button class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite(${s.id})">${isFav ? '⭐' : '☆'}</button>
       </div>
       <svg class="chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="card-body">
-      <div class="preview" id="pv${s.id}">${previewText}</div>
+      <div class="preview-wrapper">
+        <button class="preview-toggle" onclick="togglePreview(${s.id})">📄 Ver prévia</button>
+        <div class="preview-container" id="pc${s.id}">
+          <div class="preview" id="pv${s.id}">${previewText}</div>
+        </div>
+      </div>
       <div class="editor-wrap" id="ew${s.id}">
         <div class="fmt-bar">
           <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
           <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
           <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
           <div class="fmt-sep"></div>
+          <button class="fmt-btn fmt-btn-link" onmousedown="event.preventDefault();toggleLinkInput(${s.id})">🔗</button>
+          <div class="fmt-sep"></div>
           <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('insertUnorderedList')">•</button>
         </div>
-        <div contenteditable="true" id="ce${s.id}" data-placeholder="Texto do script (somente o corpo, sem saudação e sem assinatura)" oninput="livePreview(${s.id})">${plainText}</div>
-        <div class="live-preview" id="lp${s.id}">
-          <div class="label">📄 Prévia ao vivo</div>
-          <div id="lpContent${s.id}"></div>
+        <div class="link-url-input" id="li${s.id}">
+          <input type="url" id="liInput${s.id}" placeholder="https://exemplo.com" onkeydown="if(event.key==='Enter'){event.preventDefault();applyLink(${s.id});}">
+          <button onclick="applyLink(${s.id})">Inserir</button>
+          <button class="btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="toggleLinkInput(${s.id})">✕</button>
         </div>
+        <div contenteditable="true" id="ce${s.id}" data-placeholder="Texto do script (somente o corpo, sem saudação e sem assinatura)" oninput="livePreview(${s.id})">${plainText}</div>
         <div class="edit-bar">
           <button class="btn btn-save" onclick="saveEdit(${s.id})">💾 Salvar</button>
           <button class="btn btn-ghost" onclick="cancelEdit(${s.id})">Cancelar</button>
@@ -967,16 +1021,9 @@ function saveEdit(id) {
   if (newTitle) scripts[idx].title = newTitle;
   if (newCat && newCat !== '__new__') scripts[idx].cat = newCat;
 
+  // Atualiza o conteúdo da prévia se estiver visível
   const fullText = buildFullText(scripts[idx]);
   document.getElementById('pv' + id).innerHTML = fullText.replace(/\n/g, '<br>');
-
-  const titleSpan = document.getElementById('c' + id).querySelector('.card-title');
-  let badges = '';
-  const isFav = isFavorite(scripts[idx]);
-  if (isFav) badges += '<span class="feature-badge favorite">⭐ Favorito</span>';
-  if (hasGreetingFeature) badges += '<span class="feature-badge greeting">🕐 Saudação automática</span>';
-  if (hasSignatureFeature) badges += '<span class="feature-badge signature">✍️ Assinatura</span>';
-  titleSpan.innerHTML = escapeHtml(scripts[idx].title) + badges;
 
   cancelEdit(id);
   saveToLocal();
@@ -1003,21 +1050,38 @@ function deleteScript(id) {
 }
 
 // ============================================================
-//  COPIAR
+//  COPIAR (preserva formatação)
 // ============================================================
 async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
 
-  let fullText = buildFullText(s);
-  fullText = fullText.replace(/^\s+/, '');
+  // Constrói o texto completo com formatação HTML
+  let htmlContent = s.html;
+  
+  // Aplica saudação se ativa (como HTML)
+  if (hasGreeting(s)) {
+    const greeting = saudacao();
+    htmlContent = '<p><strong>' + greeting + ', ______.</strong></p>' + htmlContent;
+  }
+  
+  // Aplica assinatura se ativa (como HTML)
+  if (hasSignature(s)) {
+    const signature = getSignature();
+    htmlContent = htmlContent + '<p><strong>Atenciosamente,</strong><br>' + signature + '</p>';
+  }
+  
+  // Remove espaçamento excessivo
+  htmlContent = htmlContent.replace(/^\s+/, '');
 
+  // Extrai texto puro para fallback
   const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = fullText.replace(/\n/g, '<br>');
+  tempDiv.innerHTML = htmlContent;
   const plainText = tempDiv.innerText || tempDiv.textContent;
 
   try {
-    const blob = new Blob([fullText.replace(/\n/g, '<br>')], { type: 'text/html' });
+    // Copia como HTML e texto puro
+    const blob = new Blob([htmlContent], { type: 'text/html' });
     const blobPlain = new Blob([plainText], { type: 'text/plain' });
     await navigator.clipboard.write([
       new ClipboardItem({ 'text/html': blob, 'text/plain': blobPlain })
