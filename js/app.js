@@ -264,7 +264,7 @@ function toggleReorderMode() {
 }
 
 // ============================================================
-//  DRAG & DROP DAS CATEGORIAS
+//  DRAG & DROP DAS CATEGORIAS (SIDEBAR)
 // ============================================================
 let draggedItem = null;
 
@@ -331,7 +331,7 @@ function updateCustomOrderFromDOM() {
 }
 
 // ============================================================
-//  BUILD SIDEBAR (CORRIGIDA COM ESTILOS INLINE)
+//  BUILD SIDEBAR
 // ============================================================
 function buildSidebar() {
   const nav = document.getElementById('sidebarNav');
@@ -353,8 +353,6 @@ function buildSidebar() {
   orderedCats.forEach(cat => {
     const count = counts[cat] || 0;
     const isActive = activeCat === cat;
-    const activeStyle = isActive ? 'background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;' : '';
-    const countStyle = isActive ? 'background:rgba(255,255,255,.2);color:#fff;' : '';
     html += `<li>
       <a class="cat-btn ${isActive ? 'active' : ''}" onclick="setCat('${cat.replace(/'/g, "\\'")}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-radius:8px;color:${isActive ? '#fff' : 'var(--text-secondary)'};font-size:13px;font-weight:${isActive ? '600' : '500'};cursor:pointer;transition:all var(--transition);text-decoration:none;background:${isActive ? 'var(--accent)' : 'var(--bg)'};border:1.5px solid ${isActive ? 'var(--accent)' : 'var(--border)'};user-select:none;${isActive ? 'box-shadow:0 2px 8px rgba(30,79,122,.2);' : ''}">
         ${cat} <span class="nav-count" style="font-size:11px;background:${isActive ? 'rgba(255,255,255,.2)' : 'var(--surface2)'};padding:0px 10px;border-radius:12px;font-weight:500;color:${isActive ? '#fff' : 'var(--text-secondary)'};transition:all var(--transition);pointer-events:none;">${count}</span>
@@ -464,6 +462,288 @@ document.addEventListener('click', function(e) {
         if (suggestions) suggestions.classList.remove('show');
     }
 });
+
+// ============================================================
+//  GERENCIAR CATEGORIAS - MODAL
+// ============================================================
+function openCategoryModal() {
+    const modal = document.getElementById('categoryModal');
+    modal.classList.add('show');
+    renderCategoryList();
+}
+
+function closeCategoryModal() {
+    const modal = document.getElementById('categoryModal');
+    modal.classList.remove('show');
+}
+
+// ============================================================
+//  RENDERIZAR LISTA DE CATEGORIAS NO MODAL
+// ============================================================
+function renderCategoryList() {
+    const container = document.getElementById('categoryListContainer');
+    const cats = getCategories().filter(c => c !== 'all');
+    const counts = {};
+    scripts.forEach(s => { counts[s.cat] = (counts[s.cat] || 0) + 1; });
+    
+    if (cats.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">Nenhuma categoria criada ainda.</div>';
+        return;
+    }
+    
+    let html = '';
+    cats.forEach(cat => {
+        const count = counts[cat] || 0;
+        html += `
+            <div class="category-item" draggable="true" data-category="${cat.replace(/"/g, '&quot;')}">
+                <span class="category-name" onclick="startRenameCategory('${cat.replace(/'/g, "\\'")}')">${cat}</span>
+                <span class="category-count">${count} ${count === 1 ? 'script' : 'scripts'}</span>
+                <div class="category-actions">
+                    <button class="btn-rename" onclick="startRenameCategory('${cat.replace(/'/g, "\\'")}')" title="Renomear">✏️</button>
+                    <button class="btn-delete" onclick="deleteCategory('${cat.replace(/'/g, "\\'")}')" title="Excluir">🗑️</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    setTimeout(initCategoryDragDrop, 50);
+}
+
+// ============================================================
+//  DRAG & DROP PARA CATEGORIAS NO MODAL
+// ============================================================
+let draggedCategoryItem = null;
+
+function initCategoryDragDrop() {
+    const items = document.querySelectorAll('#categoryListContainer .category-item');
+    items.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            draggedCategoryItem = item;
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
+        });
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            document.querySelectorAll('#categoryListContainer .category-item').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            saveCategoryOrderFromModal();
+        });
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            item.classList.add('drag-over');
+        });
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+            if (!draggedCategoryItem || draggedCategoryItem === item) return;
+            
+            const parent = item.parentNode;
+            const items = Array.from(parent.querySelectorAll('.category-item'));
+            const draggedIndex = items.indexOf(draggedCategoryItem);
+            const targetIndex = items.indexOf(item);
+            
+            if (draggedIndex < targetIndex) {
+                parent.insertBefore(draggedCategoryItem, item.nextSibling);
+            } else {
+                parent.insertBefore(draggedCategoryItem, item);
+            }
+            
+            draggedCategoryItem = null;
+        });
+    });
+}
+
+function saveCategoryOrderFromModal() {
+    const items = document.querySelectorAll('#categoryListContainer .category-item');
+    const newOrder = [];
+    items.forEach(item => {
+        const catName = item.getAttribute('data-category') || item.querySelector('.category-name').textContent.trim();
+        if (catName && catName !== 'Todos') {
+            newOrder.push(catName);
+        }
+    });
+    
+    const currentOrderStr = JSON.stringify(customCategoryOrder);
+    const newOrderStr = JSON.stringify(newOrder);
+    
+    if (currentOrderStr !== newOrderStr && newOrder.length > 0) {
+        customCategoryOrder = newOrder;
+        saveCustomOrder();
+        buildSidebar();
+        showToast('✨', 'Ordem das categorias atualizada!');
+    }
+}
+
+// ============================================================
+//  RENOMEAR CATEGORIA
+// ============================================================
+let renamingCategory = null;
+
+function startRenameCategory(cat) {
+    if (renamingCategory) {
+        cancelRenameCategory();
+    }
+    
+    const items = document.querySelectorAll('#categoryListContainer .category-item');
+    let targetItem = null;
+    let targetNameSpan = null;
+    
+    items.forEach(item => {
+        const nameSpan = item.querySelector('.category-name');
+        if (nameSpan.textContent.trim() === cat) {
+            targetItem = item;
+            targetNameSpan = nameSpan;
+        }
+    });
+    
+    if (!targetNameSpan) return;
+    
+    renamingCategory = cat;
+    const currentName = targetNameSpan.textContent.trim();
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.className = 'category-rename-input';
+    input.style.cssText = 'flex:1;font-size:14px;font-weight:500;padding:4px 8px;border:2px solid var(--accent);border-radius:4px;background:var(--bg);color:var(--text);outline:none;';
+    input.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+            confirmRenameCategory(cat, input.value.trim());
+        }
+        if (e.key === 'Escape') {
+            cancelRenameCategory();
+        }
+    };
+    input.onblur = function() {
+        setTimeout(() => {
+            if (renamingCategory) {
+                confirmRenameCategory(cat, input.value.trim());
+            }
+        }, 150);
+    };
+    
+    targetNameSpan.textContent = '';
+    targetNameSpan.appendChild(input);
+    targetNameSpan.classList.add('editing');
+    input.focus();
+    input.select();
+}
+
+function cancelRenameCategory() {
+    renamingCategory = null;
+    document.querySelectorAll('.category-name.editing').forEach(el => {
+        el.classList.remove('editing');
+        const input = el.querySelector('input');
+        if (input) {
+            const name = input.value;
+            el.textContent = name;
+            el.onclick = function() { startRenameCategory(name); };
+        }
+    });
+}
+
+function confirmRenameCategory(oldName, newName) {
+    if (!newName || newName === oldName) {
+        cancelRenameCategory();
+        return;
+    }
+    
+    const exists = scripts.some(s => s.cat === newName);
+    if (exists) {
+        showToast('⚠️', 'Já existe uma categoria com este nome!');
+        cancelRenameCategory();
+        return;
+    }
+    
+    // ✅ RENOMEIA A CATEGORIA EM TODOS OS SCRIPTS
+    scripts.forEach(s => {
+        if (s.cat === oldName) {
+            s.cat = newName;
+        }
+    });
+    
+    const orderIndex = customCategoryOrder.indexOf(oldName);
+    if (orderIndex !== -1) {
+        customCategoryOrder[orderIndex] = newName;
+        saveCustomOrder();
+    }
+    
+    cancelRenameCategory();
+    saveToLocal();
+    buildSidebar();
+    renderCategoryList();
+    render();
+    showToast('✅', 'Categoria renomeada com sucesso!');
+}
+
+// ============================================================
+//  EXCLUIR CATEGORIA
+// ============================================================
+function deleteCategory(cat) {
+    const count = scripts.filter(s => s.cat === cat).length;
+    
+    if (count === 0) {
+        if (!confirm(`Deseja excluir a categoria "${cat}"?`)) return;
+    } else {
+        const confirmMsg = `A categoria "${cat}" possui ${count} ${count === 1 ? 'script' : 'scripts'}.\n\nExcluí-la fará com que esses scripts fiquem sem categoria (categoria "Geral").\n\nDeseja continuar?`;
+        if (!confirm(confirmMsg)) return;
+        
+        // ✅ Move todos os scripts para a categoria "Geral"
+        scripts.forEach(s => {
+            if (s.cat === cat) {
+                s.cat = 'Geral';
+            }
+        });
+    }
+    
+    customCategoryOrder = customCategoryOrder.filter(c => c !== cat);
+    saveCustomOrder();
+    
+    saveToLocal();
+    buildSidebar();
+    renderCategoryList();
+    render();
+    showToast('🗑️', 'Categoria removida!');
+}
+
+// ============================================================
+//  CRIAR CATEGORIA PELO MODAL
+// ============================================================
+function createCategoryFromModal() {
+    const input = document.getElementById('newCategoryName');
+    const name = input.value.trim();
+    
+    if (!name) {
+        showToast('⚠️', 'Digite o nome da nova categoria');
+        return;
+    }
+    
+    const exists = scripts.some(s => s.cat === name);
+    if (exists) {
+        showToast('⚠️', 'Esta categoria já existe!');
+        input.value = '';
+        input.focus();
+        return;
+    }
+    
+    if (!customCategoryOrder.includes(name)) {
+        customCategoryOrder.push(name);
+        saveCustomOrder();
+    }
+    
+    input.value = '';
+    input.focus();
+    buildSidebar();
+    renderCategoryList();
+    showToast('✨', 'Categoria "' + name + '" criada!');
+}
 
 // ============================================================
 //  RENDER
@@ -580,7 +860,7 @@ function toggleCard(id) {
 }
 
 // ============================================================
-//  MUDANÇA DE CATEGORIA
+//  MUDANÇA DE CATEGORIA (EDITOR)
 // ============================================================
 function onCategoryChange(id) {
   const select = document.getElementById('cat' + id);
@@ -919,10 +1199,13 @@ function showToast(icon, msg) {
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(getTheme());
   document.getElementById('themeBtn').addEventListener('click', toggleTheme);
-  document.getElementById('reorderBtn').addEventListener('click', toggleReorderMode);
   loadData();
 });
 
 document.getElementById('overlay').addEventListener('click', (e) => {
   if (e.target === document.getElementById('overlay')) closeModal();
+});
+
+document.getElementById('categoryModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('categoryModal')) closeCategoryModal();
 });
