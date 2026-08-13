@@ -25,7 +25,7 @@
             </div>
             <div id="sidebarNav"></div>
             <div class="sb-reorder">
-                <button class="btn-reorder" id="reorderBtn">🔀 Reordenar categorias</button>
+                <button class="btn-reorder" onclick="openCategoryModal()">📂 Gerenciar categorias</button>
             </div>
             <div class="sb-foot">
                 <div class="config-section">
@@ -64,7 +64,7 @@
     </div>
 
     <!-- MODAL NOVO SCRIPT -->
-    <div class="overlay" id="overlay">
+    <div class="overlay" id="overlay" onclick="if(event.target===this) closeModal()">
         <div class="modal">
             <h3>➕ Novo script</h3>
             <div class="field">
@@ -94,6 +94,24 @@
             <div class="modal-btns">
                 <button class="btn-sec" onclick="closeModal()">Cancelar</button>
                 <button class="btn-primary" onclick="addScript()">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GERENCIAR CATEGORIAS -->
+    <div class="overlay" id="categoryModal" onclick="if(event.target===this) closeCategoryModal()">
+        <div class="modal modal-category">
+            <h3>📂 Gerenciar categorias</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Arraste para reordenar. Clique no nome para renomear. Clique em "🗑️" para excluir.</p>
+            <div id="categoryListContainer">
+                <div class="category-list-loading">Carregando...</div>
+            </div>
+            <div class="category-modal-actions">
+                <input type="text" id="newCategoryName" placeholder="Digite o nome da nova categoria..." onkeydown="if(event.key==='Enter') createCategoryFromModal()">
+                <button class="btn-primary" onclick="createCategoryFromModal()">➕ Adicionar</button>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-sec" onclick="closeCategoryModal()">Fechar</button>
             </div>
         </div>
     </div>
