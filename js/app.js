@@ -212,7 +212,6 @@ function getCategories() {
 function getFilteredScripts() {
   let filtered = activeCat === 'all' ? scripts : scripts.filter(s => s.cat === activeCat);
   
-  // Se a ordenação for por favoritos, mostra APENAS os favoritos
   if (sortBy === 'favorite') {
     filtered = filtered.filter(s => isFavorite(s));
   }
@@ -234,7 +233,6 @@ function applySortFn(list) {
   if (s === 'category') return [...list].sort((a, b) => a.cat.localeCompare(b.cat));
   if (s === 'id') return [...list].sort((a, b) => a.id - b.id);
   if (s === 'favorite') {
-    // Mantém a ordenação por favoritos (já filtrados, apenas ordena por título)
     return [...list].sort((a, b) => a.title.localeCompare(b.title));
   }
   if (s === 'custom') return list;
@@ -333,7 +331,7 @@ function updateCustomOrderFromDOM() {
 }
 
 // ============================================================
-//  BUILD SIDEBAR (CORRIGIDA)
+//  BUILD SIDEBAR (CORRIGIDA COM ESTILOS INLINE)
 // ============================================================
 function buildSidebar() {
   const nav = document.getElementById('sidebarNav');
@@ -348,16 +346,18 @@ function buildSidebar() {
   }
 
   let html = '<div class="cat-lbl">Visão geral</div><ul>' +
-    `<li><a class="cat-btn ${activeCat === 'all' ? 'active' : ''}" onclick="setCat('all')">
-      📋 Todos <span class="nav-count">${scripts.length}</span></a></li></ul>`;
+    `<li><a class="cat-btn ${activeCat === 'all' ? 'active' : ''}" onclick="setCat('all')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-radius:8px;color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;transition:all var(--transition);text-decoration:none;background:var(--bg);border:1.5px solid var(--border);user-select:none;">
+      📋 Todos <span class="nav-count" style="font-size:11px;background:var(--surface2);padding:0px 10px;border-radius:12px;font-weight:500;color:var(--text-secondary);transition:all var(--transition);pointer-events:none;">${scripts.length}</span></a></li></ul>`;
 
   html += '<div class="cat-lbl">Categorias</div><ul>';
   orderedCats.forEach(cat => {
     const count = counts[cat] || 0;
     const isActive = activeCat === cat;
+    const activeStyle = isActive ? 'background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;' : '';
+    const countStyle = isActive ? 'background:rgba(255,255,255,.2);color:#fff;' : '';
     html += `<li>
-      <a class="cat-btn ${isActive ? 'active' : ''}" onclick="setCat('${cat.replace(/'/g, "\\'")}')">
-        ${cat} <span class="nav-count">${count}</span>
+      <a class="cat-btn ${isActive ? 'active' : ''}" onclick="setCat('${cat.replace(/'/g, "\\'")}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-radius:8px;color:${isActive ? '#fff' : 'var(--text-secondary)'};font-size:13px;font-weight:${isActive ? '600' : '500'};cursor:pointer;transition:all var(--transition);text-decoration:none;background:${isActive ? 'var(--accent)' : 'var(--bg)'};border:1.5px solid ${isActive ? 'var(--accent)' : 'var(--border)'};user-select:none;${isActive ? 'box-shadow:0 2px 8px rgba(30,79,122,.2);' : ''}">
+        ${cat} <span class="nav-count" style="font-size:11px;background:${isActive ? 'rgba(255,255,255,.2)' : 'var(--surface2)'};padding:0px 10px;border-radius:12px;font-weight:500;color:${isActive ? '#fff' : 'var(--text-secondary)'};transition:all var(--transition);pointer-events:none;">${count}</span>
       </a>
     </li>`;
   });
