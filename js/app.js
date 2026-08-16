@@ -10,6 +10,7 @@ let sortBy = 'title';
 let customCategoryOrder = [];
 let isCustomOrderActive = false;
 let reorderMode = false;
+let deferredInstallPrompt = null;
 
 // ============================================================
 //  TEMA (DARK MODE)
@@ -34,6 +35,29 @@ function setTheme(theme) {
   const select = document.getElementById('themeSelect');
   if (select) select.value = safeTheme;
   document.body.dataset.themeLabel = THEME_OPTIONS[safeTheme].label;
+}
+
+function showInstallHelp() {
+  showToast('ℹ️', 'No celular, use o menu do navegador e escolha “Adicionar à tela inicial”.');
+}
+
+async function installScriptzApp() {
+  const button = document.getElementById('installAppBtn');
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    showToast('✅', 'O Scriptz já está instalado como app.');
+    if (button) button.hidden = true;
+    return;
+  }
+  if (!deferredInstallPrompt) {
+    showInstallHelp();
+    return;
+  }
+  // O prompt nativo só pode ser aberto em resposta direta ao toque/clique.
+  deferredInstallPrompt.prompt();
+  const choice = await deferredInstallPrompt.userChoice;
+  if (choice.outcome === 'accepted') showToast('✅', 'Scriptz instalado como app!');
+  deferredInstallPrompt = null;
+  if (button) button.hidden = true;
 }
 
 function toggleTheme() {
@@ -415,7 +439,21 @@ function setCat(cat) {
 
 function onSearch(val) {
   searchQ = val;
+  const desktopInput = document.getElementById('searchInput');
+  const mobileInput = document.getElementById('mobileSearchInput');
+  if (desktopInput && desktopInput.value !== val) desktopInput.value = val;
+  if (mobileInput && mobileInput.value !== val) mobileInput.value = val;
   render();
+}
+
+function toggleMobileSearch() {
+  const bar = document.getElementById('mobileSearchBar');
+  const toggle = document.getElementById('mobileSearchToggle');
+  if (!bar) return;
+  const isVisible = bar.classList.toggle('visible');
+  bar.setAttribute('aria-hidden', String(!isVisible));
+  if (toggle) toggle.setAttribute('aria-expanded', String(isVisible));
+  if (isVisible) document.getElementById('mobileSearchInput')?.focus();
 }
 
 // ============================================================
@@ -844,8 +882,8 @@ function render() {
   const empty = document.getElementById('empty');
   const container = document.getElementById('cards');
 
-  badge.textContent = list.length + (list.length === 1 ? ' scriptz' : ' scriptz');
-
+    badge.hidden = list.length === 0;
+  badge.textContent = list.length === 0 ? '' : list.length === 1 ? '1 script' : `${list.length} scriptz`;
   if (list.length === 0) {
     container.innerHTML = '';
     empty.style.display = 'block';
@@ -1305,13 +1343,20 @@ function showToast(icon, msg) {
 function closeMobileNav() {
   document.body.classList.remove('mobile-nav-open');
   const toggle = document.getElementById('mobileNavToggle');
-  if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  if (toggle) {
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Abrir menu');
+  }
 }
 
 function openMobileNav() {
   document.body.classList.add('mobile-nav-open');
   const toggle = document.getElementById('mobileNavToggle');
-  if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  if (toggle) {
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.setAttribute('aria-label', 'Fechar menu');
+  }
+  document.getElementById('mobileNavClose')?.focus();
 }
 
 function initSidebarResize() {
@@ -1340,12 +1385,45 @@ function initSidebarResize() {
   });
 }
 
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  const button = document.getElementById('installAppBtn');
+  if (button) {
+    button.hidden = false;
+    button.dataset.installReady = 'true';
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const button = document.getElementById('installAppBtn');
+  if (button) button.hidden = true;
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(getTheme());
+  const installButton = document.getElementById('installAppBtn');
+  if (installButton) {
+    installButton.hidden = false;
+    installButton.addEventListener('click', installScriptzApp);
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) installButton.hidden = true;
+  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
   const select = document.getElementById('themeSelect');
   if (select) select.addEventListener('change', (event) => selectTheme(event.target.value));
   const mobileToggle = document.getElementById('mobileNavToggle');
   if (mobileToggle) mobileToggle.addEventListener('click', () => document.body.classList.contains('mobile-nav-open') ? closeMobileNav() : openMobileNav());
+  const mobileSearchToggle = document.getElementById('mobileSearchToggle');
+  if (mobileSearchToggle) mobileSearchToggle.addEventListener('click', toggleMobileSearch);
+  document.getElementById('mobileNavClose')?.addEventListener('click', closeMobileNav);
+  document.getElementById('mobileNavBackdrop')?.addEventListener('click', closeMobileNav);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      if (document.body.classList.contains('mobile-nav-open')) closeMobileNav();
+      if (document.getElementById('mobileSearchBar')?.classList.contains('visible')) toggleMobileSearch();
+    }
+  });
   initSidebarResize();
   loadData();
 });

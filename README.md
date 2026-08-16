@@ -136,3 +136,9 @@ A largura da sidebar pode ser ajustada no desktop arrastando a borda direita da 
 ## Navegação em smartphones
 
 Em telas móveis, a sidebar funciona como um menu lateral recolhido. O botão **Menu** abre a navegação sobre a tela, e a seleção de uma visão ou categoria fecha o menu automaticamente para mostrar os scripts imediatamente. Os controles principais, cards, ações, editor, modais e áreas de importação foram reorganizados para toque e largura reduzida.
+
+## Experiência mobile reformulada
+
+Em smartphones, a tela inicial segue uma hierarquia semelhante à de uma caixa de entrada de e-mail: o cabeçalho concentra menu, título, busca rápida, ordenação e exportação; o botão de criação fica isolado como ação principal; e os cards priorizam leitura e ações por ícones. A busca fica disponível pelo ícone de lupa na tela inicial, sem exigir a abertura do menu.
+
+A navegação lateral funciona como um drawer. Ela é aberta pelo botão de menu, pode ser fechada pelo botão `X`, pelo backdrop, pela tecla `Esc` ou automaticamente após a seleção de uma visão ou categoria. As categorias são apresentadas em uma lista vertical de fácil toque, enquanto assinatura, importação e gerenciamento ficam organizados na parte inferior do drawer.

@@ -1,0 +1,20 @@
+{
+  "name": "Scriptz — Gerenciador de modelos de e-mail",
+  "short_name": "Scriptz",
+  "description": "Gerenciador de modelos de e-mail Scriptz.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#101a43",
+  "theme_color": "#101a43",
+  "icons": [
+    {
+      "src": "assets/logo_scriptz_empilhado_negrito_italico_atualizado.png",
+      "sizes": "700x700",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -7,6 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=3" />
     <link rel="shortcut icon" href="assets/favicon.png?v=3" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#101a43" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
@@ -18,6 +20,7 @@
         <aside id="sidebar">
             <div class="sidebar-resize-handle" id="sidebarResizeHandle" aria-label="Ajustar largura da barra lateral" title="Arraste para ajustar a largura"></div>
             <div class="sb-head">
+                <button class="mobile-nav-close" id="mobileNavClose" type="button" aria-label="Fechar menu">✕</button>
                 <div class="brand-lockup">
                     <div class="brand-mark-row" aria-label="Scriptz">
                         <img class="brand-icon" src="assets/scriptz_icone_branco_transparente.png" alt="" />
@@ -52,23 +55,35 @@
                     📥 Arraste ou clique para importar JSON
                     <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
                 </div>
+                <button type="button" id="installAppBtn" class="install-app-btn" hidden>📱 Instalar Scriptz como app</button>
             </div>
         </aside>
 
+        <div class="mobile-nav-backdrop" id="mobileNavBackdrop" aria-hidden="true"></div>
+
         <!-- MAIN -->
         <main>
+            <div class="mobile-fixed-brand" aria-hidden="true"><img src="assets/scriptz_icone_branco_transparente.png" alt="" /></div>
             <div class="top-bar">
-                <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-controls="sidebar" aria-expanded="false">☰ Menu</button>
-                <h2 id="pageTitle">Todos os scriptz</h2>
-                <span class="badge" id="badge"></span>
+                <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu">☰</button>
+                <div class="title-stack">
+                    <h2 id="pageTitle">Todos os scriptz</h2>
+                    <span class="badge" id="badge"></span>
+                </div>
+                <button class="mobile-search-toggle" id="mobileSearchToggle" type="button" aria-controls="mobileSearchBar" aria-expanded="false" aria-label="Pesquisar scripts">⌕</button>
                 <select class="sort-select" id="sortSelect" onchange="applySort()">
                     <option value="title">Ordenar por: Título</option>
                     <option value="category">Ordenar por: Categoria</option>
                     <option value="id">Ordenar por: Data (criação)</option>
                     <option value="custom">✨ Ordem personalizada</option>
                 </select>
-                <button class="btn-export" onclick="exportJSON()">📤 Exportar JSON</button>
-                <button class="btn-add" onclick="openModal()">➕ Novo script</button>
+                <button class="btn-export" onclick="exportJSON()"><span class="btn-icon" aria-hidden="true">📤</span><span class="btn-label">Exportar JSON</span></button>
+                <button class="btn-add" onclick="openModal()"><span class="btn-icon" aria-hidden="true">➕</span><span class="btn-label">Novo script</span></button>
+            </div>
+            <div class="mobile-search-bar" id="mobileSearchBar" aria-hidden="true">
+                <span class="mobile-search-glyph" aria-hidden="true">⌕</span>
+                <input type="search" id="mobileSearchInput" placeholder="Buscar script…" aria-label="Buscar script no conteúdo" oninput="onSearch(this.value)">
+                <button type="button" onclick="toggleMobileSearch()" aria-label="Fechar pesquisa">✕</button>
             </div>
             <div id="cards"><div class="loading">⏳ Carregando scriptz…</div></div>
             <div class="empty" id="empty" style="display:none">
