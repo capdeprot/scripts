@@ -10,11 +10,7 @@
   "background_color": "#101a43",
   "theme_color": "#101a43",
   "icons": [
-    {
-      "src": "assets/scriptz_icone_branco_transparente.png",
-      "sizes": "979x817",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "assets/pwa-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
