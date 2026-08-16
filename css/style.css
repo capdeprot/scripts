@@ -1956,3 +1956,58 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--text
   :root { --sidebar-width: 320px; }
   .brand-lockup p { white-space: nowrap; }
 }
+
+
+/* Desktop sidebar v25: full-height column that grows naturally instead of looking vertically boxed. */
+@media (min-width: 821px) {
+  aside {
+    position: sticky;
+    top: 0;
+    align-self: stretch;
+    height: auto;
+    min-height: 100vh;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+
+/* Desktop sidebar v26: fixed viewport column with scrollable categories and anchored footer. */
+@media (min-width: 821px) {
+  aside {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+  #sidebarNav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .sb-reorder { flex: 0 0 auto; }
+  .sb-foot { flex: 0 0 auto; margin-top: auto; }
+}
+
+
+/* Desktop sidebar v27: the complete sidebar scrolls independently, like the scripts menu. */
+@media (min-width: 821px) {
+  aside {
+    height: 100vh;
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+  }
+  #sidebarNav {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+}
