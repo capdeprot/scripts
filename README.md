@@ -122,3 +122,7 @@ O projeto inclui o favicon Scriptz adaptativo em `assets/favicon.svg`, referenci
 A interface possui layout responsivo para telas menores. Em tablets e celulares, a sidebar passa a ocupar o topo da página, as categorias são reorganizadas em blocos tocáveis, os controles principais ocupam a largura disponível, os cards usam espaçamento compacto e os botões de ação podem ser acessados sem depender de hover. O editor, as barras de formatação, os modais, a área de importação e os campos de assinatura também se adaptam à largura da tela.
 
 O viewport usa `viewport-fit=cover` para melhorar o aproveitamento de telas com recortes e áreas seguras. Recomenda-se testar a aplicação em orientação vertical e horizontal, especialmente ao editar textos longos ou gerenciar categorias.
+
+## Publicação no GitHub Pages
+
+Para publicar em GitHub Pages, mantenha `index.html` no diretório publicado e preserve a estrutura `assets/`. As referências dos favicons são relativas — `assets/favicon.svg`, `assets/favicon.png` e `favicon.ico` na raiz — para funcionar tanto em domínio próprio quanto em URLs de repositório no formato `usuario.github.io/nome-do-repositorio/`. Evite trocar esses caminhos por `/assets/...`, pois o prefixo `/` aponta para a raiz do domínio e pode ignorar a subpasta do repositório.
