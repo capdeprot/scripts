@@ -12,10 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-theme-default="dark">
+<body data-theme-default="midnight">
     <div class="layout">
         <!-- SIDEBAR -->
-        <aside>
+        <aside id="sidebar">
+            <div class="sidebar-resize-handle" id="sidebarResizeHandle" aria-label="Ajustar largura da barra lateral" title="Arraste para ajustar a largura"></div>
             <div class="sb-head">
                 <div class="brand-lockup">
                     <div class="brand-mark-row" aria-label="Scriptz">
@@ -24,7 +25,15 @@
                     </div>
                     <p>Gerenciador de modelos de e-mail</p>
                 </div>
-                <button class="theme-toggle" id="themeBtn" aria-label="Alternar tema">☀️ Modo Claro</button>
+                <div class="theme-control">
+                    <label for="themeSelect">Tema</label>
+                    <select id="themeSelect" aria-label="Selecionar tema">
+                        <option value="light">☀️ Claro</option>
+                        <option value="black">🌙 Escuro</option>
+                        <option value="midnight">✦ Azul meia-noite</option>
+                        <option value="purple">◈ Roxo-escuro</option>
+                    </select>
+                </div>
             </div>
             <div class="sb-search">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar script…" oninput="onSearch(this.value)">
@@ -36,7 +45,7 @@
             <div class="sb-foot">
                 <div class="config-section">
                     <label>👤 Sua assinatura</label>
-                    <input type="text" id="userNameInput" placeholder="Escreva aqui seu nome e sobrenome" oninput="updateSignature()">
+                    <input type="text" id="userNameInput" placeholder="Escreva aqui seu nome e sobrenome" onblur="updateSignature()">
                 </div>
                 <button onclick="resetLocalData()" class="btn-reset">🔄 Resetar alterações locais</button>
                 <div class="drop-zone" id="dropZone" onclick="document.getElementById('importFile').click()">
@@ -49,6 +58,7 @@
         <!-- MAIN -->
         <main>
             <div class="top-bar">
+                <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-controls="sidebar" aria-expanded="false">☰ Menu</button>
                 <h2 id="pageTitle">Todos os scriptz</h2>
                 <span class="badge" id="badge"></span>
                 <select class="sort-select" id="sortSelect" onchange="applySort()">

@@ -14,20 +14,37 @@ let reorderMode = false;
 // ============================================================
 //  TEMA (DARK MODE)
 // ============================================================
+const THEME_OPTIONS = {
+  light: { label: 'Claro', icon: '☀️' },
+  black: { label: 'Escuro', icon: '🌙' },
+  midnight: { label: 'Azul meia-noite', icon: '✦' },
+  purple: { label: 'Roxo-escuro', icon: '◈' }
+};
+
 function getTheme() {
-  return localStorage.getItem('theme') || 'dark';
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') return 'midnight';
+  return THEME_OPTIONS[saved] ? saved : 'midnight';
 }
 
 function setTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('theme', theme);
-  const btn = document.getElementById('themeBtn');
-  btn.textContent = theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+  const safeTheme = THEME_OPTIONS[theme] ? theme : 'midnight';
+  document.documentElement.setAttribute('data-theme', safeTheme);
+  localStorage.setItem('theme', safeTheme);
+  const select = document.getElementById('themeSelect');
+  if (select) select.value = safeTheme;
+  document.body.dataset.themeLabel = THEME_OPTIONS[safeTheme].label;
 }
 
 function toggleTheme() {
   const current = getTheme();
-  setTheme(current === 'dark' ? 'light' : 'dark');
+  const next = current === 'light' ? 'midnight' : 'light';
+  setTheme(next);
+}
+
+function selectTheme(theme) {
+  setTheme(theme);
+  showToast(THEME_OPTIONS[theme].icon, `Tema ${THEME_OPTIONS[theme].label} aplicado`);
 }
 
 // ============================================================
@@ -389,6 +406,7 @@ function buildSidebar() {
 function setCat(cat) {
   activeCat = cat;
   searchQ = '';
+  if (window.matchMedia('(max-width: 820px)').matches) closeMobileNav();
   document.getElementById('searchInput').value = '';
   document.getElementById('pageTitle').innerHTML = cat === 'all' ? 'Todos os scriptz' : cat === 'favorites' ? 'Favoritos' : cat;
   buildSidebar();
@@ -1284,9 +1302,51 @@ function showToast(icon, msg) {
 // ============================================================
 //  INICIALIZAÇÃO
 // ============================================================
+function closeMobileNav() {
+  document.body.classList.remove('mobile-nav-open');
+  const toggle = document.getElementById('mobileNavToggle');
+  if (toggle) toggle.setAttribute('aria-expanded', 'false');
+}
+
+function openMobileNav() {
+  document.body.classList.add('mobile-nav-open');
+  const toggle = document.getElementById('mobileNavToggle');
+  if (toggle) toggle.setAttribute('aria-expanded', 'true');
+}
+
+function initSidebarResize() {
+  const handle = document.getElementById('sidebarResizeHandle');
+  if (!handle) return;
+  const saved = Number(localStorage.getItem('sidebar_width'));
+  if (saved >= 220 && saved <= 420) document.documentElement.style.setProperty('--sidebar-width', `${saved}px`);
+  let dragging = false;
+  handle.addEventListener('pointerdown', (event) => {
+    if (window.matchMedia('(max-width: 820px)').matches) return;
+    dragging = true;
+    handle.setPointerCapture(event.pointerId);
+    document.body.classList.add('resizing-sidebar');
+  });
+  handle.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    const width = Math.min(420, Math.max(220, event.clientX));
+    document.documentElement.style.setProperty('--sidebar-width', `${width}px`);
+  });
+  handle.addEventListener('pointerup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('resizing-sidebar');
+    const width = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width'), 10);
+    localStorage.setItem('sidebar_width', width);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(getTheme());
-  document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+  const select = document.getElementById('themeSelect');
+  if (select) select.addEventListener('change', (event) => selectTheme(event.target.value));
+  const mobileToggle = document.getElementById('mobileNavToggle');
+  if (mobileToggle) mobileToggle.addEventListener('click', () => document.body.classList.contains('mobile-nav-open') ? closeMobileNav() : openMobileNav());
+  initSidebarResize();
   loadData();
 });
 

@@ -126,3 +126,13 @@ O viewport usa `viewport-fit=cover` para melhorar o aproveitamento de telas com 
 ## Publicação no GitHub Pages
 
 Para publicar em GitHub Pages, mantenha `index.html` no diretório publicado e preserve a estrutura `assets/`. As referências dos favicons são relativas — `assets/favicon.svg`, `assets/favicon.png` e `favicon.ico` na raiz — para funcionar tanto em domínio próprio quanto em URLs de repositório no formato `usuario.github.io/nome-do-repositorio/`. Evite trocar esses caminhos por `/assets/...`, pois o prefixo `/` aponta para a raiz do domínio e pode ignorar a subpasta do repositório.
+
+## Temas e personalização visual
+
+O seletor de tema oferece quatro opções persistentes: **Claro**, **Escuro**, **Azul meia-noite** e **Roxo-escuro**. O tema Azul meia-noite usa a identidade azul profunda atualizada; o tema Roxo-escuro usa como base `#11001C`; o tema Escuro utiliza superfícies quase pretas; e o tema Claro preserva a leitura em superfícies claras. Os estados de cards, edição, inputs, botões, tags, modais e mensagens são recalculados pelos tokens do tema ativo para evitar conflitos de contraste.
+
+A largura da sidebar pode ser ajustada no desktop arrastando a borda direita da barra lateral. O valor é limitado a uma faixa segura e salvo localmente no navegador, sendo restaurado na próxima abertura da aplicação.
+
+## Navegação em smartphones
+
+Em telas móveis, a sidebar funciona como um menu lateral recolhido. O botão **Menu** abre a navegação sobre a tela, e a seleção de uma visão ou categoria fecha o menu automaticamente para mostrar os scripts imediatamente. Os controles principais, cards, ações, editor, modais e áreas de importação foram reorganizados para toque e largura reduzida.
