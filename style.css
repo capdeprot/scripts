@@ -2017,3 +2017,10 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--text
 @media (max-width: 820px) {
   .sb-head .brand-lockup { transform: translateY(-4px); }
 }
+
+
+/* Mobile drawer identity v30: additional top clearance for browser chrome and safe-area cropping. */
+@media (max-width: 820px) {
+  .sb-head { padding-top: max(18px, calc(env(safe-area-inset-top) + 14px)); }
+  .sb-head .brand-lockup { transform: translateY(2px); }
+}
