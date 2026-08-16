@@ -11,8 +11,8 @@
   "theme_color": "#101a43",
   "icons": [
     {
-      "src": "/manus-storage/scriptz-app-icon-envelope_89508f6b.png",
-      "sizes": "700x700",
+      "src": "assets/scriptz_icone_branco_transparente.png",
+      "sizes": "979x817",
       "type": "image/png",
       "purpose": "any maskable"
     }
