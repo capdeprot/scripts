@@ -15,7 +15,7 @@ let reorderMode = false;
 //  TEMA (DARK MODE)
 // ============================================================
 function getTheme() {
-  return localStorage.getItem('theme') || 'light';
+  return localStorage.getItem('theme') || 'dark';
 }
 
 function setTheme(theme) {
@@ -73,9 +73,20 @@ function loadUserName() {
 function toggleFavorite(id) {
   const idx = scripts.findIndex(s => s.id === id);
   if (idx === -1) return;
+
+  const currentCard = document.getElementById('c' + id);
+  const wasOpen = Boolean(currentCard && currentCard.classList.contains('open'));
   scripts[idx].isFavorite = !scripts[idx].isFavorite;
   saveToLocal();
   render();
+
+  // A renderização pode reconstruir a lista (especialmente no filtro de favoritos),
+  // mas nunca deve recolher o card que o usuário estava consultando.
+  if (wasOpen) {
+    const refreshedCard = document.getElementById('c' + id);
+    if (refreshedCard) refreshedCard.classList.add('open');
+  }
+
   showToast(scripts[idx].isFavorite ? '⭐' : '☆', scripts[idx].isFavorite ? 'Adicionado aos favoritos!' : 'Removido dos favoritos!');
 }
 
@@ -132,7 +143,7 @@ function getOrderedCategories(cats) {
 // ============================================================
 async function loadData() {
   try {
-    const response = await fetch('scripts.json');
+    const response = await fetch('scriptz.json');
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const text = await response.text();
     originalScripts = JSON.parse(text);
@@ -150,7 +161,7 @@ async function loadData() {
         if (s.hasSignature === undefined) s.hasSignature = true;
         if (s.isFavorite === undefined) s.isFavorite = false;
       });
-      showToast('✅', 'Scripts carregados com sucesso');
+      showToast('✅', 'scriptz carregados com sucesso');
     }
 
     if (isCustomOrderActive) {
@@ -164,7 +175,7 @@ async function loadData() {
   } catch (err) {
     console.error(err);
     document.getElementById('cards').innerHTML =
-      '<div class="empty"><div class="icon">❌</div><p>Erro ao carregar scripts.json. Verifique se o arquivo existe.</p></div>';
+      '<div class="empty"><div class="icon">❌</div><p>Erro ao carregar scriptz.json. Verifique se o arquivo existe.</p></div>';
   }
 }
 
@@ -201,12 +212,15 @@ function getCategories() {
 }
 
 function getFilteredScripts() {
-  let filtered = activeCat === 'all' ? scripts : scripts.filter(s => s.cat === activeCat);
-  
-  if (sortBy === 'favorite') {
-    filtered = filtered.filter(s => isFavorite(s));
+  let filtered;
+  if (activeCat === 'all') {
+    filtered = scripts;
+  } else if (activeCat === 'favorites') {
+    filtered = scripts.filter(s => isFavorite(s));
+  } else {
+    filtered = scripts.filter(s => s.cat === activeCat);
   }
-  
+
   if (searchQ) {
     const q = searchQ.toLowerCase();
     filtered = filtered.filter(s =>
@@ -218,16 +232,20 @@ function getFilteredScripts() {
   return applySortFn(filtered);
 }
 
+function prioritizeFavorites(list, comparator) {
+  return [...list].sort((a, b) => {
+    const favoritePriority = Number(isFavorite(b)) - Number(isFavorite(a));
+    return favoritePriority || comparator(a, b);
+  });
+}
+
 function applySortFn(list) {
   const s = sortBy;
-  if (s === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
-  if (s === 'category') return [...list].sort((a, b) => a.cat.localeCompare(b.cat));
-  if (s === 'id') return [...list].sort((a, b) => a.id - b.id);
-  if (s === 'favorite') {
-    return [...list].sort((a, b) => a.title.localeCompare(b.title));
-  }
-  if (s === 'custom') return list;
-  return list;
+  if (s === 'title') return prioritizeFavorites(list, (a, b) => a.title.localeCompare(b.title));
+  if (s === 'category') return prioritizeFavorites(list, (a, b) => a.cat.localeCompare(b.cat) || a.title.localeCompare(b.title));
+  if (s === 'id') return prioritizeFavorites(list, (a, b) => a.id - b.id);
+  if (s === 'custom') return prioritizeFavorites(list, () => 0);
+  return prioritizeFavorites(list, (a, b) => a.title.localeCompare(b.title));
 }
 
 function applySort() {
@@ -310,7 +328,7 @@ function updateCustomOrderFromDOM() {
   items.forEach(a => {
     const text = a.textContent.trim();
     const catName = text.replace(/\s*\(\d+\)\s*$/, '').trim();
-    if (catName && catName !== 'Todos') newOrder.push(catName);
+    if (catName && catName !== 'Todos' && catName !== 'Favoritos') newOrder.push(catName);
   });
   const currentOrderStr = JSON.stringify(customCategoryOrder);
   const newOrderStr = JSON.stringify(newOrder);
@@ -336,9 +354,16 @@ function buildSidebar() {
     orderedCats = getOrderedCategories(categoryList);
   }
 
+  const favoriteCount = scripts.filter(s => isFavorite(s)).length;
+  const overviewButton = (cat, label, icon, count) => {
+    const active = activeCat === cat;
+    return `<li><a class="cat-btn ${active ? 'active' : ''}" onclick="setCat('${cat}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-radius:8px;color:${active ? '#fff' : 'var(--text-secondary)'};font-size:13px;font-weight:${active ? '600' : '500'};cursor:pointer;transition:all var(--transition);text-decoration:none;background:${active ? 'var(--accent)' : 'var(--bg)'};border:1.5px solid ${active ? 'var(--accent)' : 'var(--border)'};user-select:none;${active ? 'box-shadow:0 2px 8px rgba(30,79,122,.2);' : ''}">
+      ${icon} ${label} <span class="nav-count" style="font-size:11px;background:${active ? 'rgba(255,255,255,.2)' : 'var(--surface2)'};padding:0px 10px;border-radius:12px;font-weight:500;color:${active ? '#fff' : 'var(--text-secondary)'};transition:all var(--transition);pointer-events:none;">${count}</span></a></li>`;
+  };
   let html = '<div class="cat-lbl">Visão geral</div><ul>' +
-    `<li><a class="cat-btn ${activeCat === 'all' ? 'active' : ''}" onclick="setCat('all')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-radius:8px;color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;transition:all var(--transition);text-decoration:none;background:var(--bg);border:1.5px solid var(--border);user-select:none;">
-      📋 Todos <span class="nav-count" style="font-size:11px;background:var(--surface2);padding:0px 10px;border-radius:12px;font-weight:500;color:var(--text-secondary);transition:all var(--transition);pointer-events:none;">${scripts.length}</span></a></li></ul>`;
+    overviewButton('all', 'Todos', '📋', scripts.length) +
+    overviewButton('favorites', 'Favoritos', '⭐', favoriteCount) +
+    '</ul>';
 
   html += '<div class="cat-lbl">Categorias</div><ul>';
   orderedCats.forEach(cat => {
@@ -365,7 +390,7 @@ function setCat(cat) {
   activeCat = cat;
   searchQ = '';
   document.getElementById('searchInput').value = '';
-  document.getElementById('pageTitle').innerHTML = cat === 'all' ? 'Todos os scripts' : cat;
+  document.getElementById('pageTitle').innerHTML = cat === 'all' ? 'Todos os scriptz' : cat === 'favorites' ? 'Favoritos' : cat;
   buildSidebar();
   render();
 }
@@ -488,7 +513,7 @@ function renderCategoryList() {
         html += `
             <div class="category-item" draggable="true" data-category="${cat.replace(/"/g, '&quot;')}">
                 <span class="category-name" onclick="startRenameCategory('${cat.replace(/'/g, "\\'")}')">${cat}</span>
-                <span class="category-count">${count} ${count === 1 ? 'script' : 'scripts'}</span>
+                <span class="category-count">${count} ${count === 1 ? 'scriptz' : 'scriptz'}</span>
                 <div class="category-actions">
                     <button class="btn-rename" onclick="startRenameCategory('${cat.replace(/'/g, "\\'")}')" title="Renomear">✏️</button>
                     <button class="btn-delete" onclick="deleteCategory('${cat.replace(/'/g, "\\'")}')" title="Excluir">🗑️</button>
@@ -682,7 +707,7 @@ function deleteCategory(cat) {
     if (count === 0) {
         if (!confirm(`Deseja excluir a categoria "${cat}"?`)) return;
     } else {
-        const confirmMsg = `A categoria "${cat}" possui ${count} ${count === 1 ? 'script' : 'scripts'}.\n\nExcluí-la fará com que esses scripts fiquem sem categoria (categoria "Geral").\n\nDeseja continuar?`;
+        const confirmMsg = `A categoria "${cat}" possui ${count} ${count === 1 ? 'scriptz' : 'scriptz'}.\n\nExcluí-la fará com que esses scriptz fiquem sem categoria (categoria "Geral").\n\nDeseja continuar?`;
         if (!confirm(confirmMsg)) return;
         
         scripts.forEach(s => {
@@ -801,7 +826,7 @@ function render() {
   const empty = document.getElementById('empty');
   const container = document.getElementById('cards');
 
-  badge.textContent = list.length + (list.length === 1 ? ' script' : ' scripts');
+  badge.textContent = list.length + (list.length === 1 ? ' scriptz' : ' scriptz');
 
   if (list.length === 0) {
     container.innerHTML = '';
@@ -861,7 +886,7 @@ function cardHTML(s) {
         <span class="card-tag">${escapeHtml(s.cat)}</span>
       </div>
       <div class="card-btns" onclick="event.stopPropagation()">
-        <button class="btn btn-copy" id="cb${s.id}" onclick="copyScript(${s.id})">📋 Copiar</button>
+        <button class="btn btn-copy" id="cb${s.id}" onclick="event.stopPropagation(); copyScript(${s.id})">📋 Copiar</button>
         <button class="btn btn-ghost" onclick="startEdit(${s.id})">✏️ Editar</button>
         <button class="btn btn-del" onclick="deleteScript(${s.id})">🗑️ Excluir</button>
         <button class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite(${s.id})">${isFav ? '⭐' : '☆'}</button>
@@ -965,7 +990,7 @@ function onCategoryChange(id) {
 function startEdit(id) {
   const s = scripts.find(x => x.id === id);
   const card = document.getElementById('c' + id);
-  card.classList.add('open');
+  card.classList.add('open', 'editing');
   document.getElementById('pv' + id).classList.add('editing-mode');
   document.getElementById('ew' + id).classList.add('visible');
   const ce = document.getElementById('ce' + id);
@@ -975,6 +1000,8 @@ function startEdit(id) {
 }
 
 function cancelEdit(id) {
+  const card = document.getElementById('c' + id);
+  if (card) card.classList.remove('editing');
   document.getElementById('pv' + id).classList.remove('editing-mode');
   document.getElementById('ew' + id).classList.remove('visible');
 }
@@ -1051,6 +1078,10 @@ async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
 
+  // Copiar nunca deve fechar o script: reforça o estado aberto antes e depois da operação.
+  const card = document.getElementById('c' + id);
+  if (card) card.classList.add('open');
+
   let htmlContent = s.html;
   
   // Aplica saudação se ativa (sem negrito)
@@ -1082,9 +1113,11 @@ async function copyScript(id) {
     btn.classList.add('ok');
     btn.innerHTML = '✅ Copiado!';
     setTimeout(() => { btn.classList.remove('ok'); btn.innerHTML = '📋 Copiar'; }, 2000);
+    if (card) card.classList.add('open');
     showToast('📋', 'Texto copiado com formatação!');
   } catch (err) {
     navigator.clipboard.writeText(plainText);
+    if (card) card.classList.add('open');
     showToast('📋', 'Copiado (somente texto)');
   }
 }
@@ -1167,10 +1200,10 @@ function exportJSON() {
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'scripts.json';
+  a.download = 'scriptz.json';
   a.click();
   URL.revokeObjectURL(a.href);
-  showToast('📤', 'scripts.json exportado!');
+  showToast('📤', 'scriptz.json exportado!');
 }
 
 function handleImport(event) {

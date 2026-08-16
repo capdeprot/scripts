@@ -2,23 +2,28 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scripts CAP/DEPROT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Scriptz — Gerenciador de modelos de e-mail</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="alternate icon" type="image/png" href="/assets/favicon.png?v=2" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-theme-default="dark">
     <div class="layout">
         <!-- SIDEBAR -->
         <aside>
             <div class="sb-head">
-                <div>
-                    <h1>📨 Scripts <span>CAP/DEPROT</span></h1>
-                    <p>Gerenciador de modelos</p>
+                <div class="brand-lockup">
+                    <div class="brand-mark-row" aria-label="Scriptz">
+                        <img class="brand-icon" src="assets/scriptz_icone_branco_transparente.png" alt="" />
+                        <span class="brand-wordmark">scriptz</span>
+                    </div>
+                    <p>Gerenciador de modelos de e-mail</p>
                 </div>
-                <button class="theme-toggle" id="themeBtn">Modo Escuro</button>
+                <button class="theme-toggle" id="themeBtn" aria-label="Alternar tema">☀️ Modo Claro</button>
             </div>
             <div class="sb-search">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar script…" oninput="onSearch(this.value)">
@@ -43,19 +48,18 @@
         <!-- MAIN -->
         <main>
             <div class="top-bar">
-                <h2 id="pageTitle">Todos os scripts</h2>
+                <h2 id="pageTitle">Todos os scriptz</h2>
                 <span class="badge" id="badge"></span>
                 <select class="sort-select" id="sortSelect" onchange="applySort()">
                     <option value="title">Ordenar por: Título</option>
                     <option value="category">Ordenar por: Categoria</option>
                     <option value="id">Ordenar por: Data (criação)</option>
-                    <option value="favorite">⭐ Favoritos</option>
                     <option value="custom">✨ Ordem personalizada</option>
                 </select>
                 <button class="btn-export" onclick="exportJSON()">📤 Exportar JSON</button>
                 <button class="btn-add" onclick="openModal()">➕ Novo script</button>
             </div>
-            <div id="cards"><div class="loading">⏳ Carregando scripts…</div></div>
+            <div id="cards"><div class="loading">⏳ Carregando scriptz…</div></div>
             <div class="empty" id="empty" style="display:none">
                 <div class="icon">📭</div>
                 <p>Nenhum script encontrado.</p>
