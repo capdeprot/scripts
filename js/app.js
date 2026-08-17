@@ -8,9 +8,12 @@ let searchQ = '';
 let originalScripts = [];
 let sortBy = 'title';
 let customCategoryOrder = [];
+let customScriptOrderByCategory = {};
+let categoryRegistry = [];
 let isCustomOrderActive = false;
 let reorderMode = false;
 let deferredInstallPrompt = null;
+let activeEditId = null;
 
 // ============================================================
 //  TEMA (DARK MODE)
@@ -18,8 +21,8 @@ let deferredInstallPrompt = null;
 const THEME_OPTIONS = {
   light: { label: 'Claro', icon: '☀️' },
   black: { label: 'Escuro', icon: '🌙' },
-  midnight: { label: 'Azul meia-noite', icon: '✦' },
-  purple: { label: 'Roxo-escuro', icon: '◈' }
+  midnight: { label: 'Blue Midnight', icon: '✦' },
+  purple: { label: 'Dark Purple', icon: '◈' }
 };
 
 function getTheme() {
@@ -165,7 +168,7 @@ function saveCustomOrder() {
 }
 
 function getOrderedCategories(cats) {
-  if (sortBy !== 'custom' || customCategoryOrder.length === 0) return cats;
+  if (customCategoryOrder.length === 0) return cats;
   const ordered = [];
   const remaining = [];
   const catSet = new Set(cats);
@@ -193,7 +196,15 @@ async function loadData() {
 
     const local = localStorage.getItem('scripts_capdeprot');
     if (local) {
-      scripts = JSON.parse(local);
+      const savedState = JSON.parse(local);
+      if (Array.isArray(savedState)) {
+        scripts = savedState;
+      } else {
+        scripts = savedState.scripts || [];
+        categoryRegistry = Array.isArray(savedState.categories) ? savedState.categories : [];
+        customCategoryOrder = Array.isArray(savedState.categoryOrder) ? savedState.categoryOrder : [];
+        customScriptOrderByCategory = savedState.scriptOrders || {};
+      }
       showToast('📂', 'Dados carregados do cache local');
     } else {
       scripts = JSON.parse(JSON.stringify(originalScripts));
@@ -205,6 +216,9 @@ async function loadData() {
       showToast('✅', 'scriptz carregados com sucesso');
     }
 
+    categoryRegistry = [...new Set([...categoryRegistry, ...scripts.map(s => s.cat).filter(Boolean)])];
+    customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
+    saveToLocal();
     if (isCustomOrderActive) {
       sortBy = 'custom';
       document.getElementById('sortSelect').value = 'custom';
@@ -226,7 +240,11 @@ async function loadData() {
 function resetLocalData() {
   if (!confirm('⚠️ Isso vai apagar suas alterações locais e recarregar os templates originais. Continuar?')) return;
   localStorage.removeItem('scripts_capdeprot');
+  localStorage.removeItem('category_order');
   scripts = JSON.parse(JSON.stringify(originalScripts));
+  categoryRegistry = [...new Set(scripts.map(s => s.cat).filter(Boolean))];
+  customCategoryOrder = [...categoryRegistry];
+  customScriptOrderByCategory = {};
   scripts.forEach(s => {
     if (s.hasGreeting === undefined) s.hasGreeting = true;
     if (s.hasSignature === undefined) s.hasSignature = true;
@@ -239,8 +257,7 @@ function resetLocalData() {
 }
 
 function saveToLocal() {
-  localStorage.setItem('scripts_capdeprot', JSON.stringify(scripts));
-  showToast('💾', 'Alterações salvas localmente');
+  localStorage.setItem('scripts_capdeprot', JSON.stringify({ version: 2, scripts, categories: categoryRegistry, categoryOrder: customCategoryOrder, scriptOrders: customScriptOrderByCategory, signature: localStorage.getItem('user_name') || '' }));
 }
 
 // ============================================================
@@ -248,7 +265,7 @@ function saveToLocal() {
 // ============================================================
 function getCategories() {
   const cats = ['all'];
-  scripts.forEach(s => { if (!cats.includes(s.cat)) cats.push(s.cat); });
+  [...categoryRegistry, ...scripts.map(s => s.cat)].filter(Boolean).forEach(cat => { if (!cats.includes(cat)) cats.push(cat); });
   return cats;
 }
 
@@ -264,11 +281,7 @@ function getFilteredScripts() {
 
   if (searchQ) {
     const q = searchQ.toLowerCase();
-    filtered = filtered.filter(s =>
-      s.title.toLowerCase().includes(q) ||
-      s.cat.toLowerCase().includes(q) ||
-      s.html.toLowerCase().includes(q)
-    );
+    filtered = filtered.filter(s => s.title.toLowerCase().includes(q));
   }
   return applySortFn(filtered);
 }
@@ -285,7 +298,11 @@ function applySortFn(list) {
   if (s === 'title') return prioritizeFavorites(list, (a, b) => a.title.localeCompare(b.title));
   if (s === 'category') return prioritizeFavorites(list, (a, b) => a.cat.localeCompare(b.cat) || a.title.localeCompare(b.title));
   if (s === 'id') return prioritizeFavorites(list, (a, b) => a.id - b.id);
-  if (s === 'custom') return prioritizeFavorites(list, () => 0);
+  if (s === 'custom') {
+    const order = customScriptOrderByCategory[activeCat] || customScriptOrderByCategory.all || [];
+    const rank = new Map(order.map((id, index) => [String(id), index]));
+    return prioritizeFavorites(list, (a, b) => (rank.get(String(a.id)) ?? 999999) - (rank.get(String(b.id)) ?? 999999));
+  }
   return prioritizeFavorites(list, (a, b) => a.title.localeCompare(b.title));
 }
 
@@ -554,7 +571,7 @@ function closeCategoryModal() {
 // ============================================================
 function renderCategoryList() {
     const container = document.getElementById('categoryListContainer');
-    const cats = getCategories().filter(c => c !== 'all');
+    const cats = getOrderedCategories(getCategories().filter(c => c !== 'all'));
     const counts = {};
     scripts.forEach(s => { counts[s.cat] = (counts[s.cat] || 0) + 1; });
     
@@ -685,6 +702,8 @@ function startRenameCategory(cat) {
     input.value = currentName;
     input.className = 'category-rename-input';
     input.style.cssText = 'flex:1;font-size:14px;font-weight:500;padding:4px 8px;border:2px solid var(--accent);border-radius:4px;background:var(--bg);color:var(--text);outline:none;';
+    input.onclick = (e) => e.stopPropagation();
+    input.onmousedown = (e) => e.stopPropagation();
     input.onkeydown = function(e) {
         if (e.key === 'Enter') {
             confirmRenameCategory(cat, input.value.trim());
@@ -694,11 +713,7 @@ function startRenameCategory(cat) {
         }
     };
     input.onblur = function() {
-        setTimeout(() => {
-            if (renamingCategory) {
-                confirmRenameCategory(cat, input.value.trim());
-            }
-        }, 150);
+        // O clique no input não confirma: apenas mantém o campo editável.
     };
     
     targetNameSpan.textContent = '';
@@ -740,6 +755,12 @@ function confirmRenameCategory(oldName, newName) {
         }
     });
     
+    const registryIndex = categoryRegistry.indexOf(oldName);
+    if (registryIndex !== -1) categoryRegistry[registryIndex] = newName;
+    if (customScriptOrderByCategory[oldName]) {
+        customScriptOrderByCategory[newName] = customScriptOrderByCategory[oldName];
+        delete customScriptOrderByCategory[oldName];
+    }
     const orderIndex = customCategoryOrder.indexOf(oldName);
     if (orderIndex !== -1) {
         customCategoryOrder[orderIndex] = newName;
@@ -774,7 +795,10 @@ function deleteCategory(cat) {
     }
     
     customCategoryOrder = customCategoryOrder.filter(c => c !== cat);
+    categoryRegistry = categoryRegistry.filter(c => c !== cat);
+    delete customScriptOrderByCategory[cat];
     saveCustomOrder();
+    saveToLocal();
     
     saveToLocal();
     buildSidebar();
@@ -803,10 +827,10 @@ function createCategoryFromModal() {
         return;
     }
     
-    if (!customCategoryOrder.includes(name)) {
-        customCategoryOrder.push(name);
-        saveCustomOrder();
-    }
+    if (!categoryRegistry.includes(name)) categoryRegistry.push(name);
+    if (!customCategoryOrder.includes(name)) customCategoryOrder.push(name);
+    saveCustomOrder();
+    saveToLocal();
     
     input.value = '';
     input.focus();
@@ -891,6 +915,7 @@ function render() {
   }
   empty.style.display = 'none';
   container.innerHTML = list.map(s => cardHTML(s)).join('');
+  setTimeout(initScriptDragDrop, 30);
 }
 
 function escapeHtml(str) {
@@ -933,7 +958,7 @@ function cardHTML(s) {
   const catOptions = getCategoryOptions(s.cat);
 
   return `
-  <div class="card" id="c${s.id}">
+  <div class="card" id="c${s.id}" draggable="${sortBy === 'custom' ? 'true' : 'false'}">
     <div class="card-hd" onclick="toggleCard(${s.id})">
       <div class="card-info">
         <div class="card-title">
@@ -947,6 +972,7 @@ function cardHTML(s) {
         <button class="btn btn-del" onclick="deleteScript(${s.id})">🗑️ Excluir</button>
         <button class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite(${s.id})">${isFav ? '⭐' : '☆'}</button>
       </div>
+      ${sortBy === 'custom' ? `<span class="script-order-controls" onclick="event.stopPropagation()"><button type="button" onclick="moveScriptOrder(${s.id}, -1)" aria-label="Mover script para cima">↑</button><button type="button" onclick="moveScriptOrder(${s.id}, 1)" aria-label="Mover script para baixo">↓</button></span>` : ''}
       <svg class="chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="card-body">
@@ -956,6 +982,16 @@ function cardHTML(s) {
         </div>
       </div>
       <div class="editor-wrap" id="ew${s.id}">
+        <div class="editor-meta">
+          <input class="title-field" id="tt${s.id}" placeholder="Título do script" value="${escapeHtml(s.title)}">
+          <select class="category-select" id="cat${s.id}" onchange="onCategoryChange(${s.id})">
+            ${catOptions}
+          </select>
+          <div class="editor-checkboxes">
+            <label><input type="checkbox" id="chkGreeting${s.id}" ${hasGreetingFeature ? 'checked' : ''}> 🕐 Saudação automática</label>
+            <label><input type="checkbox" id="chkSignature${s.id}" ${hasSignatureFeature ? 'checked' : ''}> ✍️ Assinatura</label>
+          </div>
+        </div>
         <div class="fmt-bar">
           <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
           <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
@@ -974,14 +1010,6 @@ function cardHTML(s) {
         <div class="edit-bar">
           <button class="btn btn-save" onclick="saveEdit(${s.id})">💾 Salvar</button>
           <button class="btn btn-ghost" onclick="cancelEdit(${s.id})">Cancelar</button>
-          <input class="title-field" id="tt${s.id}" placeholder="Título" value="${escapeHtml(s.title)}">
-          <select class="category-select" id="cat${s.id}" onchange="onCategoryChange(${s.id})">
-            ${catOptions}
-          </select>
-          <div class="editor-checkboxes">
-            <label><input type="checkbox" id="chkGreeting${s.id}" ${hasGreetingFeature ? 'checked' : ''}> 🕐 Saudação automática</label>
-            <label><input type="checkbox" id="chkSignature${s.id}" ${hasSignatureFeature ? 'checked' : ''}> ✍️ Assinatura</label>
-          </div>
         </div>
       </div>
     </div>
@@ -991,6 +1019,41 @@ function cardHTML(s) {
 function toggleCard(id) {
   const card = document.getElementById('c' + id);
   card.classList.toggle('open');
+}
+
+function moveScriptOrder(id, direction) {
+  const list = getFilteredScripts().map(s => String(s.id));
+  const index = list.indexOf(String(id));
+  const next = index + direction;
+  if (index < 0 || next < 0 || next >= list.length) return;
+  [list[index], list[next]] = [list[next], list[index]];
+  customScriptOrderByCategory[activeCat] = list;
+  saveToLocal();
+  render();
+}
+
+function initScriptDragDrop() {
+  if (sortBy !== 'custom') return;
+  const container = document.getElementById('cards');
+  if (!container) return;
+  let dragged = null;
+  container.querySelectorAll('.card[draggable="true"]').forEach(card => {
+    card.addEventListener('dragstart', () => { dragged = card; card.classList.add('dragging'); });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      customScriptOrderByCategory[activeCat] = [...container.querySelectorAll('.card')].map(el => el.id.slice(1));
+      saveToLocal();
+      render();
+      showToast('✨', 'Ordem dos scriptz atualizada!');
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!dragged || dragged === card) return;
+      const rect = card.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) container.insertBefore(dragged, card);
+      else container.insertBefore(dragged, card.nextSibling);
+    });
+  });
 }
 
 // ============================================================
@@ -1026,8 +1089,9 @@ function onCategoryChange(id) {
   const idx = scripts.findIndex(s => s.id === id);
   if (idx !== -1) {
     const newCat = select.value;
-    if (scripts[idx].cat !== newCat) {
-      scripts[idx].cat = newCat;
+      if (scripts[idx].cat !== newCat) {
+        if (!categoryRegistry.includes(newCat)) categoryRegistry.push(newCat);
+        scripts[idx].cat = newCat;
       saveToLocal();
       buildSidebar();
       const card = document.getElementById('c' + id);
@@ -1044,7 +1108,12 @@ function onCategoryChange(id) {
 //  EDIÇÃO
 // ============================================================
 function startEdit(id) {
+  if (activeEditId !== null && activeEditId !== id) {
+    showToast('⚠️', 'Conclua ou cancele a edição atual antes de abrir outro script.');
+    return;
+  }
   const s = scripts.find(x => x.id === id);
+  activeEditId = id;
   const card = document.getElementById('c' + id);
   card.classList.add('open', 'editing');
   document.getElementById('pv' + id).classList.add('editing-mode');
@@ -1059,9 +1128,9 @@ function cancelEdit(id) {
   const card = document.getElementById('c' + id);
   if (card) card.classList.remove('editing');
   document.getElementById('pv' + id).classList.remove('editing-mode');
-  document.getElementById('ew' + id).classList.remove('visible');
+    document.getElementById('ew' + id).classList.remove('visible');
+  if (activeEditId === id) activeEditId = null;
 }
-
 function livePreview(id) {
   const ce = document.getElementById('ce' + id);
   const content = document.getElementById('pv' + id);
@@ -1224,6 +1293,8 @@ function addScript() {
     const cat = categoryInput || hiddenCategory || 'Geral';
     
     const exists = scripts.some(s => s.cat === cat);
+    if (!categoryRegistry.includes(cat)) categoryRegistry.push(cat);
+    if (!customCategoryOrder.includes(cat)) customCategoryOrder.push(cat);
     if (!exists && cat !== 'Geral') {
         showToast('✨', 'Categoria "' + cat + '" criada automaticamente!');
     }
@@ -1252,7 +1323,7 @@ function addScript() {
 //  EXPORT / IMPORT
 // ============================================================
 function exportJSON() {
-  const json = JSON.stringify(scripts, null, 2);
+  const json = JSON.stringify({ version: 2, scripts, categories: categoryRegistry, categoryOrder: customCategoryOrder, scriptOrders: customScriptOrderByCategory, signature: localStorage.getItem('user_name') || '', theme: getTheme() }, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1271,12 +1342,30 @@ function handleImport(event) {
       const imported = JSON.parse(e.target.result);
       if (Array.isArray(imported)) {
         scripts = imported;
-        nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
-        saveToLocal();
-        buildSidebar();
-        render();
-        showToast('📥', 'Importado com sucesso!');
-      } else throw new Error();
+      } else if (imported && Array.isArray(imported.scripts)) {
+        scripts = imported.scripts;
+        categoryRegistry = Array.isArray(imported.categories) ? imported.categories : [];
+        customCategoryOrder = Array.isArray(imported.categoryOrder) ? imported.categoryOrder : [];
+        customScriptOrderByCategory = imported.scriptOrders || {};
+        if (imported.signature !== undefined) {
+          localStorage.setItem('user_name', imported.signature || '');
+          loadUserName();
+        }
+        if (imported.theme && THEME_OPTIONS[imported.theme]) setTheme(imported.theme);
+      } else {
+        throw new Error('Formato inválido');
+      }
+      categoryRegistry = [...new Set([...categoryRegistry, ...scripts.map(s => s.cat).filter(Boolean)])];
+      scripts.forEach(s => {
+        if (s.hasGreeting === undefined) s.hasGreeting = true;
+        if (s.hasSignature === undefined) s.hasSignature = true;
+        if (s.isFavorite === undefined) s.isFavorite = false;
+      });
+      nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
+      saveToLocal();
+      buildSidebar();
+      render();
+      showToast('📥', 'Importado com sucesso!');
     } catch (err) {
       showToast('❌', 'Arquivo inválido');
     }

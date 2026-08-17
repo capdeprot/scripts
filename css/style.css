@@ -2088,3 +2088,36 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--text
     gap: 8px;
   }
 }
+
+
+/* Editor v36: metadata belongs above the editing canvas on desktop and mobile. */
+.editor-meta {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.25fr) minmax(150px, .9fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-light) 52%, var(--surface));
+}
+.editor-meta .title-field,
+.editor-meta .category-select { min-width: 0; width: 100%; }
+.editor-meta .editor-checkboxes { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.card[draggable="true"] { cursor: grab; }
+.card[draggable="true"]:active { cursor: grabbing; }
+.card.dragging { opacity: .55; outline: 2px dashed var(--accent); }
+@media (max-width: 820px) {
+  .editor-meta { grid-template-columns: 1fr; gap: 8px; padding: 9px; }
+  .editor-meta .editor-checkboxes { justify-content: flex-start; }
+}
+
+
+/* Custom script ordering controls: drag on desktop, explicit buttons on touch screens. */
+.script-order-controls { display: inline-flex; gap: 3px; align-items: center; margin-left: auto; margin-right: 8px; }
+.script-order-controls button { border: 1px solid var(--border); background: var(--surface2); color: var(--text-secondary); border-radius: 5px; min-width: 28px; min-height: 28px; cursor: pointer; }
+.script-order-controls button:hover { color: var(--text); border-color: var(--accent); }
+@media (max-width: 820px) {
+  .script-order-controls button { min-width: 34px; min-height: 34px; font-size: 16px; }
+}

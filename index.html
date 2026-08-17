@@ -33,13 +33,13 @@
                     <select id="themeSelect" aria-label="Selecionar tema">
                         <option value="light">☀️ Claro</option>
                         <option value="black">🌙 Escuro</option>
-                        <option value="midnight">✦ Midnight Blue</option>
+                        <option value="midnight">✦ Blue Midnight</option>
                         <option value="purple">◈ Dark Purple</option>
                     </select>
                 </div>
             </div>
             <div class="sb-search">
-                <input type="text" id="searchInput" placeholder="🔍 Buscar script…" oninput="onSearch(this.value)">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar pelo título do script…" oninput="onSearch(this.value)">
             </div>
             <div id="sidebarNav"></div>
             <div class="sb-reorder">
@@ -82,7 +82,7 @@
             </div>
             <div class="mobile-search-bar" id="mobileSearchBar" aria-hidden="true">
                 <span class="mobile-search-glyph" aria-hidden="true">⌕</span>
-                <input type="search" id="mobileSearchInput" placeholder="Buscar script…" aria-label="Buscar script no conteúdo" oninput="onSearch(this.value)">
+                <input type="search" id="mobileSearchInput" placeholder="Buscar pelo título do script…" aria-label="Buscar pelo título do script" oninput="onSearch(this.value)">
                 <button type="button" onclick="toggleMobileSearch()" aria-label="Fechar pesquisa">✕</button>
             </div>
             <div id="cards"><div class="loading">⏳ Carregando scriptz…</div></div>

@@ -1,144 +1,146 @@
 # Scriptz — Gerenciador de modelos de e-mail
 
-O **Scriptz** é uma aplicação web local para organizar, consultar, editar e reutilizar scripts e modelos de texto. A ferramenta foi adaptada à identidade visual Scriptz e funciona sem backend obrigatório: os dados iniciais ficam em `scriptz.json` e as alterações do usuário são persistidas no navegador.
+O **Scriptz** é uma aplicação web estática para organizar, consultar, editar e reutilizar modelos de e-mail. A aplicação funciona diretamente no navegador, sem backend obrigatório: carrega os dados iniciais de `scriptz.json`, mantém as alterações no armazenamento local e permite exportar ou importar um arquivo completo para transportar a experiência entre dispositivos.
 
-## Funcionalidades atuais
+## Funcionalidades
 
-| Área | Recursos disponíveis |
-| --- | --- |
-| Consulta | Cards expansíveis com título, categoria, ações rápidas e pré-visualização do conteúdo. |
-| Busca | Pesquisa por título, categoria ou conteúdo do script em tempo real. |
-| Favoritos | Visão própria em **Visão geral**, logo abaixo de **Todos**, com contador e filtro exclusivo. |
-| Prioridade | Favoritos aparecem antes dos demais scripts em todas as visões e categorias, independentemente do critério secundário escolhido. |
-| Ordenação | Ordenação por título, categoria, data de criação ou ordem personalizada. A opção de ordenar por favoritos foi removida porque Favoritos é uma visão independente. |
-| Categorias | Criação, seleção, renomeação, exclusão e reordenação por arrastar e soltar. |
-| Edição | Editor rich text com negrito, itálico, sublinhado, listas e links, além de pré-visualização ao vivo. |
-| Cópia | Copia o script com formatação HTML quando disponível e usa texto simples como fallback, mantendo o card aberto. |
-| Saudação | Insere automaticamente “Bom dia”, “Boa tarde” ou “Boa noite” conforme o horário. |
-| Assinatura | Permite definir o nome do usuário e inserir a assinatura nos scripts. |
-| Criação | Criação de novos scripts com título, categoria, texto, saudação e assinatura opcionais. |
-| Importação | Importação de JSON por seleção de arquivo ou arrastar e soltar. |
-| Exportação | Exportação dos dados atuais no arquivo `scriptz.json`. |
-| Temas | Modo escuro como padrão e modo claro alternável, ambos com paleta coerente com a identidade Scriptz. |
-| Persistência | Armazenamento local de scripts editados, tema, assinatura, favoritos e ordem de categorias. |
+| Área | Recursos |
+|---|---|
+| Consulta | Cards expansíveis com título, categoria, pré-visualização e ações rápidas. |
+| Pesquisa | Busca explicitamente pelo **título do script**, com campo disponível no desktop e pela lupa no mobile. |
+| Favoritos | Visão própria abaixo de **Todos**; favoritos também recebem prioridade nas demais visões. |
+| Ordenação | Título, categoria, data de criação e **ordem personalizada**. |
+| Scripts | Criação, edição, exclusão, cópia formatada, favoritos e mudança de categoria. |
+| Categorias | Criação, renomeação, exclusão e reordenação persistente. |
+| Ordem personalizada | Ordenação de scripts por categoria; no desktop é possível arrastar cards e no mobile há controles de mover para cima ou para baixo. |
+| Editor | Edição rich text com negrito, itálico, sublinhado, listas, links e pré-visualização ao vivo. |
+| Edição segura | Apenas um script pode permanecer em edição por vez. O usuário precisa salvar ou cancelar antes de abrir outro. |
+| Saudação e assinatura | Opções independentes para saudação automática e assinatura do usuário. A assinatura é atualizada ao sair do campo. |
+| Persistência | Scripts, categorias, ordens, favoritos, tema e assinatura são salvos localmente. |
+| Importação e exportação | O estado completo pode ser exportado como `scriptz.json` e importado em outro navegador ou dispositivo. |
+| PWA | Manifesto, service worker e ícones locais permitem instalação como aplicativo quando o navegador oferecer suporte. |
 
-## Identidade visual
+## Identidade visual e temas
 
-O modo escuro é o tema inicial quando não existe uma preferência salva no navegador. Ele utiliza navy profundo, superfícies elevadas, bordas azuladas e acentos em azul-cobalto.
+A identidade utiliza o símbolo de envelope da Scriptz e a wordmark `scriptz` renderizada em Rajdhani negrito e itálico. A paleta principal é baseada em **azul meia-noite**; a nomenclatura antiga “navy” não é utilizada como nome de tema.
 
-O cabeçalho combina um símbolo transparente com a wordmark `scriptz` renderizada como texto real em Rajdhani negrito e itálico. O símbolo é dimensionado para acompanhar visualmente a altura-x da wordmark. O modo claro mantém a mesma hierarquia visual, substituindo as superfícies escuras por tons branco-azulados e texto navy.
+O seletor oferece quatro temas persistentes:
 
-A tela de edição possui uma superfície contrastante dentro do card, indicador visual `EDITANDO`, barra de ferramentas própria e foco destacado no campo editável. Isso diferencia edição e leitura sem abandonar a paleta Scriptz.
+| Nome | Característica |
+|---|---|
+| **Claro** | Superfícies claras, contraste escuro e acentos azuis. |
+| **Escuro** | Fundo quase preto, com a lua como ícone do tema. |
+| **Blue Midnight** | Azul meia-noite como identidade principal da interface. |
+| **Dark Purple** | Base roxo-escura, com referência cromática em `#11001C`. |
+
+O padrão inicial é **Blue Midnight** quando não existe preferência salva. A preferência selecionada é armazenada no navegador e também acompanha a exportação JSON.
 
 ## Como executar localmente
 
-Como a aplicação carrega `scriptz.json` com `fetch`, recomenda-se executá-la por HTTP local em vez de abrir diretamente com `file://`.
+Como a aplicação carrega `scriptz.json` via `fetch`, ela deve ser executada por HTTP, e não diretamente por `file://`.
 
 ```bash
 python3 -m http.server 4173
 ```
 
-Depois, acesse `http://localhost:4173/` no navegador.
+Depois, acesse `http://localhost:4173/`. Também é possível utilizar qualquer servidor estático que preserve os caminhos relativos do projeto.
 
 ## Uso da interface
 
-Na tela inicial, clique no cabeçalho de um card para expandir ou recolher o script. O botão **Copiar** copia o conteúdo e mantém o card aberto. O botão **Editar** abre o editor interno; depois de salvar ou cancelar, o usuário retorna ao card. A estrela alterna o favorito sem recolher o card.
+Na tela inicial, clique no cabeçalho de um card para expandir ou recolher o conteúdo. **Copiar** mantém o card aberto, e **Favoritar** também preserva o estado aberto. O botão **Editar** abre o editor interno; depois de salvar ou cancelar, o script volta ao fluxo normal.
 
-A seção **Visão geral** contém **Todos** e **Favoritos**. **Todos** mostra os scripts disponíveis, enquanto **Favoritos** mostra somente os itens marcados. As categorias aparecem abaixo dessas duas visões.
+O campo de pesquisa informa claramente que a busca é feita pelo título do script. No mobile, a busca pode ser aberta pela lupa no cabeçalho. A seção **Visão geral** contém **Todos** e **Favoritos**, seguida pelas categorias disponíveis.
 
-O campo de busca filtra títulos, categorias e conteúdo. O seletor de ordenação oferece título, categoria, data de criação e ordem personalizada. Em todos esses casos, os favoritos são apresentados primeiro.
+A sidebar é redimensionável no desktop. No mobile, ela funciona como drawer, com navegação por toque, botão para abrir e fechar, backdrop e fechamento automático após a escolha de uma categoria ou visão.
 
 ## Gerenciamento de categorias
 
-O botão **Gerenciar categorias** abre o painel de administração das categorias. Nesse painel é possível adicionar categorias, renomeá-las, excluir categorias vazias ou reorganizar sua ordem. A ordem personalizada também pode ser iniciada pelo botão de reordenação da barra lateral.
+O botão **Gerenciar categorias** abre o painel de categorias. É possível adicionar uma categoria mesmo que ela ainda não possua scripts, renomear sem confirmar ao clicar novamente no campo, excluir e arrastar para reordenar. A ordem é mantida ao fechar e reabrir o painel, independentemente da ordenação usada para os cards.
+
+Quando uma categoria é renomeada ou excluída, os scripts relacionados são atualizados de acordo com a operação. A criação de um script em uma categoria nova também registra essa categoria de forma persistente.
+
+## Ordenação personalizada de scripts
+
+Selecione **Ordem personalizada** no seletor principal. Cada categoria possui sua própria sequência. Em telas desktop, os cards podem ser arrastados; em telas mobile, os botões de seta movem o script para cima ou para baixo dentro da categoria atual. A ordem é salva localmente e exportada para o JSON.
 
 ## Criação e edição de scripts
 
-Para criar um script, clique em **Novo script**, informe título e categoria e escreva somente o corpo do texto. A saudação e a assinatura são adicionadas automaticamente quando suas opções estão ativas.
+Para criar um script, clique em **Novo script**, informe título, categoria e corpo, e escolha se a saudação e a assinatura devem ser adicionadas. Na edição de um script existente, os metadados — título, categoria, saudação e assinatura — ficam na área superior do editor, enquanto a barra inferior permanece dedicada às ações **Salvar** e **Cancelar**.
 
-Para editar um script existente, clique em **Editar**. O editor permite alterar título, categoria, conteúdo, saudação e assinatura. O conteúdo é armazenado em HTML para preservar formatação, links e listas.
+O editor aceita conteúdo HTML para preservar formatação, links e listas. Dois scripts não podem ser editados simultaneamente: é necessário concluir ou cancelar a edição atual antes de abrir outro.
 
-## Importação e exportação
+## Persistência local e arquivo `scriptz.json`
 
-A aplicação importa arquivos JSON por meio do botão de upload ou da área de arrastar e soltar. O arquivo deve conter um array de scripts com, pelo menos, título, categoria e conteúdo.
+O navegador mantém um estado versionado no `localStorage`. Esse estado inclui os scripts atuais, categorias, ordem de categorias, ordem personalizada dos scripts por categoria, favoritos, tema e assinatura.
 
-A exportação baixa os dados atuais no arquivo `scriptz.json`. Recomenda-se exportar periodicamente as alterações, pois o armazenamento local pertence ao navegador e pode ser perdido quando os dados do site forem removidos.
+A exportação gera um arquivo chamado `scriptz.json` com o formato geral abaixo:
 
-## Estrutura dos dados
+```json
+{
+  "version": 2,
+  "scripts": [],
+  "categories": [],
+  "categoryOrder": [],
+  "scriptOrders": {},
+  "signature": "",
+  "theme": "midnight"
+}
+```
 
-O arquivo inicial é `scriptz.json`. Cada item pode conter os campos abaixo:
+A importação aceita tanto o formato antigo, baseado diretamente em um array de scripts, quanto o formato completo versionado. Para transportar todas as personalizações, utilize sempre o arquivo exportado pela própria aplicação.
 
-| Campo | Tipo | Finalidade |
-| --- | --- | --- |
-| `id` | número | Identificador do script. |
-| `title` | texto | Título exibido no card. |
-| `cat` | texto | Categoria do script. |
-| `html` | texto | Conteúdo do script em HTML. |
-| `hasGreeting` | booleano | Ativa ou desativa a saudação automática. |
-| `hasSignature` | booleano | Ativa ou desativa a assinatura automática. |
-| `isFavorite` | booleano | Define se o script pertence à visão Favoritos e recebe prioridade. |
+> A persistência local pertence ao navegador. Para mover dados entre dispositivos, exporte `scriptz.json` antes de limpar o armazenamento local ou trocar de navegador.
 
-## Persistência local
-
-As alterações são mantidas no `localStorage` do navegador. Entre as preferências armazenadas estão o tema visual, o nome da assinatura, os scripts editados, os favoritos e a ordem personalizada das categorias.
-
-O botão **Resetar alterações locais** remove as alterações locais dos scripts e recarrega a base original de `scriptz.json`. Antes de usar essa opção, exporte os dados caso existam alterações importantes ainda não salvas em arquivo.
+O botão **Resetar alterações locais** remove as alterações salvas e recarrega a base original de `scriptz.json`. Faça uma exportação antes de utilizar essa função se houver dados importantes.
 
 ## Estrutura do projeto
 
+O conteúdo deste projeto deve ser publicado com `index.html` diretamente na raiz do diretório publicado:
+
 ```text
 .
+├── index.html
+├── scriptz.json
+├── manifest.webmanifest
+├── sw.js
+├── favicon.ico
+├── README.md
 ├── assets/
-│   ├── logo_scriptz_empilhado_negrito_italico_atualizado.png
-│   ├── logo_scriptz_negrito_italico_recortado.png
+│   ├── favicon.svg
+│   ├── favicon.png
+│   ├── pwa-icon-192.png
+│   ├── pwa-icon-512.png
 │   └── scriptz_icone_branco_transparente.png
 ├── css/
 │   └── style.css
-├── js/
-│   └── app.js
-├── index.html
-├── scriptz.json
-└── README.md
+└── js/
+    └── app.js
 ```
 
-`index.html` contém a estrutura da interface e as referências de fonte e scripts. `css/style.css` concentra layout, responsividade, temas e estados visuais. `js/app.js` implementa a lógica de busca, filtros, categorias, favoritos, edição, cópia, persistência e importação ou exportação. `scriptz.json` contém os modelos iniciais.
+`index.html` concentra a estrutura da interface e usa referências relativas para `css/style.css`, `js/app.js` e os arquivos dentro de `assets/`. `css/style.css` contém tokens de tema, layout, responsividade e estados visuais. `js/app.js` implementa carregamento, busca, categorias, ordenação, edição, favoritos, persistência, importação, exportação e PWA. `scriptz.json` fornece os modelos iniciais.
 
-## Tecnologias
+Os arquivos antigos `app.js`, `style.css`, `favicon.png`, `favicon.svg` e logos soltos na raiz não são necessários quando o `index.html` utiliza a estrutura acima. Os logos de wordmark podem ser mantidos separadamente no kit de identidade visual.
 
-A aplicação utiliza HTML5, CSS3, JavaScript no navegador, `localStorage` para persistência local e a Clipboard API com fallback para cópia de conteúdo. Não há banco de dados, autenticação ou API externa necessários para as funções principais.
+## PWA e instalação como aplicativo
 
-## Observações de segurança e backup
+O projeto inclui `manifest.webmanifest`, `sw.js` e ícones locais de 192×192 e 512×512. Em navegadores compatíveis, o botão de instalação pode abrir o prompt nativo. Quando o navegador não disponibiliza esse prompt, ele pode exigir a opção “Adicionar à tela inicial”.
 
-Os scripts podem conter informações internas ou sensíveis. Mantenha os arquivos JSON em local seguro e evite publicá-los em repositórios públicos sem revisar o conteúdo. Como a persistência é local, o backup por exportação é a forma recomendada de preservar alterações entre navegadores ou dispositivos.
-
-## Licença e uso
-
-O projeto é destinado ao uso interno da equipe responsável pelos modelos de atendimento. Ajuste a política de distribuição conforme as regras da organização antes de publicar ou compartilhar a aplicação.
-
-## Favicon e suporte mobile
-
-O projeto inclui o favicon Scriptz adaptativo em `assets/favicon.svg`, referenciado no `<head>` de `index.html`, com `assets/favicon.png` como fallback. O SVG usa o símbolo branco em fundos escuros e aplica azul-marinho em fundos claros por meio de `prefers-color-scheme`, melhorando o contraste nas abas do navegador.
-
-A interface possui layout responsivo para telas menores. Em tablets e celulares, a sidebar passa a ocupar o topo da página, as categorias são reorganizadas em blocos tocáveis, os controles principais ocupam a largura disponível, os cards usam espaçamento compacto e os botões de ação podem ser acessados sem depender de hover. O editor, as barras de formatação, os modais, a área de importação e os campos de assinatura também se adaptam à largura da tela.
-
-O viewport usa `viewport-fit=cover` para melhorar o aproveitamento de telas com recortes e áreas seguras. Recomenda-se testar a aplicação em orientação vertical e horizontal, especialmente ao editar textos longos ou gerenciar categorias.
+A instalação programática exige que a aplicação seja servida em HTTPS, exceto em `localhost`. GitHub Pages atende a esse requisito. Depois de substituir uma versão já instalada, pode ser necessário desinstalar o aplicativo antigo e instalar novamente para remover o cache do manifesto e do service worker anterior.
 
 ## Publicação no GitHub Pages
 
-Para publicar em GitHub Pages, mantenha `index.html` no diretório publicado e preserve a estrutura `assets/`. As referências dos favicons são relativas — `assets/favicon.svg`, `assets/favicon.png` e `favicon.ico` na raiz — para funcionar tanto em domínio próprio quanto em URLs de repositório no formato `usuario.github.io/nome-do-repositorio/`. Evite trocar esses caminhos por `/assets/...`, pois o prefixo `/` aponta para a raiz do domínio e pode ignorar a subpasta do repositório.
+Para publicar, extraia o conteúdo interno do pacote na raiz do repositório, sem criar uma camada adicional como `scriptz-main-updated/`. O arquivo publicado deve estar em:
 
-## Temas e personalização visual
+```text
+https://usuario.github.io/repositorio/index.html
+```
 
-O seletor de tema oferece quatro opções persistentes: **Claro**, **Escuro**, **Midnight Blue** e **Dark Purple**. O tema Midnight Blue usa a identidade azul profunda atualizada; o tema Dark Purple usa como base `#11001C`; o tema Escuro utiliza superfícies quase pretas; e o tema Claro preserva a leitura em superfícies claras. Os estados de cards, edição, inputs, botões, tags, modais e mensagens são recalculados pelos tokens do tema ativo para evitar conflitos de contraste.
+Preserve as referências relativas, como `assets/favicon.svg` e `css/style.css`. Não substitua esses caminhos por `/assets/...`, pois o prefixo absoluto pode ignorar o nome do repositório em URLs do GitHub Pages.
 
-A largura da sidebar pode ser ajustada no desktop arrastando a borda direita da barra lateral. O valor é limitado a uma faixa segura e salvo localmente no navegador, sendo restaurado na próxima abertura da aplicação.
+Após o commit e a publicação, recarregue a página. Se o projeto já tiver sido instalado como PWA, desinstale a versão antiga antes de testar novamente o manifesto e os ícones atualizados.
 
-## Navegação em smartphones
+## Tecnologias e limitações
 
-Em telas móveis, a sidebar funciona como um menu lateral recolhido. O botão **Menu** abre a navegação sobre a tela, e a seleção de uma visão ou categoria fecha o menu automaticamente para mostrar os scripts imediatamente. Os controles principais, cards, ações, editor, modais e áreas de importação foram reorganizados para toque e largura reduzida.
+A aplicação utiliza HTML5, CSS3, JavaScript no navegador, `localStorage`, `contenteditable`, Clipboard API com fallback, manifesto PWA e service worker. Não há banco de dados, autenticação ou API externa necessários para as funções principais.
 
-## Experiência mobile reformulada
-
-Em smartphones, a tela inicial segue uma hierarquia semelhante à de uma caixa de entrada de e-mail: o cabeçalho concentra menu, título, busca rápida, ordenação e exportação; o botão de criação fica isolado como ação principal; e os cards priorizam leitura e ações por ícones. A busca fica disponível pelo ícone de lupa na tela inicial, sem exigir a abertura do menu.
-
-A navegação lateral funciona como um drawer. Ela é aberta pelo botão de menu, pode ser fechada pelo botão `X`, pelo backdrop, pela tecla `Esc` ou automaticamente após a seleção de uma visão ou categoria. As categorias são apresentadas em uma lista vertical de fácil toque, enquanto assinatura, importação e gerenciamento ficam organizados na parte inferior do drawer.
+Como os dados podem conter informações internas ou sensíveis, revise `scriptz.json` antes de publicá-lo em um repositório público. A distribuição e a política de acesso devem seguir as regras da organização responsável pelos modelos.
