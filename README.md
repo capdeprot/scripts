@@ -129,7 +129,7 @@ Para publicar em GitHub Pages, mantenha `index.html` no diretório publicado e p
 
 ## Temas e personalização visual
 
-O seletor de tema oferece quatro opções persistentes: **Claro**, **Escuro**, **Azul meia-noite** e **Roxo-escuro**. O tema Azul meia-noite usa a identidade azul profunda atualizada; o tema Roxo-escuro usa como base `#11001C`; o tema Escuro utiliza superfícies quase pretas; e o tema Claro preserva a leitura em superfícies claras. Os estados de cards, edição, inputs, botões, tags, modais e mensagens são recalculados pelos tokens do tema ativo para evitar conflitos de contraste.
+O seletor de tema oferece quatro opções persistentes: **Claro**, **Escuro**, **Midnight Blue** e **Dark Purple**. O tema Midnight Blue usa a identidade azul profunda atualizada; o tema Dark Purple usa como base `#11001C`; o tema Escuro utiliza superfícies quase pretas; e o tema Claro preserva a leitura em superfícies claras. Os estados de cards, edição, inputs, botões, tags, modais e mensagens são recalculados pelos tokens do tema ativo para evitar conflitos de contraste.
 
 A largura da sidebar pode ser ajustada no desktop arrastando a borda direita da barra lateral. O valor é limitado a uma faixa segura e salvo localmente no navegador, sendo restaurado na próxima abertura da aplicação.
 
