@@ -1,0 +1,16 @@
+{
+  "sourceSchema": "scriptz-free-project",
+  "division": "DEPROT",
+  "scriptCount": 10,
+  "categoryCount": 5,
+  "multiCategoryScriptIds": [
+    4
+  ],
+  "categories": [
+    "Envio de guias",
+    "Protocolo",
+    "Alvará de Autorização Para Evento Temporário",
+    "Andamento de Processo",
+    "Encaminhamento"
+  ]
+}

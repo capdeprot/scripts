@@ -29,12 +29,12 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=3" />
     <link rel="shortcut icon" href="assets/favicon.png?v=3" />
-    <link rel="manifest" href="manifest.webmanifest?v=49" />
+    <link rel="manifest" href="manifest.webmanifest?v=51" />
     <meta name="theme-color" content="#101a43" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=49">
+    <link rel="stylesheet" href="css/style.css?v=51">
 </head>
 <body data-theme-default="midnight">
     <div class="layout" id="appLayout">
@@ -86,8 +86,8 @@
                     <summary>Ações <span aria-hidden="true">⌄</span></summary>
                     <div class="actions-menu-content">
                         <button type="button" onclick="openCategoryModal()">📂 Gerenciar categorias</button>
-                        <button id="loadTemplateBaseBtn" type="button" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar JSON padrão como base</button>
-                        <button id="exportScriptsBtn" type="button" onclick="exportJSON()">📤 Exportar meus Scriptz</button>
+                        <button id="loadTemplateBaseBtn" type="button" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar script padrão como base</button>
+                        <button id="exportScriptsBtn" type="button" onclick="exportJSON()">📤 Exportar meus scriptz</button>
                         <button id="discardTemplatesBtn" type="button" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Descartar Scriptz e reiniciar Modo Editor</button>
                         <button id="resetLocalBtn" type="button" onclick="resetLocalData()" class="btn-reset" hidden>↩️ Reverter alterações locais</button>
                     </div>
@@ -161,7 +161,7 @@
                 <label for="newSignature">✍️ Incluir assinatura</label>
             </div>
             <div class="field">
-                <label>Texto do script (somente o corpo, sem saudação e sem assinatura)</label>
+                <label>Texto</label>
                 <div class="new-editor-shell">
                     <div class="fmt-bar new-editor-fmt-bar" role="toolbar" aria-label="Ferramentas de formatação">
                         <button type="button" class="fmt-btn" aria-label="Negrito" title="Negrito" onmousedown="event.preventDefault();formatNewScript('bold')"><b>B</b></button>
@@ -208,7 +208,7 @@
     <!-- MODAL: BASE DO MODO EDITOR -->
     <div class="overlay" id="templateBaseModal" onclick="if(event.target===this) closeTemplateBaseModal()">
         <div class="modal template-base-modal">
-            <h3>📂 Usar JSON padrão como base</h3>
+            <h3>📂 Usar script padrão como base</h3>
             <p>Os scripts carregados aqui permanecerão totalmente editáveis no Modo Editor.</p>
             <div class="template-base-grid">
                 <button onclick="loadStandardBaseIntoFree('DEPROT')">CAP · DEPROT</button>
@@ -258,6 +258,6 @@
     <!-- TOAST -->
     <div class="toast" id="toast"><span class="icon"></span><span class="msg"></span></div>
 
-    <script src="js/app.js?v=49"></script>
+    <script src="js/app.js?v=51"></script>
 </body>
 </html>

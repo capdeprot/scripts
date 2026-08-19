@@ -71,3 +71,14 @@
 - [x] Limitar a ordenação a Ordem alfabética e Ordem personalizada, tornando a personalizada o padrão.
 - [x] Bloquear alterações de ordenação enquanto houver um script em edição.
 - [x] Validar os fluxos em desktop e mobile, atualizar a documentação e gerar o pacote revisado.
+
+# Nomenclaturas e padrão DEPROT
+
+- [x] Atualizar as três nomenclaturas da interface solicitadas.
+- [x] Validar o JSON fornecido e convertê-lo, se necessário, ao esquema de template padrão de DEPROT.
+- [x] Incorporar o padrão de DEPROT, validar scripts e proteções e gerar o pacote atualizado.
+
+# Indicador discreto de script padrão
+
+- [x] Substituir o selo textual por um cadeado discreto com tooltip “Script padrão protegido”.
+- [x] Validar contraste, tooltip e comportamento em desktop e mobile; gerar pacote atualizado.

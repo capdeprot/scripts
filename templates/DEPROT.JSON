@@ -2,6 +2,144 @@
   "schema": "scriptz-standard-template",
   "version": 1,
   "division": "DEPROT",
-  "scripts": [],
-  "categories": []
+  "categories": [
+    "Envio de guias",
+    "Protocolo",
+    "Alvará de Autorização Para Evento Temporário",
+    "Andamento de Processo",
+    "Encaminhamento"
+  ],
+  "scripts": [
+    {
+      "id": 2,
+      "cat": "Envio de guias",
+      "cats": [
+        "Envio de guias"
+      ],
+      "title": "Uma Guia",
+      "html": "<!--StartFragment--><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento com&nbsp;<strong>código de barras e autenticação bancária</strong>&nbsp;para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 1,
+      "cat": "Envio de guias",
+      "cats": [
+        "Envio de guias"
+      ],
+      "title": "Duas Guias",
+      "html": "<!--StartFragment--><p>Seguem, anexas a este e-mail, as guias para pagamento dos preços públicos referentes à sua solicitação. Responda essa mensagem anexando os comprovantes de pagamento com&nbsp;<strong>código de barras e autenticação bancária</strong>&nbsp;para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 3,
+      "cat": "Envio de guias",
+      "cats": [
+        "Envio de guias"
+      ],
+      "title": "Guia de Autuação",
+      "html": "<!--StartFragment--><p>Segue, anexa a esse e-mail, a guia para pagamento do preço público de recepção de documentos para autuação de processo eletrônico (<strong>Até 50 megabytes — R$ 30,20 / por megabyte adicional — R$ 2,90</strong>). Responda essa mensagem anexando o comprovante de pagamento com&nbsp;<strong>código de barras e autenticação bancária</strong>&nbsp;para seguirmos com o protocolo do processo; a lista de bancos conveniados está disponível através do link abaixo:</p><p><a href=\"https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://prefeitura.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 4,
+      "cat": "Alvará de Autorização Para Evento Temporário",
+      "cats": [
+        "Alvará de Autorização Para Evento Temporário",
+        "Envio de guias"
+      ],
+      "title": "Envio de guia - Alvará de Autorização",
+      "html": "<!--StartFragment--><p><strong>Data limite para protocolo do processo: ??/??/????</strong></p><p>Segue, anexa a este e-mail, a guia para pagamento do preço público referente à sua solicitação. Responda essa mensagem anexando o comprovante de pagamento&nbsp;<strong>até às 15h</strong>&nbsp;da data limite informada acima para seguirmos com o protocolo do processo.</p><p>A lista de bancos credenciados está disponível através do link:&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p><p>Aguardamos seu retorno, até mais!</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 5,
+      "cat": "Protocolo",
+      "cats": [
+        "Protocolo"
+      ],
+      "title": "Protocolo Padrão",
+      "html": "<!--StartFragment--><p>Encaminhamos em anexo o protocolo referente ao processo&nbsp;<strong>________</strong>, gerado conforme sua solicitação.</p><p>Não há estimativa de prazo para conclusão, mas você pode acompanhar o andamento pelo Portal de Processos: 🔗&nbsp;<a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos de seus processos encontram-se restritos em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal 13.709/2018 e Decreto Municipal 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação.&nbsp;<a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\" target=\"_blank\" rel=\"noopener noreferrer\"><strong>Clique aqui</strong></a>&nbsp;para participar — sua contribuição é fundamental para o aprimoramento dos nossos serviços.</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 6,
+      "cat": "Protocolo",
+      "cats": [
+        "Protocolo"
+      ],
+      "title": "Revalidação + Pedido de Isenção",
+      "html": "<!--StartFragment--><p>Encaminhamos em anexo os protocolos dos processos abaixo, gerados conforme sua solicitação:</p><p>Revalidação: ___________<br>Pedido de Isenção: ___________</p><p>Você pode acompanhar o andamento por meio do Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos de seus processos encontram-se restritos em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal 13.709/2018 e Decreto Municipal 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação.&nbsp;<a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\" target=\"_blank\" rel=\"noopener noreferrer\"><strong>Clique aqui</strong></a>&nbsp;para participar — sua contribuição é fundamental para o aprimoramento dos nossos serviços.</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 9,
+      "cat": "Alvará de Autorização Para Evento Temporário",
+      "cats": [
+        "Alvará de Autorização Para Evento Temporário"
+      ],
+      "title": "Evento Fora do Prazo",
+      "html": "<!--StartFragment--><p>Em atenção à solicitação de protocolo de&nbsp;<strong>Alvará de Autorização para Evento Temporário</strong>, informamos que o pedido não poderá ser recepcionado, tendo em vista o não atendimento ao prazo mínimo exigido.</p><p>Nos termos do&nbsp;<strong>Decreto Municipal nº 49.969/2008</strong>, o requerimento deve ser protocolado com antecedência mínima de&nbsp;<strong>30 (trinta) dias</strong>&nbsp;da data do evento, condição indispensável para análise pelos órgãos competentes.</p><p>Assim, por determinação da gestão desta Pasta, em consonância com as normas vigentes e com as diretrizes de governança, integridade e padronização de procedimentos administrativos, não é possível a flexibilização do prazo estabelecido, sob pena de violação aos princípios que regem a Administração Pública, especialmente os da isonomia, impessoalidade e segurança jurídica.</p><p>Orientamos que novos pedidos sejam apresentados dentro do prazo regulamentar.</p><!--EndFragment-->",
+      "greetingMode": "formal",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 7,
+      "cat": "Andamento de Processo",
+      "cats": [
+        "Andamento de Processo"
+      ],
+      "title": "Resposta 1",
+      "html": "<!--StartFragment--><p>Para acompanhar o andamento você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba&nbsp;<strong>\"Localização Atual\"</strong>.<br><br>Agradecemos pela compreensão.</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 10,
+      "cat": "Andamento de Processo",
+      "cats": [
+        "Andamento de Processo"
+      ],
+      "title": "Resposta 2",
+      "html": "<!--StartFragment--><p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba&nbsp;<strong>\"Localização Atual\"</strong>&nbsp;após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Atenciosamente,</p><!--EndFragment-->",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 8,
+      "cat": "Encaminhamento",
+      "cats": [
+        "Encaminhamento"
+      ],
+      "title": "Encaminhamento",
+      "html": "<!--StartFragment-->Encaminhamos a presente solicitação recebida em&nbsp;<strong>CAP/DEPROT</strong>&nbsp;para ciência e providências, no que couber.<!--EndFragment-->",
+      "greetingMode": "formal",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    }
+  ]
 }

@@ -324,7 +324,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=49`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=51`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template' || !Array.isArray(data.scripts)) throw new Error('Template inválido');
@@ -1399,7 +1399,7 @@ function cardHTML(s) {
   const primaryOptions = getCategoryOptions(primaryCategory);
   const secondaryOptions = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
   const locked = isStandardScript(s);
-  const lockedBadge = locked ? '<span class="standard-badge" title="Script padrão protegido">🔒 Script padrão</span>' : '';
+  const lockedBadge = locked ? '<span class="standard-lock" role="img" aria-label="Script padrão protegido" title="Script padrão protegido"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v2"></path></svg></span>' : '';
   const lockAttrs = locked ? 'disabled aria-disabled="true" title="Script padrão protegido"' : '';
   
   return `

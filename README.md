@@ -32,13 +32,13 @@ Os arquivos-base desta distribuição começam vazios e estão prontos para rece
 
 | Unidade | Arquivo-base |
 |---|---|
-| DEPROT | `templates/DEPROT.JSON` |
+| DEPROT | `templates/DEPROT.JSON` — base institucional com 10 scripts e 5 categorias. |
 | DPCI | `templates/DPCI.JSON` |
 | DPD | `templates/DPD.JSON` |
 | Núcleo | `templates/SMUL-CAP.JSON` |
 | Sala Arthur Saboya | `templates/SALA-ARTHUR-SABOYA.JSON` |
 
-Os scripts provenientes desses arquivos recebem o indicador **🔒 Script padrão**. Eles não podem ser editados, excluídos ou movidos de categoria. As categorias padrão também não podem ser renomeadas ou excluídas. Scripts, categorias e ordenações criados pela pessoa usuária continuam livres.
+Os scripts provenientes desses arquivos recebem apenas um **cadeado dourado discreto** ao lado do título. Ao passar o mouse sobre ele, a aplicação informa **Script padrão protegido**. Eles não podem ser editados, excluídos ou movidos de categoria. As categorias padrão também não podem ser renomeadas ou excluídas. Scripts, categorias e ordenações criados pela pessoa usuária continuam livres.
 
 > Contextos antigos gravados como `Coord.` são migrados automaticamente para **Núcleo** ao abrir a aplicação.
 
@@ -63,8 +63,8 @@ Abaixo da assinatura, o menu expansível **Ações** concentra os recursos opera
 | Ação | Scriptz Padrão | Modo Editor |
 |---|---:|---:|
 | Gerenciar categorias | Sim | Sim |
-| Usar JSON padrão como base | Não | Sim |
-| Exportar meus Scriptz | Sim | Sim |
+| Usar script padrão como base | Não | Sim |
+| Exportar meus scriptz | Sim | Sim |
 | Descartar Scriptz e reiniciar Modo Editor | Não | Sim |
 | Reverter alterações locais | Sim | Não |
 
@@ -92,7 +92,7 @@ A edição é exclusiva: enquanto um card estiver em edição, outro script não
 
 O aplicativo inclui `manifest.webmanifest`, service worker e ícones próprios. O botão **Instalar Scriptz como app** aciona o prompt nativo quando disponível; em navegadores que não o disponibilizam, a aplicação orienta a adicionar o site à tela inicial.
 
-O cache PWA atual é `scriptz-shell-v49` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
+O cache PWA atual é `scriptz-shell-v50` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
 
 ## Estrutura do projeto
 
