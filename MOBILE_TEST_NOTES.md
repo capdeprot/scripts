@@ -26,3 +26,9 @@
 
 - Em uma sessão limpa de desktop, o gate de onboarding já estava ativo no primeiro paint: a interface principal permaneceu oculta e a tela de boas-vindas foi a única superfície visível.
 - Em uma sessão limpa mobile de 375 × 812px, foi observado o mesmo comportamento. Não houve exibição da sidebar, cards ou controles do sistema antes da jornada.
+
+## Editor rico e Modo Editor — v46
+
+- Em 320px, o modal de criação mantém a barra de formatação, saudação e uma área de conteúdo ampliada. A altura do formulário exige rolagem vertical, sem criar rolagem horizontal, o que preserva os alvos de toque e a leitura.
+- Em 375px, o editor de scripts existentes exibe controles de negrito, itálico, sublinhado, links e lista, além de texto ampliado. A prévia manteve negrito e itálico depois da criação e da edição.
+- Os rótulos compactos de ordenação seguem sem transbordamento em telas estreitas e a nova jornada de unidades permanece acessível pelo fluxo mobile.

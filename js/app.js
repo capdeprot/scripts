@@ -17,14 +17,17 @@ let activeEditId = null;
 let workspace = { mode: null, division: null };
 let standardCategories = [];
 let standardScripts = [];
+let newScriptLinkRange = null;
 
 const SCRIPT_LIMITS = Object.freeze({ standard: 300, free: 500 });
 const STANDARD_DIVISIONS = Object.freeze({
   DEPROT: 'templates/DEPROT.JSON',
   DPCI: 'templates/DPCI.JSON',
   DPD: 'templates/DPD.JSON',
-  'Coord.': 'templates/SMUL-CAP.JSON'
+  'Núcleo': 'templates/SMUL-CAP.JSON',
+  'Sala Arthur Saboya': 'templates/SALA-ARTHUR-SABOYA.JSON'
 });
+const LEGACY_DIVISIONS = Object.freeze({ 'Coord.': 'Núcleo' });
 
 // ============================================================
 //  TEMA (DARK MODE)
@@ -93,6 +96,17 @@ function saudacao() {
   if (h >= 5 && h < 12) return 'Bom dia';
   if (h >= 12 && h < 18) return 'Boa tarde';
   return 'Boa noite';
+}
+
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function shouldShowDailyWelcome() {
+  return localStorage.getItem('scriptz_daily_welcome_date') !== localDateKey();
 }
 
 const GREETING_MODES = Object.freeze({ off: 'off', auto: 'auto', formal: 'formal' });
@@ -278,7 +292,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=41`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=48`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template' || !Array.isArray(data.scripts)) throw new Error('Template inválido');
@@ -289,17 +303,15 @@ function configureWorkspaceControls() {
   const select = document.getElementById('workspaceSelect');
   const reset = document.getElementById('resetLocalBtn');
   const discard = document.getElementById('discardTemplatesBtn');
-  const newProject = document.getElementById('newFreeProjectBtn');
   const templateBase = document.getElementById('loadTemplateBaseBtn');
   if (select) select.value = isStandardMode() ? `standard:${workspace.division}` : 'free';
   if (reset) reset.hidden = !isStandardMode();
   if (discard) discard.hidden = isStandardMode();
-  if (newProject) newProject.hidden = isStandardMode();
   if (templateBase) templateBase.hidden = isStandardMode();
 }
 
 function refreshWorkspaceUI() {
-  const label = isStandardMode() ? `CAP · ${workspace.division}` : 'Modo Livre';
+  const label = isStandardMode() ? `CAP · ${workspace.division}` : 'Modo Editor';
   document.body.dataset.workspaceMode = workspace.mode || '';
   document.body.dataset.workspaceDivision = workspace.division || '';
   document.getElementById('pageTitle').textContent = activeCat === 'all' ? label : activeCat === 'favorites' ? 'Favoritos' : activeCat;
@@ -345,7 +357,7 @@ async function loadWorkspace(showFeedback = true) {
     nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
     saveToLocal();
     refreshWorkspaceUI();
-    if (showFeedback) showToast('📂', isStandardMode() ? `CAP · ${workspace.division} carregado` : 'Modo Livre carregado');
+    if (showFeedback) showToast('📂', isStandardMode() ? `CAP · ${workspace.division} carregado` : 'Modo Editor carregado');
   } catch (err) {
     console.error(err);
     document.getElementById('cards').innerHTML = '<div class="empty"><div class="icon">❌</div><p>Não foi possível carregar este contexto.</p></div>';
@@ -356,13 +368,14 @@ async function selectWorkspace(value) {
   if (value === 'free') workspace = { mode: 'free', division: null };
   else {
     const [, division] = String(value).split(':');
-    if (!STANDARD_DIVISIONS[division]) return;
-    workspace = { mode: 'standard', division };
+    const normalizedDivision = LEGACY_DIVISIONS[division] || division;
+    if (!STANDARD_DIVISIONS[normalizedDivision]) return;
+    workspace = { mode: 'standard', division: normalizedDivision };
   }
   localStorage.setItem('scriptz_workspace', JSON.stringify(workspace));
   localStorage.setItem('scriptz_onboarding_complete', 'true');
-  document.documentElement.classList.remove('scriptz-awaiting-onboarding');
-  document.getElementById('welcomeScreen')?.setAttribute('hidden', '');
+  localStorage.setItem('scriptz_daily_welcome_date', localDateKey());
+  await dismissWelcomeScreen();
   await loadWorkspace();
 }
 
@@ -379,9 +392,28 @@ function getStoredWorkspace() {
   try {
     const saved = JSON.parse(localStorage.getItem('scriptz_workspace'));
     if (saved?.mode === 'free') return { mode: 'free', division: null };
-    if (saved?.mode === 'standard' && STANDARD_DIVISIONS[saved.division]) return saved;
+    const normalizedDivision = LEGACY_DIVISIONS[saved?.division] || saved?.division;
+    if (saved?.mode === 'standard' && STANDARD_DIVISIONS[normalizedDivision]) return { mode: 'standard', division: normalizedDivision };
   } catch (_) {}
   return null;
+}
+
+function dismissWelcomeScreen() {
+  const screen = document.getElementById('welcomeScreen');
+  return new Promise(resolve => {
+    if (!screen || screen.hidden) {
+      document.documentElement.classList.remove('scriptz-awaiting-onboarding', 'scriptz-awaiting-daily-welcome');
+      resolve();
+      return;
+    }
+    screen.classList.add('leaving');
+    setTimeout(() => {
+      screen.hidden = true;
+      screen.classList.remove('leaving', 'visible');
+      document.documentElement.classList.remove('scriptz-awaiting-onboarding', 'scriptz-awaiting-daily-welcome');
+      resolve();
+    }, 520);
+  });
 }
 
 function showWelcomeFlow() {
@@ -390,15 +422,43 @@ function showWelcomeFlow() {
   const menu = document.getElementById('welcomeMenu');
   if (!screen || !splash || !menu) return;
   screen.hidden = false;
-  requestAnimationFrame(() => splash.classList.add('visible'));
+  screen.dataset.welcomeVariant = 'onboarding';
+  screen.classList.remove('leaving');
+  splash.hidden = false;
+  menu.hidden = true;
+  menu.classList.remove('visible');
+  requestAnimationFrame(() => {
+    screen.classList.add('visible');
+    splash.classList.add('visible');
+  });
   setTimeout(() => {
     splash.classList.add('leaving');
     setTimeout(() => {
       splash.hidden = true;
       menu.hidden = false;
       requestAnimationFrame(() => menu.classList.add('visible'));
-    }, 350);
-  }, 4700);
+    }, 560);
+  }, 3200);
+}
+
+function showDailyWelcomeFlow() {
+  const screen = document.getElementById('welcomeScreen');
+  const splash = document.getElementById('welcomeSplash');
+  const menu = document.getElementById('welcomeMenu');
+  if (!screen || !splash || !menu) return;
+  localStorage.setItem('scriptz_daily_welcome_date', localDateKey());
+  screen.hidden = false;
+  screen.dataset.welcomeVariant = 'daily';
+  screen.classList.remove('leaving');
+  splash.hidden = false;
+  splash.classList.remove('leaving');
+  menu.hidden = true;
+  menu.classList.remove('visible');
+  requestAnimationFrame(() => {
+    screen.classList.add('visible');
+    splash.classList.add('visible');
+  });
+  setTimeout(() => dismissWelcomeScreen(), 3200);
 }
 
 function showDivisionStep() {
@@ -418,6 +478,7 @@ async function loadData() {
   if (savedWorkspace) {
     workspace = savedWorkspace;
     await loadWorkspace(false);
+    if (shouldShowDailyWelcome()) showDailyWelcomeFlow();
   } else {
     scripts = [];
     categoryRegistry = [];
@@ -434,7 +495,7 @@ function resetLocalData() {
   if (!confirm('⚠️ Isso vai apagar somente scripts, categorias e ordenações criados localmente neste contexto. Continuar?')) return;
   localStorage.removeItem(workspaceKey());
   loadWorkspace(false);
-  showToast('🗑️', 'Alterações locais deletadas.');
+  showToast('↩️', 'Alterações locais revertidas.');
 }
 
 function saveToLocal() {
@@ -1142,6 +1203,110 @@ function applyLink(id) {
     showToast('🔗', 'Link inserido com sucesso!');
 }
 
+function cleanEditorHtml(html) {
+  const template = document.createElement('template');
+  template.innerHTML = String(html || '');
+  const allowedTags = new Set(['P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'A', 'UL', 'OL', 'LI', 'DIV', 'SPAN']);
+  const removeTags = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'META', 'LINK', 'FORM', 'INPUT', 'BUTTON', 'SVG', 'MATH']);
+  [...template.content.querySelectorAll('*')].forEach(element => {
+    const tag = element.tagName;
+    if (removeTags.has(tag)) {
+      element.remove();
+      return;
+    }
+    if (!allowedTags.has(tag)) {
+      element.replaceWith(...element.childNodes);
+      return;
+    }
+    const href = tag === 'A' ? element.getAttribute('href') : '';
+    const originalStyle = element.getAttribute('style') || '';
+    [...element.attributes].forEach(attribute => element.removeAttribute(attribute.name));
+    const safeStyle = [];
+    if (/font-weight\s*:\s*(bold|[6-9]00)/i.test(originalStyle)) safeStyle.push('font-weight:700');
+    if (/font-style\s*:\s*italic/i.test(originalStyle)) safeStyle.push('font-style:italic');
+    if (/text-decoration(?:-line)?\s*:[^;]*(underline)/i.test(originalStyle)) safeStyle.push('text-decoration:underline');
+    if (safeStyle.length) element.setAttribute('style', safeStyle.join(';'));
+    if (tag === 'A') {
+      if (/^(https?:\/\/|mailto:)/i.test(String(href || '').trim())) {
+        element.setAttribute('href', href.trim());
+        element.setAttribute('target', '_blank');
+        element.setAttribute('rel', 'noopener noreferrer');
+      } else {
+        element.replaceWith(...element.childNodes);
+      }
+    }
+  });
+  return template.innerHTML.replace(/<p>\s*<\/p>/gi, '').replace(/<div>\s*<\/div>/gi, '').trim();
+}
+
+function formatNewScript(command) {
+  const editor = document.getElementById('newText');
+  if (!editor) return;
+  editor.focus();
+  document.execCommand(command, false, null);
+  syncNewScriptEditorState();
+}
+
+function toggleNewScriptLinkInput() {
+  const container = document.getElementById('newLinkInput');
+  const input = document.getElementById('newLinkUrl');
+  const editor = document.getElementById('newText');
+  if (!container || !input || !editor) return;
+  const willOpen = !container.classList.contains('visible');
+  if (willOpen) {
+    const selection = window.getSelection();
+    newScriptLinkRange = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+  }
+  container.classList.toggle('visible', willOpen);
+  if (willOpen) input.focus();
+  else {
+    input.value = '';
+    newScriptLinkRange = null;
+    editor.focus();
+  }
+}
+
+function applyNewScriptLink() {
+  const input = document.getElementById('newLinkUrl');
+  const editor = document.getElementById('newText');
+  if (!input || !editor) return;
+  const rawUrl = input.value.trim();
+  if (!rawUrl) {
+    showToast('⚠️', 'Digite uma URL válida');
+    return;
+  }
+  if (!newScriptLinkRange || newScriptLinkRange.collapsed) {
+    showToast('⚠️', 'Selecione o texto que deseja transformar em link');
+    return;
+  }
+  const finalUrl = /^(https?:\/\/|mailto:)/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(newScriptLinkRange);
+  editor.focus();
+  document.execCommand('createLink', false, finalUrl);
+  const link = selection.anchorNode?.parentElement?.closest?.('a');
+  if (link) {
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+  }
+  syncNewScriptEditorState();
+  toggleNewScriptLinkInput();
+}
+
+function handleNewScriptPaste(event) {
+  const html = event.clipboardData?.getData('text/html');
+  if (!html) return;
+  event.preventDefault();
+  document.execCommand('insertHTML', false, cleanEditorHtml(html));
+  syncNewScriptEditorState();
+}
+
+function syncNewScriptEditorState() {
+  const editor = document.getElementById('newText');
+  if (editor) editor.dataset.hasContent = editor.innerText.trim() ? 'true' : 'false';
+}
+
 // ============================================================
 //  RENDER
 // ============================================================
@@ -1438,14 +1603,6 @@ function saveEdit(id) {
   showToast('💾', 'Script salvo!');
 }
 
-function cleanEditorHtml(html) {
-  let cleaned = html.replace(/<span style="[^"]*">/g, '');
-  cleaned = cleaned.replace(/<\/span>/g, '');
-  cleaned = cleaned.replace(/<p><\/p>/g, '');
-  cleaned = cleaned.replace(/<br>$/g, '');
-  return cleaned;
-}
-
 function deleteScript(id) {
   const script = scripts.find(item => item.id === id);
   if (isStandardScript(script)) {
@@ -1512,7 +1669,12 @@ function openModal() {
     document.getElementById('newTitle').value = '';
     document.getElementById('newCategoryInput').value = '';
     document.getElementById('newCategoryHidden').value = '';
-    document.getElementById('newText').value = '';
+    const editor = document.getElementById('newText');
+    editor.innerHTML = '';
+    editor.dataset.hasContent = 'false';
+    document.getElementById('newLinkInput')?.classList.remove('visible');
+    document.getElementById('newLinkUrl').value = '';
+    newScriptLinkRange = null;
     const greetingSelect = document.getElementById('newGreeting');
     greetingSelect.innerHTML = greetingSelectOptions(GREETING_MODES.auto);
     greetingSelect.value = GREETING_MODES.auto;
@@ -1540,7 +1702,9 @@ function textToHTML(txt) {
 
 function addScript() {
     const title = document.getElementById('newTitle').value.trim();
-    const text = document.getElementById('newText').value.trim();
+    const editor = document.getElementById('newText');
+    const text = editor.innerText.trim();
+    const html = cleanEditorHtml(editor.innerHTML);
     const categoryInput = document.getElementById('newCategoryInput').value.trim();
     const hiddenCategory = document.getElementById('newCategoryHidden').value.trim();
     const greetingMode = document.getElementById('newGreeting').value;
@@ -1568,7 +1732,7 @@ function addScript() {
         id: nextId++,
         cat: cat,
         title: title,
-        html: textToHTML(text),
+        html: html || textToHTML(text),
         greetingMode: greetingMode,
         hasGreeting: greetingMode !== GREETING_MODES.off,
         hasSignature: includeSignature,
@@ -1610,10 +1774,10 @@ function exportJSON() {
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = standard ? `${workspace.division}-alteracoes.json` : 'scriptz-modo-livre.json';
+  a.download = standard ? `${workspace.division}-alteracoes.json` : 'meus-scriptz.json';
   a.click();
   URL.revokeObjectURL(a.href);
-  showToast('📤', 'JSON exportado!');
+  showToast('📤', standard ? 'Alterações exportadas!' : 'Meus Scriptz exportados!');
 }
 
 function importProjectData(imported) {
@@ -1712,7 +1876,7 @@ async function loadStandardBaseIntoFree(division) {
   try {
     const template = await fetchStandardTemplate(division);
     const incoming = template.scripts.map(script => normalizeScript({ ...script, isStandard: false }, 'template-base'));
-    if (scripts.length + incoming.length > SCRIPT_LIMITS.free) throw new Error(`O Modo Livre aceita até ${SCRIPT_LIMITS.free} scriptz.`);
+    if (scripts.length + incoming.length > SCRIPT_LIMITS.free) throw new Error(`O Modo Editor aceita até ${SCRIPT_LIMITS.free} scriptz.`);
     scripts = [...scripts, ...incoming];
     categoryRegistry = [...new Set([...categoryRegistry, ...(template.categories || []), ...incoming.map(script => script.cat)])];
     customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
@@ -1720,7 +1884,7 @@ async function loadStandardBaseIntoFree(division) {
     saveToLocal();
     closeTemplateBaseModal();
     refreshWorkspaceUI();
-    showToast('📂', `Base CAP · ${division} carregada no Modo Livre.`);
+    showToast('📂', `Base CAP · ${division} carregada no Modo Editor.`);
   } catch (error) {
     showToast('❌', error.message || 'Não foi possível carregar a base.');
   }
@@ -1728,35 +1892,17 @@ async function loadStandardBaseIntoFree(division) {
 
 function discardFreeTemplates() {
   if (isStandardMode()) return;
-  const templateScripts = scripts.filter(script => script.source === 'template-base');
-  if (!templateScripts.length) {
-    showToast('ℹ️', 'Não há templates carregados para descartar.');
-    return;
-  }
-  if (!confirm(`Descartar ${templateScripts.length} template(s) carregado(s) como base? Seus scripts continuarão preservados.`)) return;
-  scripts = scripts.filter(script => script.source !== 'template-base');
-  categoryRegistry = categoryRegistry.filter(category => scripts.some(script => script.cat === category));
-  customCategoryOrder = customCategoryOrder.filter(category => categoryRegistry.includes(category));
+  if (!confirm('Isso apagará todos os seus Scriptz deste Modo Editor e o reiniciará em branco. Continuar?')) return;
+  localStorage.removeItem(workspaceKey());
+  scripts = [];
+  categoryRegistry = [];
+  customCategoryOrder = [];
+  customScriptOrderByCategory = {};
+  nextId = 100;
+  activeCat = 'all';
   saveToLocal();
   refreshWorkspaceUI();
-  showToast('🧹', 'Templates descartados.');
-}
-
-function downloadAndNewProject() {
-  if (isStandardMode()) return;
-  if (!confirm('O JSON atual será baixado e o Modo Livre será iniciado em branco. Continuar?')) return;
-  exportJSON();
-  setTimeout(() => {
-    localStorage.removeItem(workspaceKey());
-    scripts = [];
-    categoryRegistry = [];
-    customCategoryOrder = [];
-    customScriptOrderByCategory = {};
-    nextId = 100;
-    saveToLocal();
-    refreshWorkspaceUI();
-    showToast('✅', 'Novo projeto iniciado no Modo Livre.');
-  }, 120);
+  showToast('🧹', 'Modo Editor reiniciado.');
 }
 
 // ============================================================

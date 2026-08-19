@@ -1,16 +1,28 @@
-# Arquitetura de Modo — Scriptz
+# Arquitetura de modos — Scriptz v46
 
-O Scriptz possui dois contextos independentes. O **Scriptz Padrão** carrega um JSON-base associado à divisão selecionada e mantém cada item desse arquivo como `standard`, sem permitir alteração de conteúdo, título ou categoria. O **Modo Livre** começa sem dados e trata todos os scripts como editáveis.
+O Scriptz opera em dois contextos independentes. O **Scriptz Padrão** carrega um JSON-base associado à unidade selecionada e bloqueia scripts e categorias institucionais. O **Modo Editor** começa vazio e mantém todos os dados editáveis.
 
-As escolhas de tema, assinatura, modo, divisão e largura da barra lateral permanecem exclusivamente no armazenamento local. Os dados exportados nunca incluem essas preferências. No Modo Padrão, a exportação contém somente scripts e categorias criados pelo usuário, mais as preferências de ordenação necessárias para recriar sua organização.
+As preferências de tema, assinatura, contexto, unidade e largura da barra lateral pertencem somente ao navegador. Exportações carregam os scripts, categorias e ordenações do contexto, mas não essas preferências pessoais.
 
 | Contexto | Fonte inicial | Edição de scripts-base | Exportação |
 |---|---|---|---|
-| Scriptz Padrão | `templates/<DIVISÃO>.JSON` | Bloqueada | Apenas alterações do usuário |
-| Modo Livre | Nenhuma | Livre | Projeto completo do Modo Livre |
+| Scriptz Padrão | JSON-base de DEPROT, DPCI, DPD, Núcleo ou Sala Arthur Saboya | Bloqueada | Apenas alterações do usuário na mesma unidade |
+| Modo Editor | Projeto vazio ou base CAP editável | Livre | Projeto completo como `scriptz-free-project` |
 
-Para manter a interface responsiva em dispositivos móveis, o limite operacional é de **300 scripts por divisão** no Scriptz Padrão e **500 scripts por projeto** no Modo Livre. O limite considera que os cards possuem prévia, controles e editor já presentes no DOM, evitando degradação de rolagem e de interações.
+## Unidades
 
-## Verificação visual mobile
+| Unidade | Arquivo-base |
+|---|---|
+| DEPROT | `templates/DEPROT.JSON` |
+| DPCI | `templates/DPCI.JSON` |
+| DPD | `templates/DPD.JSON` |
+| Núcleo | `templates/SMUL-CAP.JSON` |
+| Sala Arthur Saboya | `templates/SALA-ARTHUR-SABOYA.JSON` |
 
-Em uma captura de 375 × 812 px, a mensagem inicial ficou legível e centralizada, e a tela seguinte apresentou a seleção de coordenadoria sem rolagem horizontal. Os botões mantiveram uma área de toque ampla, com o Modo Livre ocupando a largura disponível para explicitar a ação principal.
+Contextos antigos persistidos como `Coord.` são normalizados para **Núcleo** ao abrir a aplicação.
+
+## Limites e interface
+
+O limite é de **300 scripts por unidade** no Scriptz Padrão e **500 scripts por projeto** no Modo Editor. O editor de criação e o editor existente armazenam HTML tratado, preservando formatação segura de texto e rejeitando elementos executáveis.
+
+No primeiro acesso, uma breve boas-vindas antecede a tela **SMUL · CAP**, que apresenta as cinco unidades e o acesso textual ao Modo Editor. O menu expansível **Ações** concentra os comandos operacionais aplicáveis ao contexto e mantém a barra lateral mais limpa em desktop e mobile.

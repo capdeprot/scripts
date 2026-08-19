@@ -2153,16 +2153,18 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--text
 .template-base-grid button { min-height: 72px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface2); color: var(--text); font: 700 15px/1 'Rajdhani', sans-serif; cursor: pointer; transition: transform .16s cubic-bezier(.23,1,.32,1), background .16s ease, border-color .16s ease; }
 .template-base-grid button:hover { transform: translateY(-2px); background: var(--accent-light); border-color: var(--accent); }
 
-.welcome-screen { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; overflow: auto; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: radial-gradient(circle at 50% 10%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 46%), var(--bg); color: var(--text); }
+.welcome-screen { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; overflow: auto; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: radial-gradient(circle at 50% 10%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 46%), var(--bg); color: var(--text); opacity: 0; transition: opacity .52s cubic-bezier(.23,1,.32,1); }
 .welcome-screen[hidden] { display: none; }
-html.scriptz-awaiting-onboarding .layout { visibility: hidden; pointer-events: none; }
-.welcome-splash { display: grid; justify-items: center; gap: 16px; opacity: 0; transform: translateY(10px); transition: opacity .35s cubic-bezier(.23,1,.32,1), transform .35s cubic-bezier(.23,1,.32,1); }
+html.scriptz-awaiting-onboarding .layout, html.scriptz-awaiting-daily-welcome .layout { visibility: hidden; pointer-events: none; }
+.welcome-screen.visible { opacity: 1; }
+.welcome-screen.leaving { opacity: 0; }
+.welcome-splash { display: grid; justify-items: center; gap: 16px; opacity: 0; transform: translateY(14px) scale(.985); transition: opacity .56s cubic-bezier(.23,1,.32,1), transform .56s cubic-bezier(.23,1,.32,1); }
 .welcome-splash.visible { opacity: 1; transform: translateY(0); }
-.welcome-splash.leaving { opacity: 0; transform: translateY(-10px); }
+.welcome-splash.leaving { opacity: 0; transform: translateY(-12px) scale(.99); }
 .welcome-splash p { margin: 0; color: var(--text-secondary); font: 600 clamp(18px, 3vw, 28px)/1 'Rajdhani', sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .welcome-splash div { display: flex; align-items: center; gap: 14px; font: 700 italic clamp(44px, 8vw, 80px)/.9 'Rajdhani', sans-serif; }
 .welcome-splash img { width: clamp(52px, 7vw, 76px); height: auto; object-fit: contain; }
-.welcome-menu { width: min(860px, 100%); opacity: 0; transform: translateY(12px); transition: opacity .35s cubic-bezier(.23,1,.32,1), transform .35s cubic-bezier(.23,1,.32,1); }
+.welcome-menu { width: min(860px, 100%); opacity: 0; transform: translateY(16px) scale(.99); transition: opacity .58s cubic-bezier(.23,1,.32,1), transform .58s cubic-bezier(.23,1,.32,1); }
 .welcome-menu.visible { opacity: 1; transform: translateY(0); }
 .welcome-step { padding: clamp(28px, 5vw, 52px); border: 1px solid var(--border); border-radius: 22px; background: color-mix(in srgb, var(--surface) 90%, transparent); box-shadow: 0 28px 80px rgba(0,0,0,.22); text-align: center; }
 .welcome-kicker { margin: 0 0 8px; color: var(--accent); font: 700 13px/1 'Rajdhani', sans-serif; letter-spacing: .16em; text-transform: uppercase; }
@@ -2172,6 +2174,7 @@ html.scriptz-awaiting-onboarding .layout { visibility: hidden; pointer-events: n
 .welcome-choice-grid .welcome-free { grid-column: span 2; background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .welcome-back { display: inline-flex; margin: 0 auto 22px; border: 0; background: transparent; color: var(--text-secondary); font: 600 14px/1 'Inter', sans-serif; cursor: pointer; }
 .welcome-back:hover { color: var(--accent); }
+.welcome-splash, .welcome-menu { grid-area: 1 / 1; }
 
 @media (min-width: 821px) {
   .top-bar { width: 100%; }
@@ -2193,4 +2196,52 @@ html.scriptz-awaiting-onboarding .layout { visibility: hidden; pointer-events: n
   .welcome-splash div { gap: 10px; }
   .welcome-step h1 { font-size: 30px; }
   .welcome-choice-grid button { min-height: 92px; }
+}
+
+/* Scriptz v45: criação rica espelha as ferramentas do editor e amplia a leitura em ambos os fluxos. */
+.new-script-modal { width: min(680px, 95vw); }
+.new-editor-shell { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface2); }
+.new-editor-shell .new-editor-fmt-bar { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+.new-editor-shell [contenteditable] { min-height: 235px; padding: 18px 20px; background: var(--surface); color: var(--text); font-size: 16px; line-height: 1.7; }
+.new-editor-shell [contenteditable]:focus { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent); }
+.new-editor-shell .link-url-input { margin: 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+.editor-wrap.visible [contenteditable] { min-height: 205px; font-size: 16px; line-height: 1.7; }
+
+@media (max-width: 820px) {
+  .new-script-modal { width: calc(100vw - 20px); max-height: calc(100vh - 20px); padding: 18px; }
+  .new-editor-shell [contenteditable] { min-height: 245px; padding: 14px; font-size: 15px; line-height: 1.65; }
+  .editor-wrap.visible [contenteditable] { min-height: 205px; padding: 14px; font-size: 15px; line-height: 1.65; }
+}
+
+/* Scriptz v46: ações contextuais agrupadas e escolha direta da unidade no primeiro acesso. */
+.actions-menu { border: 1px solid var(--border); border-radius: 10px; background: color-mix(in srgb, var(--surface2) 72%, transparent); }
+.actions-menu summary { display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; color: var(--text); font: 700 14px/1 'Rajdhani', sans-serif; letter-spacing: .04em; cursor: pointer; list-style: none; }
+.actions-menu summary::-webkit-details-marker { display: none; }
+.actions-menu summary span { transition: transform .18s cubic-bezier(.23,1,.32,1); }
+.actions-menu[open] summary { border-bottom: 1px solid var(--border); }
+.actions-menu[open] summary span { transform: rotate(180deg); }
+.actions-menu:not([open]) .actions-menu-content { display: none; }
+.actions-menu-content { display: grid; gap: 7px; padding: 9px; }
+.actions-menu-content button { min-height: 38px; text-align: left; }
+.actions-menu-content .btn-reset { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+
+.welcome-units-step { max-width: 860px; }
+.welcome-units-step h1 { max-width: 670px; margin-inline: auto; font-size: clamp(23px, 3.1vw, 34px); line-height: 1.06; }
+.welcome-units-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); max-width: 760px; margin-inline: auto; }
+.welcome-units-grid button { grid-column: span 2; min-height: 102px; font-size: clamp(20px, 2.5vw, 28px); }
+.welcome-units-grid button:nth-child(4) { grid-column: 2 / span 2; }
+.welcome-units-grid button:nth-child(5) { grid-column: 4 / span 2; }
+.welcome-editor-link { margin: 26px 0 0; color: var(--text-secondary); font: 500 15px/1.5 'Inter', sans-serif; }
+.welcome-editor-link button { margin: 0; padding: 0; border: 0; background: transparent; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.welcome-editor-link button:hover { color: var(--text); }
+
+@media (max-width: 820px) {
+  .actions-menu summary { min-height: 42px; }
+  .welcome-units-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .welcome-units-grid button, .welcome-units-grid button:nth-child(4), .welcome-units-grid button:nth-child(5) { grid-column: span 1; min-height: 82px; font-size: 21px; }
+  .welcome-units-grid button:nth-child(5) { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-screen, .welcome-splash, .welcome-menu { transition-duration: .01ms; }
 }

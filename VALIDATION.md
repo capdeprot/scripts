@@ -1,22 +1,26 @@
-# Validação da arquitetura de modos
+# Validação da versão v48
 
-Esta versão foi validada em navegador com os templates de divisão deliberadamente vazios. Os testes usaram dados temporários apenas no armazenamento local e foram removidos ao final da validação.
+Esta versão foi validada com os templates institucionais deliberadamente vazios. Os scripts usados nos testes foram temporários e mantidos apenas no armazenamento local do navegador.
 
 | Cenário | Resultado observado |
 |---|---|
-| Primeiro acesso | A mensagem de boas-vindas aparece suavemente e, após a permanência prevista, apresenta CAP e Modo Livre. |
-| CAP e divisões | DEPROT, DPCI, DPD e Coord. carregam seus arquivos JSON vazios sem recorrer ao JSON legado. |
-| Modo Livre | Abre vazio, disponibiliza base editável, descarte de templates e novo projeto. |
-| Persistência | Um script criado em DEPROT permaneceu disponível após recarregar a página e não foi carregado no Modo Livre. |
-| Proteção | Um Script Padrão temporário exibiu editar e excluir desativados; a função de edição também recusou uma chamada direta. |
-| Importação | Arquivos de divisão diferente foram recusados; categorias inexistentes foram direcionadas para Geral; alterações padrão foram recusadas no Modo Livre. |
-| Exportação | Projetos livres usam `scriptz-free-project`; divisões usam `scriptz-standard-changes` e excluem scripts padrão, tema e assinatura. |
-| Desempenho | 300 cards padrão foram renderizados em aproximadamente 98 ms; 500 cards livres, em aproximadamente 277 ms. |
-| PWA | O service worker `scriptz-shell-v44` ficou ativo e armazena os quatro arquivos JSON-base. |
-| Saudação configurável | Criação com `Prezado(a),`, edição para Desabilitar, prévia ao vivo e persistência após recarregar foram confirmadas. Scripts antigos mantêm o comportamento automático ou desabilitado conforme `hasGreeting`. |
-| Mobile | Jornada inicial aprovada em 320px, 375px e 430px. Criação, edição, remoção de saudação e persistência validadas em 320px e 375px, sem rolagem horizontal. |
-| Primeiro paint | Em perfis limpos desktop e mobile, o gate de onboarding ocultou a interface principal e exibiu a jornada inicial antes de qualquer superfície do sistema. Contextos já salvos continuam abrindo diretamente a aplicação. |
+| Primeiro paint | Em perfis limpos desktop e mobile, a jornada inicial foi a primeira superfície visível. A interface principal não apareceu antes dela. |
+| Jornada inicial | Após a boas-vindas, a tela SMUL · CAP exibiu DEPROT, DPCI, DPD, Núcleo, Sala Arthur Saboya e o link para o Modo Editor. |
+| Unidades | DEPROT, DPCI, DPD, Núcleo e Sala Arthur Saboya carregaram seus JSONs-base vazios sem recorrer ao JSON legado. |
+| Modo Editor | Abriu vazio, permanece disponível na jornada e no dropdown e mantém ações próprias dentro do menu Ações. |
+| Editor rico | A criação passou a oferecer negrito, itálico, sublinhado, lista e links. HTML colado preservou formatação segura e removeu conteúdo inseguro. |
+| Persistência | O script criado com negrito, itálico e lista permaneceu formatado na prévia e no estado local após salvar. |
+| Ações | O menu inicia recolhido. No Modo Editor, mostra base padrão, exportação e reinício; em unidades padrão, mostra exportação e reversão local. |
+| Exportação | O Modo Editor exporta `meus-scriptz.json`; unidades seguem gerando `scriptz-standard-changes` sem templates, tema ou assinatura. |
+| Mobile | Criação rica, edição e saudação foram validadas em 320px e 375px, sem rolagem horizontal. A jornada de unidades foi inspecionada em 375px. |
+| PWA | O service worker `scriptz-shell-v48` ficou ativo e incluiu os cinco JSONs-base, inclusive Sala Arthur Saboya. |
+| Retorno diário — desktop | Em um perfil com contexto existente e tema Dark Purple, o gate diário ocultou a interface principal, aplicou o tema antes da inicialização e mostrou a mesma recepção institucional do primeiro acesso. |
+| Retorno diário — mobile | Em 375px, com Blue Midnight, a recepção institucional diária permaneceu centralizada, legível e sem rolagem horizontal. |
+| Encerramento diário | Após o tempo de exibição, o gate foi removido, a tela de boas-vindas foi ocultada, a interface voltou a ficar visível e a data local foi persistida em `scriptz_daily_welcome_date`. |
+| Inspeção visual | As capturas estabilizadas de Dark Purple em desktop e Blue Midnight em mobile confirmaram hierarquia, contraste, marca e centralização adequados. |
 
 ## Checagens técnicas
 
-`js/app.js` e `sw.js` passaram pela verificação de sintaxe do Node.js. Todos os JSONs da pasta `templates/` foram analisados como JSON válido. Não foram registrados erros no console do navegador durante os fluxos testados.
+`js/app.js`, `sw.js` e os scripts de validação passaram pela verificação de sintaxe do Node.js. Todos os JSONs da pasta `templates/` foram analisados como JSON válido. Os fluxos de criação, edição, seleção de contexto e PWA foram executados sem erros de JavaScript observados no console.
+
+Para o retorno diário, `tools/daily-welcome-test.mjs` executou dois perfis limpos por Chromium headless: **1280×720 com Dark Purple** e **375×812 com Blue Midnight**. Em ambos os cenários, o teste confirmou o gate, o tema aplicado, a visibilidade da mesma recepção institucional do primeiro acesso, a ocultação da interface, a transição de encerramento e o registro da data. As imagens correspondentes ficam em `screenshots/daily-welcome-v48/` durante a validação local.

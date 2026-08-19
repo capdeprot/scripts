@@ -8,7 +8,18 @@
         try {
           var stored = localStorage.getItem('scriptz_workspace');
           var workspace = stored ? JSON.parse(stored) : null;
-          if (!workspace || !workspace.mode) document.documentElement.classList.add('scriptz-awaiting-onboarding');
+          var theme = localStorage.getItem('theme');
+          var allowedThemes = { light: true, black: true, midnight: true, purple: true };
+          document.documentElement.setAttribute('data-theme', allowedThemes[theme] ? theme : 'midnight');
+          if (!workspace || !workspace.mode) {
+            document.documentElement.classList.add('scriptz-awaiting-onboarding');
+            return;
+          }
+          var now = new Date();
+          var today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+          if (localStorage.getItem('scriptz_daily_welcome_date') !== today) {
+            document.documentElement.classList.add('scriptz-awaiting-daily-welcome');
+          }
         } catch (_) {
           document.documentElement.classList.add('scriptz-awaiting-onboarding');
         }
@@ -18,12 +29,12 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=3" />
     <link rel="shortcut icon" href="assets/favicon.png?v=3" />
-    <link rel="manifest" href="manifest.webmanifest?v=44" />
+    <link rel="manifest" href="manifest.webmanifest?v=48" />
     <meta name="theme-color" content="#101a43" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=44">
+    <link rel="stylesheet" href="css/style.css?v=48">
 </head>
 <body data-theme-default="midnight">
     <div class="layout" id="appLayout">
@@ -55,9 +66,10 @@
                             <option value="standard:DEPROT">CAP · DEPROT</option>
                             <option value="standard:DPCI">CAP · DPCI</option>
                             <option value="standard:DPD">CAP · DPD</option>
-                            <option value="standard:Coord.">CAP · Coord.</option>
+                            <option value="standard:Núcleo">CAP · Núcleo</option>
+                            <option value="standard:Sala Arthur Saboya">CAP · Sala Arthur Saboya</option>
                         </optgroup>
-                        <option value="free">Modo Livre</option>
+                        <option value="free">Modo Editor</option>
                     </select>
                 </div>
             </div>
@@ -65,18 +77,21 @@
                 <input type="text" id="searchInput" placeholder="🔍 Buscar pelo título do script…" oninput="onSearch(this.value)">
             </div>
             <div id="sidebarNav"></div>
-            <div class="sb-reorder">
-                <button class="btn-reorder" onclick="openCategoryModal()">📂 Gerenciar categorias</button>
-            </div>
             <div class="sb-foot">
                 <div class="config-section">
                     <label>👤 Sua assinatura</label>
                     <input type="text" id="userNameInput" placeholder="Escreva aqui seu nome e sobrenome" onblur="updateSignature()">
                 </div>
-                <button id="resetLocalBtn" onclick="resetLocalData()" class="btn-reset">🗑️ Deletar alterações locais</button>
-                <button id="discardTemplatesBtn" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Descartar Templates</button>
-                <button id="newFreeProjectBtn" onclick="downloadAndNewProject()" class="context-action" hidden>📥 Baixar JSON e iniciar novo projeto</button>
-                <button id="loadTemplateBaseBtn" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar JSON padrão como base</button>
+                <details class="actions-menu" id="actionsMenu">
+                    <summary>Ações <span aria-hidden="true">⌄</span></summary>
+                    <div class="actions-menu-content">
+                        <button type="button" onclick="openCategoryModal()">📂 Gerenciar categorias</button>
+                        <button id="loadTemplateBaseBtn" type="button" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar JSON padrão como base</button>
+                        <button id="exportScriptsBtn" type="button" onclick="exportJSON()">📤 Exportar meus Scriptz</button>
+                        <button id="discardTemplatesBtn" type="button" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Descartar Scriptz e reiniciar Modo Editor</button>
+                        <button id="resetLocalBtn" type="button" onclick="resetLocalData()" class="btn-reset" hidden>↩️ Reverter alterações locais</button>
+                    </div>
+                </details>
                 <div class="drop-zone" id="dropZone" onclick="document.getElementById('importFile').click()">
                     📥 Arraste ou clique para importar JSON
                     <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
@@ -104,7 +119,6 @@
                         <option value="id" data-desktop-label="Ordenar por: Data (criação)" data-mobile-label="Data">Ordenar por: Data (criação)</option>
                         <option value="custom" data-desktop-label="✨ Ordem personalizada" data-mobile-label="✨ Manual">✨ Ordem personalizada</option>
                     </select>
-                    <button class="btn-export" onclick="exportJSON()"><span class="btn-icon" aria-hidden="true">📤</span><span class="btn-label">Exportar JSON</span></button>
                     <button class="btn-add" onclick="openModal()"><span class="btn-icon" aria-hidden="true">➕</span><span class="btn-label">Novo script</span></button>
                 </div>
             </div>
@@ -123,7 +137,7 @@
 
     <!-- MODAL NOVO SCRIPT -->
     <div class="overlay" id="overlay" onclick="if(event.target===this) closeModal()">
-        <div class="modal">
+        <div class="modal new-script-modal">
             <h3>➕ Novo script</h3>
             <div class="field">
                 <label>Título</label>
@@ -151,7 +165,23 @@
             </div>
             <div class="field">
                 <label>Texto do script (somente o corpo, sem saudação e sem assinatura)</label>
-                <textarea id="newText" placeholder="Cole ou escreva o texto aqui…"></textarea>
+                <div class="new-editor-shell">
+                    <div class="fmt-bar new-editor-fmt-bar" role="toolbar" aria-label="Ferramentas de formatação">
+                        <button type="button" class="fmt-btn" aria-label="Negrito" title="Negrito" onmousedown="event.preventDefault();formatNewScript('bold')"><b>B</b></button>
+                        <button type="button" class="fmt-btn" aria-label="Itálico" title="Itálico" onmousedown="event.preventDefault();formatNewScript('italic')"><i>I</i></button>
+                        <button type="button" class="fmt-btn" aria-label="Sublinhado" title="Sublinhado" onmousedown="event.preventDefault();formatNewScript('underline')"><u>U</u></button>
+                        <div class="fmt-sep"></div>
+                        <button type="button" class="fmt-btn fmt-btn-link" aria-label="Inserir link" title="Inserir link" onmousedown="event.preventDefault();toggleNewScriptLinkInput()">🔗</button>
+                        <div class="fmt-sep"></div>
+                        <button type="button" class="fmt-btn" aria-label="Lista com marcadores" title="Lista com marcadores" onmousedown="event.preventDefault();formatNewScript('insertUnorderedList')">•</button>
+                    </div>
+                    <div class="link-url-input" id="newLinkInput">
+                        <input type="url" id="newLinkUrl" placeholder="https://exemplo.com" onkeydown="if(event.key==='Enter'){event.preventDefault();applyNewScriptLink();}">
+                        <button type="button" onclick="applyNewScriptLink()">Inserir</button>
+                        <button type="button" class="btn-ghost" onclick="toggleNewScriptLinkInput()">✕</button>
+                    </div>
+                    <div id="newText" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Cole ou escreva o texto aqui…" oninput="syncNewScriptEditorState()" onpaste="handleNewScriptPaste(event)"></div>
+                </div>
             </div>
             <div class="modal-btns">
                 <button class="btn-sec" onclick="closeModal()">Cancelar</button>
@@ -178,16 +208,17 @@
         </div>
     </div>
 
-    <!-- MODAL: BASE DO MODO LIVRE -->
+    <!-- MODAL: BASE DO MODO EDITOR -->
     <div class="overlay" id="templateBaseModal" onclick="if(event.target===this) closeTemplateBaseModal()">
         <div class="modal template-base-modal">
             <h3>📂 Usar JSON padrão como base</h3>
-            <p>Os scripts carregados aqui permanecerão totalmente editáveis no Modo Livre.</p>
+            <p>Os scripts carregados aqui permanecerão totalmente editáveis no Modo Editor.</p>
             <div class="template-base-grid">
                 <button onclick="loadStandardBaseIntoFree('DEPROT')">CAP · DEPROT</button>
                 <button onclick="loadStandardBaseIntoFree('DPCI')">CAP · DPCI</button>
                 <button onclick="loadStandardBaseIntoFree('DPD')">CAP · DPD</button>
-                <button onclick="loadStandardBaseIntoFree('Coord.')">CAP · Coord.</button>
+                <button onclick="loadStandardBaseIntoFree('Núcleo')">CAP · Núcleo</button>
+                <button onclick="loadStandardBaseIntoFree('Sala Arthur Saboya')">CAP · Sala Arthur Saboya</button>
             </div>
             <div class="modal-btns"><button class="btn-sec" onclick="closeTemplateBaseModal()">Cancelar</button></div>
         </div>
@@ -197,43 +228,39 @@
     <section id="welcomeScreen" class="welcome-screen" aria-live="polite" hidden>
         <div id="welcomeSplash" class="welcome-splash">
             <p>Bem-vindo(a) ao</p>
-            <div><img src="assets/scriptz_icone_branco_transparente.png" alt="" /><strong>scriptz!</strong></div>
+            <div><img src="assets/scriptz_icone_branco_transparente.png" alt="" /><strong>scriptz</strong></div>
         </div>
         <div id="welcomeMenu" class="welcome-menu" hidden>
-            <div class="welcome-step" id="coordinatorStep">
-                <p class="welcome-kicker">Primeiro acesso</p>
-                <h1>Selecione sua coordenadoria</h1>
-                <div class="welcome-choice-grid">
-                    <button onclick="showDivisionStep()">CAP</button>
-                    <button class="welcome-free" onclick="selectWorkspace('free')">Iniciar em Modo Livre</button>
-                </div>
-            </div>
-            <div class="welcome-step" id="divisionStep" hidden>
-                <button class="welcome-back" onclick="showCoordinatorStep()">← Voltar</button>
-                <p class="welcome-kicker">CAP · Scriptz Padrão</p>
-                <h1>Selecione sua divisão</h1>
-                <div class="welcome-choice-grid">
+            <div class="welcome-step welcome-units-step">
+                <p class="welcome-kicker">SMUL · CAP</p>
+                <h1>Escolha sua unidade para acessar as respostas padronizadas.</h1>
+                <div class="welcome-choice-grid welcome-units-grid">
                     <button onclick="selectWorkspace('standard:DEPROT')">DEPROT</button>
                     <button onclick="selectWorkspace('standard:DPCI')">DPCI</button>
                     <button onclick="selectWorkspace('standard:DPD')">DPD</button>
-                    <button onclick="selectWorkspace('standard:Coord.')">Coord.</button>
+                    <button onclick="selectWorkspace('standard:Núcleo')">Núcleo</button>
+                    <button onclick="selectWorkspace('standard:Sala Arthur Saboya')">Sala Arthur Saboya</button>
                 </div>
+                <p class="welcome-editor-link">Ou <button type="button" onclick="selectWorkspace('free')">clique aqui</button> para acessar o Modo Editor e criar seus próprios Scriptz.</p>
             </div>
         </div>
     </section>
     <script>
       (function () {
-        if (!document.documentElement.classList.contains('scriptz-awaiting-onboarding')) return;
+        var root = document.documentElement;
+        var isOnboarding = root.classList.contains('scriptz-awaiting-onboarding');
+        var isDaily = root.classList.contains('scriptz-awaiting-daily-welcome');
+        if (!isOnboarding && !isDaily) return;
         var screen = document.getElementById('welcomeScreen');
         var splash = document.getElementById('welcomeSplash');
-        if (screen) screen.hidden = false;
-        if (splash) splash.classList.add('visible');
+        if (screen) { screen.hidden = false; screen.classList.add('visible'); }
+        if ((isOnboarding || isDaily) && splash) splash.classList.add('visible');
       })();
     </script>
 
     <!-- TOAST -->
     <div class="toast" id="toast"><span class="icon"></span><span class="msg"></span></div>
 
-    <script src="js/app.js?v=44"></script>
+    <script src="js/app.js?v=48"></script>
 </body>
 </html>

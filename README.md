@@ -1,91 +1,108 @@
 # Scriptz — Gerenciador de modelos de e-mail
 
-O **Scriptz** é uma aplicação web estática e instalável que organiza modelos de e-mail em dois contextos independentes: **Scriptz Padrão**, destinado a divisões da CAP com modelos institucionais protegidos, e **Modo Livre**, destinado à criação e gestão integral de projetos pessoais. A aplicação funciona inteiramente no navegador, sem backend obrigatório.
+O **Scriptz** é uma aplicação web estática e instalável para organizar, criar, editar e reutilizar modelos de e-mail. Todo o funcionamento ocorre no navegador: não há backend obrigatório, e os dados de cada contexto permanecem separados no armazenamento local.
 
-## Modos de uso
+## Contextos de uso
 
-No primeiro acesso, o Scriptz exibe uma recepção breve e solicita a escolha entre CAP e Modo Livre. A escolha fica armazenada localmente, assim como o tema, a assinatura e a largura da barra lateral. Esses elementos são preferências da pessoa usuária; portanto, não são incorporados aos JSONs exportados.
+No primeiro acesso, a aplicação apresenta uma breve recepção e, em seguida, a tela **SMUL · CAP**. A pessoa usuária pode escolher a unidade que deseja consultar ou acessar o **Modo Editor** pelo link da própria jornada. A escolha também permanece disponível no seletor de contexto da barra lateral.
 
-| Contexto | Início | Permissões | Exportação |
+| Contexto | Uso | Permissões | Exportação |
 |---|---|---|---|
-| **Scriptz Padrão** | Seleção de DEPROT, DPCI, DPD ou Coord. | Os scripts e categorias do JSON-base são protegidos; dados criados localmente continuam editáveis. | Apenas scripts, categorias e ordenações criados pelo usuário. |
-| **Modo Livre** | Projeto vazio. A pessoa usuária pode importar um projeto ou carregar uma base padrão como ponto de partida. | Todos os scripts e categorias são editáveis. | Projeto completo do Modo Livre. |
+| **Scriptz Padrão** | Consulta e personalização local dos modelos de uma unidade. | Os scripts e categorias recebidos do JSON-base são protegidos; dados próprios permanecem editáveis. | Exporta apenas scripts, categorias e ordenações criados localmente. |
+| **Modo Editor** | Criação livre de Scriptz, importação de projetos e uso opcional de bases CAP editáveis. | Todos os scripts e categorias são editáveis. | Exporta o projeto completo como `meus-scriptz.json`. |
 
-## Scriptz Padrão
+Tema, assinatura, contexto selecionado e largura da barra lateral são preferências locais. Por isso, não são transportados em JSONs de importação ou exportação.
 
-Cada divisão carrega seu próprio arquivo-base na pasta `templates/`. Nesta versão inicial, os arquivos foram criados vazios por decisão de produto; eles estão prontos para receber os modelos oficiais sem necessidade de alterar a aplicação.
+## Boas-vindas e retorno diário
 
-| Divisão selecionada | Arquivo-base |
+No primeiro acesso, a aplicação exibe a recepção inicial e a escolha de unidade antes de revelar a interface principal. Em retornos posteriores, a primeira abertura de cada dia exibe a mesma recepção institucional do primeiro acesso antes de continuar para o contexto já selecionado.
+
+| Aspecto | Comportamento |
+|---|---|
+| Conteúdo | O retorno diário reutiliza apenas a marca institucional **Bem-vindo(a) ao scriptz**, sem saudação por horário ou nome da assinatura. |
+| Tema | O fundo e os acentos adotam o tema atualmente salvo: Claro, Escuro, Blue Midnight ou Dark Purple. |
+| Frequência | A recepção aparece uma vez por dia em cada navegador, controlada pela chave local `scriptz_daily_welcome_date`. |
+| Movimento | As telas surgem e saem com transições de opacidade, deslocamento e escala suaves. Pessoas com redução de movimento ativada recebem transições praticamente instantâneas. |
+
+A interface principal permanece oculta enquanto a jornada de boas-vindas está ativa, evitando que o conteúdo do sistema apareça antes dela. A recepção de retorno se encerra automaticamente após uma breve pausa.
+
+## Unidades do Scriptz Padrão
+
+Os arquivos-base desta distribuição começam vazios e estão prontos para receber modelos institucionais. Cada unidade possui seu próprio contexto local.
+
+| Unidade | Arquivo-base |
 |---|---|
 | DEPROT | `templates/DEPROT.JSON` |
 | DPCI | `templates/DPCI.JSON` |
 | DPD | `templates/DPD.JSON` |
-| Coord. | `templates/SMUL-CAP.JSON` |
+| Núcleo | `templates/SMUL-CAP.JSON` |
+| Sala Arthur Saboya | `templates/SALA-ARTHUR-SABOYA.JSON` |
 
-Os scripts presentes nesses arquivos aparecem com o indicador **🔒 Script padrão**. Neles, os comandos de editar e excluir, bem como título e categoria, ficam bloqueados. As categorias recebidas do arquivo-base também não podem ser renomeadas nem excluídas. A pessoa usuária, contudo, pode criar novas categorias, criar scripts, adicionar seus scripts a categorias padrão ou próprias e ordenar livremente cards e categorias.
+Os scripts provenientes desses arquivos recebem o indicador **🔒 Script padrão**. Eles não podem ser editados, excluídos ou movidos de categoria. As categorias padrão também não podem ser renomeadas ou excluídas. Scripts, categorias e ordenações criados pela pessoa usuária continuam livres.
 
-> Os JSONs de mudanças do Scriptz Padrão são vinculados à divisão de origem. Um arquivo exportado em DEPROT não é aceito em DPCI, DPD, Coord. ou no Modo Livre.
+> Contextos antigos gravados como `Coord.` são migrados automaticamente para **Núcleo** ao abrir a aplicação.
 
-Ao importar mudanças em uma divisão, qualquer script cujo nome de categoria não exista entre as categorias padrão nem entre as categorias próprias exportadas é movido para **Geral**. O Scriptz informa esse ajuste por mensagem na interface.
+## Editor rico e criação de Scriptz
 
-## Modo Livre
+O formulário de **Novo script** usa o mesmo editor rico da edição de scripts existentes. A barra oferece negrito, itálico, sublinhado, listas com marcadores e links. A área de criação é ampliada e o texto foi aumentado tanto na criação quanto na edição para facilitar a revisão do conteúdo.
 
-O Modo Livre começa vazio e não carrega automaticamente nenhum JSON legado. A pessoa usuária pode criar um projeto do zero, importar um projeto livre compatível ou usar um dos JSONs padrão como base editável. Quando uma base é carregada no Modo Livre, seus scripts não recebem bloqueio.
+Ao colar conteúdo com formatação, o Scriptz preserva elementos seguros de texto, incluindo parágrafos, negrito, itálico, sublinhado, listas e links. Também reconhece estilos comuns de clipboard para negrito, itálico e sublinhado. Elementos potencialmente inseguros, como scripts e iframes, são removidos antes do salvamento.
 
-O rodapé da barra lateral oferece três ações próprias desse contexto. **Descartar Templates** remove somente scripts carregados como base. **Baixar JSON e iniciar novo projeto** exporta o projeto atual e reinicia o Modo Livre em branco. **Usar JSON padrão como base** apresenta as quatro divisões para carregamento editável.
+O seletor de saudação está disponível nos dois fluxos e oferece **Desabilitar**, uma saudação automática conforme o horário e **Prezado(a),**. A assinatura permanece opcional e é mantida separadamente como preferência local.
 
-## Dados, importação e exportação
+## Ações contextuais
 
-O Scriptz usa esquemas explícitos para impedir a mistura indevida de contextos. As preferências locais — tema, assinatura, contexto selecionado e largura da barra lateral — nunca são exportadas ou importadas por JSON.
+Abaixo da assinatura, o menu expansível **Ações** concentra os recursos operacionais. Ele inicia recolhido para reduzir a densidade da barra lateral e mostra apenas os comandos aplicáveis ao contexto.
+
+| Ação | Scriptz Padrão | Modo Editor |
+|---|---:|---:|
+| Gerenciar categorias | Sim | Sim |
+| Usar JSON padrão como base | Não | Sim |
+| Exportar meus Scriptz | Sim | Sim |
+| Descartar Scriptz e reiniciar Modo Editor | Não | Sim |
+| Reverter alterações locais | Sim | Não |
+
+No Modo Editor, **Descartar Scriptz e reiniciar Modo Editor** apaga todos os scripts, categorias e ordenações daquele projeto após confirmação. A antiga ação de baixar o JSON e iniciar um novo projeto foi removida.
+
+## Importação e exportação
+
+O Scriptz usa formatos diferentes para impedir a mistura involuntária de dados de contextos incompatíveis.
 
 | Esquema | Gerado por | Pode ser importado em |
 |---|---|---|
-| `scriptz-standard-changes` | Uma divisão do Scriptz Padrão | Somente na mesma divisão. |
-| `scriptz-free-project` | Modo Livre | Somente no Modo Livre. |
-| Array legado | Versões anteriores do Scriptz | Modo Livre, apenas como projeto editável. |
+| `scriptz-standard-changes` | Uma unidade do Scriptz Padrão | Somente na mesma unidade. |
+| `scriptz-free-project` | Modo Editor | Somente no Modo Editor. |
+| Array legado | Versões anteriores do Scriptz | Modo Editor, como projeto editável. |
 
-Um projeto padrão exportado contém somente dados próprios. Isso preserva os modelos institucionais no arquivo-base e evita que uma exportação copie ou modifique inadvertidamente os templates protegidos.
+Quando uma importação padrão inclui uma categoria que não está presente no arquivo-base nem no próprio JSON de mudanças, o Scriptz move o item para **Geral** e informa o ajuste.
 
-## Limites operacionais
+## Limites e produtividade
 
-Os limites foram definidos considerando que cada card possui prévia, ações e editor no DOM quando necessário. Em testes locais, a renderização de 300 cards padrão levou aproximadamente 98 ms e a de 500 cards do Modo Livre aproximadamente 277 ms no ambiente de validação.
+O Scriptz aceita até **300 scripts por unidade** no Scriptz Padrão e até **500 scripts por projeto** no Modo Editor. A interface oferece busca por título, favoritos, filtros por categoria, ordenação por título, categoria, criação ou ordem personalizada e reordenação de categorias e scripts.
 
-| Contexto | Limite | Objetivo |
-|---|---:|---|
-| Scriptz Padrão | 300 scripts por divisão | Preservar fluidez em listas com scripts protegidos e próprios. |
-| Modo Livre | 500 scripts por projeto | Equilibrar capacidade, busca, ordenação e rolagem em desktop e mobile. |
+A edição é exclusiva: enquanto um card estiver em edição, outro script não pode abrir seu editor. A cópia mantém a formatação do texto sempre que o navegador oferecer suporte à área de transferência rica.
 
-Caso um JSON importado exceda o limite do contexto, o Scriptz recusa o arquivo e informa a quantidade máxima aceita.
+## PWA e interface mobile
 
-## Interface e produtividade
+O aplicativo inclui `manifest.webmanifest`, service worker e ícones próprios. O botão **Instalar Scriptz como app** aciona o prompt nativo quando disponível; em navegadores que não o disponibilizam, a aplicação orienta a adicionar o site à tela inicial.
 
-O Scriptz oferece pesquisa exclusivamente por **título do script**, favoritos prioritários em todas as listas, filtros por categoria, ordenação por título, categoria, criação ou ordem personalizada, e reordenação de categorias e scripts. A edição é exclusiva: enquanto um card estiver sendo editado, outro não pode ser aberto em edição.
-
-A prévia recebe uma diferenciação discreta durante a edição, preservando a legibilidade enquanto deixa claro que o editor está ativo. Em telas móveis, o cabeçalho fixo, a busca, os controles de contexto e as ações principais foram adaptados a alvos de toque maiores e à navegação por drawer.
-
-O campo de saudação é um seletor disponível tanto na criação quanto na edição. Ele permite **Desabilitar**, uma saudação automática que mostra **Bom dia**, **Boa tarde** ou **Boa noite** conforme o horário e a opção fixa **Prezado(a),**. Scripts de versões anteriores são migrados automaticamente: `hasGreeting: false` passa a Desabilitar, enquanto os demais continuam usando a saudação automática.
-
-## PWA
-
-O aplicativo inclui `manifest.webmanifest`, service worker e ícones próprios. O botão **Instalar Scriptz como app** abre o prompt nativo quando o navegador o disponibiliza; quando o navegador não expõe o prompt, a aplicação orienta a usar a opção de adicionar à tela inicial.
-
-O cache atual inclui os recursos de interface, os ícones e os quatro arquivos JSON-base, permitindo a escolha da divisão mesmo sem conexão após a primeira visita.
+O cache PWA atual é `scriptz-shell-v48` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
 
 ## Estrutura do projeto
 
 ```text
 assets/                  Ícones, logo e favicons
-css/style.css            Temas, layout desktop/mobile e estados visuais
-js/app.js                Estado, modos, proteção, persistência, importação e PWA
-templates/               JSONs-base de DEPROT, DPCI, DPD e Coord.
-index.html               Estrutura da interface, modais e jornada inicial
+css/style.css            Temas, layout responsivo, editor rico e menu Ações
+js/app.js                Estado, contexto, proteção, editor, persistência e importação
+templates/               JSONs-base das cinco unidades CAP
+index.html                Estrutura da interface, modais e jornada inicial
 manifest.webmanifest     Metadados do aplicativo instalável
 sw.js                    Cache offline do PWA
 ```
 
 ## Atualização dos scripts padrão
 
-Para publicar modelos institucionais, edite exclusivamente o JSON da divisão correspondente em `templates/`. O formato esperado é o seguinte:
+Para publicar modelos institucionais, edite exclusivamente o JSON da unidade correspondente em `templates/`. O formato esperado é:
 
 ```json
 {
@@ -99,7 +116,7 @@ Para publicar modelos institucionais, edite exclusivamente o JSON da divisão co
       "cat": "Categoria padrão",
       "title": "Título do modelo",
       "html": "<p>Conteúdo do e-mail.</p>",
-      "hasGreeting": true,
+      "greetingMode": "auto",
       "hasSignature": true,
       "isFavorite": false
     }
@@ -107,4 +124,4 @@ Para publicar modelos institucionais, edite exclusivamente o JSON da divisão co
 }
 ```
 
-Após alterar um template, atualize a versão de cache em `sw.js` antes de publicar para que instalações existentes recebam os novos conteúdos.
+Depois de modificar um template, atualize a versão de cache em `sw.js` antes de publicar para que instalações existentes recebam o conteúdo novo.
