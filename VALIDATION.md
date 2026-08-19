@@ -1,4 +1,4 @@
-# Validação da versão v48
+# Validação da versão v49
 
 Esta versão foi validada com os templates institucionais deliberadamente vazios. Os scripts usados nos testes foram temporários e mantidos apenas no armazenamento local do navegador.
 
@@ -13,14 +13,20 @@ Esta versão foi validada com os templates institucionais deliberadamente vazios
 | Ações | O menu inicia recolhido. No Modo Editor, mostra base padrão, exportação e reinício; em unidades padrão, mostra exportação e reversão local. |
 | Exportação | O Modo Editor exporta `meus-scriptz.json`; unidades seguem gerando `scriptz-standard-changes` sem templates, tema ou assinatura. |
 | Mobile | Criação rica, edição e saudação foram validadas em 320px e 375px, sem rolagem horizontal. A jornada de unidades foi inspecionada em 375px. |
-| PWA | O service worker `scriptz-shell-v48` ficou ativo e incluiu os cinco JSONs-base, inclusive Sala Arthur Saboya. |
+| PWA | O service worker `scriptz-shell-v49` ficou ativo e incluiu os cinco JSONs-base, inclusive Sala Arthur Saboya. |
 | Retorno diário — desktop | Em um perfil com contexto existente e tema Dark Purple, o gate diário ocultou a interface principal, aplicou o tema antes da inicialização e mostrou a mesma recepção institucional do primeiro acesso. |
 | Retorno diário — mobile | Em 375px, com Blue Midnight, a recepção institucional diária permaneceu centralizada, legível e sem rolagem horizontal. |
 | Encerramento diário | Após o tempo de exibição, o gate foi removido, a tela de boas-vindas foi ocultada, a interface voltou a ficar visível e a data local foi persistida em `scriptz_daily_welcome_date`. |
 | Inspeção visual | As capturas estabilizadas de Dark Purple em desktop e Blue Midnight em mobile confirmaram hierarquia, contraste, marca e centralização adequados. |
+| Duas categorias | Um script foi criado com **Atendimento** e **Fiscalização**, salvo novamente com **Atendimento** e **Geral**, e exibido nos filtros laterais das duas categorias. |
+| Persistência e importação | A lista `cats` com duas entradas foi preservada no armazenamento local e carregada novamente pelo fluxo de importação, mantendo `cat` como categoria principal legada. |
+| Ordenação | A interface apresenta somente Ordem personalizada e Ordem alfabética. A personalizada abriu como padrão; enquanto a edição estava ativa, o seletor, a reordenação de scripts e a reordenação de categorias ficaram bloqueados. |
+| Modal de criação | Desktop e mobile confirmaram rolagem no modal e no corpo do editor, dois dropdowns de categoria e ações finais acessíveis. |
 
 ## Checagens técnicas
 
 `js/app.js`, `sw.js` e os scripts de validação passaram pela verificação de sintaxe do Node.js. Todos os JSONs da pasta `templates/` foram analisados como JSON válido. Os fluxos de criação, edição, seleção de contexto e PWA foram executados sem erros de JavaScript observados no console.
 
 Para o retorno diário, `tools/daily-welcome-test.mjs` executou dois perfis limpos por Chromium headless: **1280×720 com Dark Purple** e **375×812 com Blue Midnight**. Em ambos os cenários, o teste confirmou o gate, o tema aplicado, a visibilidade da mesma recepção institucional do primeiro acesso, a ocultação da interface, a transição de encerramento e o registro da data. As imagens correspondentes ficam em `screenshots/daily-welcome-v48/` durante a validação local.
+
+Para a revisão v49, `tools/multicategory-v49-test.mjs` validou criação, edição, persistência e importação com duas categorias, além do bloqueio de ordenação durante edição. `tools/mobile-creation-v49-test.mjs` confirmou em 375×812 a pilha dos dois dropdowns, a rolagem do modal e do editor e a presença das ações finais.

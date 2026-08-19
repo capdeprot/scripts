@@ -6,7 +6,7 @@ let nextId = 100;
 let activeCat = 'all';
 let searchQ = '';
 let originalScripts = [];
-let sortBy = 'title';
+let sortBy = 'custom';
 let customCategoryOrder = [];
 let customScriptOrderByCategory = {};
 let categoryRegistry = [];
@@ -20,6 +20,7 @@ let standardScripts = [];
 let newScriptLinkRange = null;
 
 const SCRIPT_LIMITS = Object.freeze({ standard: 300, free: 500 });
+const MAX_SCRIPT_CATEGORIES = 2;
 const STANDARD_DIVISIONS = Object.freeze({
   DEPROT: 'templates/DEPROT.JSON',
   DPCI: 'templates/DPCI.JSON',
@@ -263,9 +264,38 @@ function currentScriptLimit() {
   return isStandardMode() ? SCRIPT_LIMITS.standard : SCRIPT_LIMITS.free;
 }
 
+function normalizedCategoryList(categories, fallback = 'Geral') {
+  const source = Array.isArray(categories) ? categories : [categories];
+  const unique = [...new Set(source.map(category => String(category || '').trim()).filter(Boolean))];
+  return unique.slice(0, MAX_SCRIPT_CATEGORIES).length ? unique.slice(0, MAX_SCRIPT_CATEGORIES) : [fallback];
+}
+
+function getScriptCategories(script) {
+  return normalizedCategoryList(script?.cats ?? script?.cat);
+}
+
+function setScriptCategories(script, categories) {
+  const normalized = normalizedCategoryList(categories);
+  script.cats = normalized;
+  script.cat = normalized[0];
+  return normalized;
+}
+
+function scriptHasCategory(script, category) {
+  return getScriptCategories(script).includes(category);
+}
+
+function allScriptCategories(collection = scripts) {
+  return collection.flatMap(script => getScriptCategories(script));
+}
+
+function categoryLabel(script) {
+  return getScriptCategories(script).join(' · ');
+}
+
 function normalizeScript(script, source = 'user') {
   const greetingMode = getGreetingMode(script);
-  return {
+  const normalized = {
     id: Number(script.id) || nextId++,
     cat: String(script.cat || 'Geral'),
     title: String(script.title || 'Sem título'),
@@ -277,6 +307,8 @@ function normalizeScript(script, source = 'user') {
     isStandard: source === 'standard' || script.isStandard === true,
     source
   };
+  setScriptCategories(normalized, script.cats ?? script.cat);
+  return normalized;
 }
 
 function normalizeWorkspaceState(savedState) {
@@ -292,7 +324,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=48`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=49`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template' || !Array.isArray(data.scripts)) throw new Error('Template inválido');
@@ -336,24 +368,20 @@ async function loadWorkspace(showFeedback = true) {
       const saved = local ? JSON.parse(local) : null;
       normalizeWorkspaceState(saved);
       scripts = [...standardScripts, ...scripts.filter(script => !script.isStandard)];
-      categoryRegistry = [...new Set([...standardCategories, ...categoryRegistry, ...scripts.map(script => script.cat).filter(Boolean)])];
+      categoryRegistry = [...new Set([...standardCategories, ...categoryRegistry, ...allScriptCategories()])];
       originalScripts = JSON.parse(JSON.stringify(standardScripts));
     } else {
       const saved = local ? JSON.parse(local) : null;
       normalizeWorkspaceState(saved);
       scripts = scripts.map(script => ({ ...script, isStandard: false, source: script.source || 'user' }));
-      categoryRegistry = [...new Set([...categoryRegistry, ...scripts.map(script => script.cat).filter(Boolean)])];
+      categoryRegistry = [...new Set([...categoryRegistry, ...allScriptCategories()])];
       originalScripts = [];
     }
     customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
     isCustomOrderActive = customCategoryOrder.length > 0;
-    if (isCustomOrderActive) {
-      sortBy = 'custom';
-      const sortSelect = document.getElementById('sortSelect');
-      if (sortSelect) sortSelect.value = 'custom';
-    } else {
-      sortBy = 'title';
-    }
+    sortBy = 'custom';
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) sortSelect.value = 'custom';
     nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
     saveToLocal();
     refreshWorkspaceUI();
@@ -506,7 +534,7 @@ function saveToLocal() {
     : categoryRegistry;
   localStorage.setItem(workspaceKey(), JSON.stringify({
     schema: isStandardMode() ? 'scriptz-standard-changes' : 'scriptz-free-project',
-    version: 3,
+    version: 4,
     mode: workspace.mode,
     division: workspace.division,
     scripts: userScripts,
@@ -521,7 +549,7 @@ function saveToLocal() {
 // ============================================================
 function getCategories() {
   const cats = ['all'];
-  [...categoryRegistry, ...scripts.map(s => s.cat)].filter(Boolean).forEach(cat => { if (!cats.includes(cat)) cats.push(cat); });
+  [...categoryRegistry, ...allScriptCategories()].filter(Boolean).forEach(cat => { if (!cats.includes(cat)) cats.push(cat); });
   return cats;
 }
 
@@ -532,7 +560,7 @@ function getFilteredScripts() {
   } else if (activeCat === 'favorites') {
     filtered = scripts.filter(s => isFavorite(s));
   } else {
-    filtered = scripts.filter(s => s.cat === activeCat);
+    filtered = scripts.filter(s => scriptHasCategory(s, activeCat));
   }
 
   if (searchQ) {
@@ -552,8 +580,6 @@ function prioritizeFavorites(list, comparator) {
 function applySortFn(list) {
   const s = sortBy;
   if (s === 'title') return prioritizeFavorites(list, (a, b) => a.title.localeCompare(b.title));
-  if (s === 'category') return prioritizeFavorites(list, (a, b) => a.cat.localeCompare(b.cat) || a.title.localeCompare(b.title));
-  if (s === 'id') return prioritizeFavorites(list, (a, b) => a.id - b.id);
   if (s === 'custom') {
     const order = customScriptOrderByCategory[activeCat] || customScriptOrderByCategory.all || [];
     const rank = new Map(order.map((id, index) => [String(id), index]));
@@ -563,9 +589,24 @@ function applySortFn(list) {
 }
 
 function applySort() {
+  if (activeEditId !== null) {
+    const select = document.getElementById('sortSelect');
+    if (select) select.value = sortBy;
+    showToast('⚠️', 'Conclua ou cancele a edição antes de alterar a ordenação.');
+    return;
+  }
   sortBy = document.getElementById('sortSelect').value;
-  if (sortBy === 'custom') loadCustomOrder();
   render();
+}
+
+function syncOrderingControls() {
+  const locked = activeEditId !== null;
+  const select = document.getElementById('sortSelect');
+  if (select) {
+    select.disabled = locked;
+    select.title = locked ? 'Conclua ou cancele a edição para alterar a ordenação.' : '';
+  }
+  document.body.classList.toggle('ordering-locked', locked);
 }
 
 function updateSortLabelsForViewport() {
@@ -581,6 +622,10 @@ function updateSortLabelsForViewport() {
 //  MODO DE REORDENAÇÃO
 // ============================================================
 function toggleReorderMode() {
+  if (activeEditId !== null) {
+    showToast('⚠️', 'Conclua ou cancele a edição antes de reordenar categorias.');
+    return;
+  }
   reorderMode = !reorderMode;
   const btn = document.getElementById('reorderBtn');
   btn.classList.toggle('active');
@@ -669,7 +714,7 @@ function buildSidebar() {
   const nav = document.getElementById('sidebarNav');
   const cats = getCategories();
   const counts = {};
-  scripts.forEach(s => { counts[s.cat] = (counts[s.cat] || 0) + 1; });
+  scripts.forEach(script => getScriptCategories(script).forEach(category => { counts[category] = (counts[category] || 0) + 1; }));
 
   const categoryList = cats.filter(c => c !== 'all');
   let orderedCats = categoryList;
@@ -739,88 +784,68 @@ function toggleMobileSearch() {
 }
 
 // ============================================================
-//  AUTOCOMPLETE DE CATEGORIAS
+//  CATEGORIAS DA CRIAÇÃO (ATÉ DUAS)
 // ============================================================
-function filterCategorySuggestions(query) {
-    const input = document.getElementById('newCategoryInput');
-    const hidden = document.getElementById('newCategoryHidden');
-    const suggestions = document.getElementById('categorySuggestions');
-    
-    if (!query || query.trim() === '') {
-        suggestions.classList.remove('show');
-        hidden.value = '';
-        return;
-    }
-    
-    query = query.trim();
-    const cats = getCategories().filter(c => c !== 'all');
-    
-    const matches = cats.filter(c => c.toLowerCase().includes(query.toLowerCase()));
-    
-    let html = '';
-    
-    if (matches.length > 0) {
-        matches.forEach(cat => {
-            const highlighted = cat.replace(
-                new RegExp(query, 'gi'),
-                match => `<span class="highlight">${match}</span>`
-            );
-            html += `<div class="suggestion-item" onclick="selectCategory('${cat.replace(/'/g, "\\'")}')">${highlighted}</div>`;
-        });
-    }
-    
-    const exactMatch = cats.some(c => c.toLowerCase() === query.toLowerCase());
-    
-    if (!exactMatch) {
-        html += `<div class="suggestion-item create-new" onclick="createNewCategory('${query.replace(/'/g, "\\'")}')">
-            ➕ Criar nova categoria: <strong>${query}</strong>
-        </div>`;
-    }
-    
-    if (html) {
-        suggestions.innerHTML = html;
-        suggestions.classList.add('show');
-    } else {
-        suggestions.classList.remove('show');
-    }
-    
-    hidden.value = query;
+function createCategoryFromPrompt() {
+  const value = prompt('Digite o nome da nova categoria:');
+  if (!value || !value.trim()) return '';
+  const category = value.trim();
+  if (!categoryRegistry.includes(category)) {
+    categoryRegistry.push(category);
+    if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
+  }
+  return category;
 }
 
-function selectCategory(cat) {
-    const input = document.getElementById('newCategoryInput');
-    const hidden = document.getElementById('newCategoryHidden');
-    const suggestions = document.getElementById('categorySuggestions');
-    
-    input.value = cat;
-    hidden.value = cat;
-    suggestions.classList.remove('show');
-    input.focus();
+function getNewScriptCategories() {
+  return normalizedCategoryList([
+    document.getElementById('newCategoryPrimary')?.value,
+    document.getElementById('newCategorySecondary')?.value
+  ]).filter(category => category !== '__new__');
 }
 
-function createNewCategory(cat) {
-    const input = document.getElementById('newCategoryInput');
-    const hidden = document.getElementById('newCategoryHidden');
-    const suggestions = document.getElementById('categorySuggestions');
-    
-    input.value = cat.trim();
-    hidden.value = cat.trim();
-    suggestions.classList.remove('show');
-    showToast('✨', 'Nova categoria será criada');
+function populateNewCategorySelects(categories = []) {
+  const selected = normalizedCategoryList(categories).filter(category => category !== 'Geral' || categories.includes('Geral'));
+  const primary = document.getElementById('newCategoryPrimary');
+  const secondary = document.getElementById('newCategorySecondary');
+  if (!primary || !secondary) return;
+  const primaryCategory = selected[0] || '';
+  const secondaryCategory = selected[1] || '';
+  primary.innerHTML = getCategoryOptions(primaryCategory, { placeholder: 'Selecione uma categoria' });
+  secondary.innerHTML = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
+  primary.value = primaryCategory;
+  secondary.value = secondaryCategory;
 }
 
-document.addEventListener('click', function(e) {
-    const wrapper = document.querySelector('.category-input-wrapper');
-    if (wrapper && !wrapper.contains(e.target)) {
-        const suggestions = document.getElementById('categorySuggestions');
-        if (suggestions) suggestions.classList.remove('show');
+function onNewCategorySelectChange(slot) {
+  const primary = document.getElementById('newCategoryPrimary');
+  const secondary = document.getElementById('newCategorySecondary');
+  if (!primary || !secondary) return;
+  const select = slot === 0 ? primary : secondary;
+  if (select.value === '__new__') {
+    const newCategory = createCategoryFromPrompt();
+    select.value = newCategory || '';
+    if (newCategory) showToast('✨', 'Nova categoria criada!');
+  }
+  if (primary.value && primary.value === secondary.value) {
+    if (slot === 0) secondary.value = '';
+    else {
+      secondary.value = '';
+      showToast('⚠️', 'Escolha uma segunda categoria diferente.');
     }
-});
+  }
+  const categories = [primary.value, secondary.value].filter(value => value && value !== '__new__');
+  populateNewCategorySelects(categories);
+}
 
 // ============================================================
 //  GERENCIAR CATEGORIAS - MODAL
 // ============================================================
 function openCategoryModal() {
+    if (activeEditId !== null) {
+        showToast('⚠️', 'Conclua ou cancele a edição antes de reordenar categorias.');
+        return;
+    }
     const modal = document.getElementById('categoryModal');
     modal.classList.add('show');
     renderCategoryList();
@@ -838,7 +863,7 @@ function renderCategoryList() {
     const container = document.getElementById('categoryListContainer');
     const cats = getOrderedCategories(getCategories().filter(c => c !== 'all'));
     const counts = {};
-    scripts.forEach(s => { counts[s.cat] = (counts[s.cat] || 0) + 1; });
+    scripts.forEach(script => getScriptCategories(script).forEach(category => { counts[category] = (counts[category] || 0) + 1; }));
     
     if (cats.length === 0) {
         container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">Nenhuma categoria criada ainda.</div>';
@@ -1044,16 +1069,16 @@ function confirmRenameCategory(oldName, newName) {
         return;
     }
     
-    const exists = scripts.some(s => s.cat === newName);
+    const exists = getCategories().some(category => category === newName && category !== oldName);
     if (exists) {
         showToast('⚠️', 'Já existe uma categoria com este nome!');
         cancelRenameCategory();
         return;
     }
     
-    scripts.forEach(s => {
-        if (s.cat === oldName) {
-            s.cat = newName;
+    scripts.forEach(script => {
+        if (scriptHasCategory(script, oldName)) {
+            setScriptCategories(script, getScriptCategories(script).map(category => category === oldName ? newName : category));
         }
     });
     
@@ -1085,7 +1110,7 @@ function deleteCategory(cat) {
         showToast('🔒', 'Categorias padrão não podem ser excluídas.');
         return;
     }
-    const count = scripts.filter(s => s.cat === cat).length;
+    const count = scripts.filter(script => scriptHasCategory(script, cat)).length;
     
     if (count === 0) {
         if (!confirm(`Deseja excluir a categoria "${cat}"?`)) return;
@@ -1093,9 +1118,10 @@ function deleteCategory(cat) {
         const confirmMsg = `A categoria "${cat}" possui ${count} ${count === 1 ? 'scriptz' : 'scriptz'}.\n\nExcluí-la fará com que esses scriptz fiquem sem categoria (categoria "Geral").\n\nDeseja continuar?`;
         if (!confirm(confirmMsg)) return;
         
-        scripts.forEach(s => {
-            if (s.cat === cat) {
-                s.cat = 'Geral';
+        scripts.forEach(script => {
+            if (scriptHasCategory(script, cat)) {
+                const remaining = getScriptCategories(script).filter(category => category !== cat);
+                setScriptCategories(script, remaining.length ? remaining : ['Geral']);
             }
         });
     }
@@ -1125,7 +1151,7 @@ function createCategoryFromModal() {
         return;
     }
     
-    const exists = scripts.some(s => s.cat === name);
+    const exists = getCategories().includes(name);
     if (exists) {
         showToast('⚠️', 'Esta categoria já existe!');
         input.value = '';
@@ -1321,21 +1347,25 @@ function render() {
   if (list.length === 0) {
     container.innerHTML = '';
     empty.style.display = 'block';
+    syncOrderingControls();
     return;
   }
   empty.style.display = 'none';
   container.innerHTML = list.map(s => cardHTML(s)).join('');
-  setTimeout(initScriptDragDrop, 30);
+  setTimeout(() => {
+    initScriptDragDrop();
+    syncOrderingControls();
+  }, 30);
 }
 
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function getCategoryOptions(selected) {
+function getCategoryOptions(selected = '', { placeholder = '', exclude = [] } = {}) {
   const cats = getCategories().filter(c => c !== 'all');
-  let html = '';
-  cats.forEach(c => {
+  let html = placeholder ? `<option value="">${escapeHtml(placeholder)}</option>` : '';
+  cats.filter(category => !exclude.includes(category)).forEach(c => {
     html += `<option value="${escapeHtml(c)}" ${c === selected ? 'selected' : ''}>${escapeHtml(c)}</option>`;
   });
   html += `<option value="__new__">➕ Nova categoria...</option>`;
@@ -1363,19 +1393,23 @@ function cardHTML(s) {
   const greetingOptions = greetingSelectOptions(greetingMode);
   const hasSignatureFeature = hasSignature(s);
   const isFav = isFavorite(s);
-  const catOptions = getCategoryOptions(s.cat);
+  const categories = getScriptCategories(s);
+  const primaryCategory = categories[0] || 'Geral';
+  const secondaryCategory = categories[1] || '';
+  const primaryOptions = getCategoryOptions(primaryCategory);
+  const secondaryOptions = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
   const locked = isStandardScript(s);
   const lockedBadge = locked ? '<span class="standard-badge" title="Script padrão protegido">🔒 Script padrão</span>' : '';
   const lockAttrs = locked ? 'disabled aria-disabled="true" title="Script padrão protegido"' : '';
   
   return `
-  <div class="card ${locked ? 'standard-script' : ''}" id="c${s.id}" draggable="${sortBy === 'custom' ? 'true' : 'false'}">
+  <div class="card ${locked ? 'standard-script' : ''}" id="c${s.id}" draggable="${sortBy === 'custom' && activeEditId === null ? 'true' : 'false'}">
     <div class="card-hd" onclick="toggleCard(${s.id})">
       <div class="card-info">
         <div class="card-title">
           ${escapeHtml(s.title)} ${lockedBadge}
         </div>
-        <span class="card-tag">${escapeHtml(s.cat)}</span>
+        <span class="card-tag">${escapeHtml(categoryLabel(s))}</span>
       </div>
       <div class="card-btns" onclick="event.stopPropagation()">
         <button class="btn btn-copy" id="cb${s.id}" onclick="event.stopPropagation(); copyScript(${s.id})">📋 Copiar</button>
@@ -1383,7 +1417,7 @@ function cardHTML(s) {
         <button class="btn btn-del" onclick="deleteScript(${s.id})" ${lockAttrs}>🗑️ Excluir</button>
         <button class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite(${s.id})">${isFav ? '⭐' : '☆'}</button>
       </div>
-      ${sortBy === 'custom' ? `<span class="script-order-controls" onclick="event.stopPropagation()"><button type="button" onclick="moveScriptOrder(${s.id}, -1)" aria-label="Mover script para cima">↑</button><button type="button" onclick="moveScriptOrder(${s.id}, 1)" aria-label="Mover script para baixo">↓</button></span>` : ''}
+      ${sortBy === 'custom' && activeEditId === null ? `<span class="script-order-controls" onclick="event.stopPropagation()"><button type="button" onclick="moveScriptOrder(${s.id}, -1)" aria-label="Mover script para cima">↑</button><button type="button" onclick="moveScriptOrder(${s.id}, 1)" aria-label="Mover script para baixo">↓</button></span>` : ''}
       <svg class="chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="card-body">
@@ -1395,9 +1429,10 @@ function cardHTML(s) {
       <div class="editor-wrap" id="ew${s.id}">
         <div class="editor-meta">
           <input class="title-field" id="tt${s.id}" placeholder="Título do script" value="${escapeHtml(s.title)}" ${lockAttrs}>
-          <select class="category-select" id="cat${s.id}" onchange="onCategoryChange(${s.id})" ${lockAttrs}>
-            ${catOptions}
-          </select>
+          <div class="category-select-stack editor-category-stack">
+            <select class="category-select" id="catPrimary${s.id}" onchange="onEditCategoryChange(${s.id}, 0)" ${lockAttrs}>${primaryOptions}</select>
+            <select class="category-select" id="catSecondary${s.id}" onchange="onEditCategoryChange(${s.id}, 1)" ${lockAttrs}>${secondaryOptions}</select>
+          </div>
           <div class="editor-checkboxes">
             <label class="editor-greeting-label">🕐 Saudação
               <select class="editor-greeting-select ${greetingMode === GREETING_MODES.off ? 'is-disabled' : ''}" id="greeting${s.id}" onchange="syncGreetingSelectState(this); livePreview(${s.id})" ${lockAttrs}>${greetingOptions}</select>
@@ -1435,6 +1470,10 @@ function toggleCard(id) {
 }
 
 function moveScriptOrder(id, direction) {
+  if (activeEditId !== null) {
+    showToast('⚠️', 'Conclua ou cancele a edição antes de reordenar scripts.');
+    return;
+  }
   const list = getFilteredScripts().map(s => String(s.id));
   const index = list.indexOf(String(id));
   const next = index + direction;
@@ -1446,7 +1485,7 @@ function moveScriptOrder(id, direction) {
 }
 
 function initScriptDragDrop() {
-  if (sortBy !== 'custom') return;
+  if (sortBy !== 'custom' || activeEditId !== null) return;
   const container = document.getElementById('cards');
   if (!container) return;
   let dragged = null;
@@ -1470,56 +1509,48 @@ function initScriptDragDrop() {
 }
 
 // ============================================================
-//  MUDANÇA DE CATEGORIA (EDITOR)
+//  CATEGORIAS NA EDIÇÃO (ATÉ DUAS)
 // ============================================================
-function onCategoryChange(id) {
-  const existing = scripts.find(script => script.id === id);
-  if (isStandardScript(existing)) {
+function getEditCategories(id) {
+  return normalizedCategoryList([
+    document.getElementById('catPrimary' + id)?.value,
+    document.getElementById('catSecondary' + id)?.value
+  ]).filter(category => category !== '__new__');
+}
+
+function populateEditCategorySelects(id, categories = []) {
+  const primary = document.getElementById('catPrimary' + id);
+  const secondary = document.getElementById('catSecondary' + id);
+  if (!primary || !secondary) return;
+  const selected = normalizedCategoryList(categories).filter(category => category !== 'Geral' || categories.includes('Geral'));
+  const primaryCategory = selected[0] || 'Geral';
+  const secondaryCategory = selected[1] || '';
+  primary.innerHTML = getCategoryOptions(primaryCategory);
+  secondary.innerHTML = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
+  primary.value = primaryCategory;
+  secondary.value = secondaryCategory;
+}
+
+function onEditCategoryChange(id, slot) {
+  const script = scripts.find(item => item.id === id);
+  if (isStandardScript(script)) {
     showToast('🔒', 'A categoria de um Script Padrão não pode ser alterada.');
     return;
   }
-  const select = document.getElementById('cat' + id);
-  const value = select.value;
-  
-  if (value === '__new__') {
-    const newCat = prompt('Digite o nome da nova categoria:');
-    if (newCat && newCat.trim()) {
-      const catName = newCat.trim();
-      const exists = scripts.some(s => s.cat === catName);
-      if (!exists) {
-        const option = document.createElement('option');
-        option.value = catName;
-        option.textContent = catName;
-        select.insertBefore(option, select.querySelector('option[value="__new__"]'));
-        select.value = catName;
-        showToast('✨', 'Nova categoria criada!');
-      } else {
-        select.value = catName;
-        showToast('ℹ️', 'Categoria já existe');
-      }
-    } else {
-      const currentScript = scripts.find(s => s.id === id);
-      if (currentScript) select.value = currentScript.cat;
-      return;
-    }
+  const primary = document.getElementById('catPrimary' + id);
+  const secondary = document.getElementById('catSecondary' + id);
+  if (!primary || !secondary) return;
+  const changed = slot === 0 ? primary : secondary;
+  if (changed.value === '__new__') {
+    const newCategory = createCategoryFromPrompt();
+    changed.value = newCategory || '';
+    if (newCategory) showToast('✨', 'Nova categoria criada!');
   }
-  
-  const idx = scripts.findIndex(s => s.id === id);
-  if (idx !== -1) {
-    const newCat = select.value;
-      if (scripts[idx].cat !== newCat) {
-        if (!categoryRegistry.includes(newCat)) categoryRegistry.push(newCat);
-        scripts[idx].cat = newCat;
-      saveToLocal();
-      buildSidebar();
-      const card = document.getElementById('c' + id);
-      if (card) {
-        const tag = card.querySelector('.card-tag');
-        if (tag) tag.textContent = newCat;
-      }
-      showToast('📂', 'Categoria atualizada!');
-    }
+  if (primary.value && primary.value === secondary.value) {
+    secondary.value = '';
+    showToast('⚠️', 'Escolha uma segunda categoria diferente.');
   }
+  populateEditCategorySelects(id, [primary.value, secondary.value].filter(Boolean));
 }
 
 // ============================================================
@@ -1538,12 +1569,15 @@ function startEdit(id) {
   activeEditId = id;
   const card = document.getElementById('c' + id);
   card.classList.add('open', 'editing');
+  card.draggable = false;
+  card.querySelector('.script-order-controls')?.setAttribute('hidden', '');
   document.getElementById('pv' + id).classList.add('editing-mode');
   document.getElementById('ew' + id).classList.add('visible');
   const ce = document.getElementById('ce' + id);
   ce.innerHTML = s.html;
   ce.focus();
   livePreview(id);
+  syncOrderingControls();
 }
 
 function cancelEdit(id) {
@@ -1552,6 +1586,11 @@ function cancelEdit(id) {
   document.getElementById('pv' + id).classList.remove('editing-mode');
     document.getElementById('ew' + id).classList.remove('visible');
   if (activeEditId === id) activeEditId = null;
+  if (card && sortBy === 'custom') {
+    card.draggable = true;
+    card.querySelector('.script-order-controls')?.removeAttribute('hidden');
+  }
+  syncOrderingControls();
 }
 function livePreview(id) {
   const ce = document.getElementById('ce' + id);
@@ -1580,7 +1619,7 @@ function saveEdit(id) {
   const ce = document.getElementById('ce' + id);
   let newHTML = ce.innerHTML;
   const newTitle = document.getElementById('tt' + id).value.trim();
-  const newCat = document.getElementById('cat' + id).value;
+  const newCategories = getEditCategories(id);
   const greetingMode = document.getElementById('greeting' + id).value;
   const hasSignatureFeature = document.getElementById('chkSignature' + id).checked;
 
@@ -1591,7 +1630,12 @@ function saveEdit(id) {
   scripts[idx].hasGreeting = greetingMode !== GREETING_MODES.off;
   scripts[idx].hasSignature = hasSignatureFeature;
   if (newTitle) scripts[idx].title = newTitle;
-  if (newCat && newCat !== '__new__') scripts[idx].cat = newCat;
+  const categories = newCategories.length ? newCategories : getScriptCategories(scripts[idx]);
+  categories.forEach(category => {
+    if (!categoryRegistry.includes(category)) categoryRegistry.push(category);
+    if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
+  });
+  setScriptCategories(scripts[idx], categories);
 
   const fullHTML = buildFullText(scripts[idx]);
   document.getElementById('pv' + id).innerHTML = fullHTML;
@@ -1667,8 +1711,7 @@ async function copyScript(id) {
 // ============================================================
 function openModal() {
     document.getElementById('newTitle').value = '';
-    document.getElementById('newCategoryInput').value = '';
-    document.getElementById('newCategoryHidden').value = '';
+    populateNewCategorySelects([]);
     const editor = document.getElementById('newText');
     editor.innerHTML = '';
     editor.dataset.hasContent = 'false';
@@ -1680,17 +1723,15 @@ function openModal() {
     greetingSelect.value = GREETING_MODES.auto;
     syncGreetingSelectState(greetingSelect);
     document.getElementById('newSignature').checked = true;
-    document.getElementById('categorySuggestions').classList.remove('show');
     document.getElementById('overlay').classList.add('show');
     
     setTimeout(() => {
-        document.getElementById('newCategoryInput').focus();
+        document.getElementById('newCategoryPrimary').focus();
     }, 100);
 }
 
 function closeModal() {
     document.getElementById('overlay').classList.remove('show');
-    document.getElementById('categorySuggestions').classList.remove('show');
 }
 
 function textToHTML(txt) {
@@ -1705,8 +1746,7 @@ function addScript() {
     const editor = document.getElementById('newText');
     const text = editor.innerText.trim();
     const html = cleanEditorHtml(editor.innerHTML);
-    const categoryInput = document.getElementById('newCategoryInput').value.trim();
-    const hiddenCategory = document.getElementById('newCategoryHidden').value.trim();
+    const categories = getNewScriptCategories();
     const greetingMode = document.getElementById('newGreeting').value;
     const includeSignature = document.getElementById('newSignature').checked;
 
@@ -1719,18 +1759,17 @@ function addScript() {
         return;
     }
 
-    const cat = categoryInput || hiddenCategory || 'Geral';
-    
-    const exists = scripts.some(s => s.cat === cat);
-    if (!categoryRegistry.includes(cat)) categoryRegistry.push(cat);
-    if (!customCategoryOrder.includes(cat)) customCategoryOrder.push(cat);
-    if (!exists && cat !== 'Geral') {
-        showToast('✨', 'Categoria "' + cat + '" criada automaticamente!');
-    }
+    const scriptCategories = categories.length ? categories : ['Geral'];
+    const created = scriptCategories.filter(category => !getCategories().includes(category));
+    scriptCategories.forEach(category => {
+      if (!categoryRegistry.includes(category)) categoryRegistry.push(category);
+      if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
+    });
 
     scripts.push({
         id: nextId++,
-        cat: cat,
+        cat: scriptCategories[0],
+        cats: scriptCategories,
         title: title,
         html: html || textToHTML(text),
         greetingMode: greetingMode,
@@ -1742,13 +1781,13 @@ function addScript() {
     });
     
     closeModal();
-    activeCat = cat;
+    activeCat = scriptCategories[0];
     searchQ = '';
-    document.getElementById('pageTitle').innerHTML = cat;
+    document.getElementById('pageTitle').innerHTML = activeCat;
     saveToLocal();
     buildSidebar();
     render();
-    showToast('✅', 'Script adicionado!');
+    showToast(created.length ? '✨' : '✅', created.length ? 'Script adicionado e nova categoria criada!' : 'Script adicionado!');
 }
 
 // ============================================================
@@ -1762,7 +1801,7 @@ function exportJSON() {
   const standard = isStandardMode();
   const payload = {
     schema: standard ? 'scriptz-standard-changes' : 'scriptz-free-project',
-    version: 3,
+    version: 4,
     mode: workspace.mode,
     division: workspace.division,
     scripts: standard ? scripts.filter(script => !script.isStandard) : scripts,
@@ -1796,14 +1835,16 @@ function importProjectData(imported) {
     let movedToGeneral = 0;
     const userScripts = data.scripts.map(script => {
       const normalized = normalizeScript({ ...script, isStandard: false }, 'user');
-      if (!allowedCategories.has(normalized.cat)) {
-        normalized.cat = 'Geral';
+      const categories = getScriptCategories(normalized);
+      const allowed = categories.filter(category => allowedCategories.has(category));
+      if (allowed.length !== categories.length) {
+        setScriptCategories(normalized, allowed.length ? allowed : ['Geral']);
         movedToGeneral += 1;
       }
       return normalized;
     });
     scripts = [...standardScripts, ...userScripts];
-    categoryRegistry = [...new Set([...standardCategories, ...importedCategories, ...scripts.map(script => script.cat)])];
+    categoryRegistry = [...new Set([...standardCategories, ...importedCategories, ...allScriptCategories()])];
     customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : categoryRegistry;
     customScriptOrderByCategory = data.scriptOrders || {};
     if (movedToGeneral) showToast('ℹ️', `${movedToGeneral} scriptz foram movidos para Geral porque a categoria padrão não existe.`);
@@ -1813,7 +1854,7 @@ function importProjectData(imported) {
     categoryRegistry = Array.isArray(data.categories) ? data.categories : [];
     customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : [];
     customScriptOrderByCategory = data.scriptOrders || {};
-    categoryRegistry = [...new Set([...categoryRegistry, ...scripts.map(script => script.cat).filter(Boolean)])];
+    categoryRegistry = [...new Set([...categoryRegistry, ...allScriptCategories()])];
   }
   nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
   saveToLocal();
@@ -1878,7 +1919,7 @@ async function loadStandardBaseIntoFree(division) {
     const incoming = template.scripts.map(script => normalizeScript({ ...script, isStandard: false }, 'template-base'));
     if (scripts.length + incoming.length > SCRIPT_LIMITS.free) throw new Error(`O Modo Editor aceita até ${SCRIPT_LIMITS.free} scriptz.`);
     scripts = [...scripts, ...incoming];
-    categoryRegistry = [...new Set([...categoryRegistry, ...(template.categories || []), ...incoming.map(script => script.cat)])];
+    categoryRegistry = [...new Set([...categoryRegistry, ...(template.categories || []), ...allScriptCategories(incoming)])];
     customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
     nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
     saveToLocal();

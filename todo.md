@@ -62,3 +62,12 @@
 - [x] Substituir a instrução da seleção de unidade pela opção curta aprovada.
 - [x] Remover a mensagem diária personalizada e reutilizar a recepção do primeiro acesso para retornos em novos dias.
 - [x] Preservar o tema salvo durante a recepção diária e validar desktop e mobile antes de atualizar o pacote.
+
+# Duas categorias, criação e ordenação
+
+- [x] Evoluir o modelo de script com compatibilidade para até duas categorias em criação, edição, persistência, importação e exportação.
+- [x] Substituir a escolha de categoria na criação por dropdown com a criação de nova categoria, espelhando a edição.
+- [x] Adicionar rolagem própria ao formulário de criação e garantir o cursor de texto nos campos editáveis.
+- [x] Limitar a ordenação a Ordem alfabética e Ordem personalizada, tornando a personalizada o padrão.
+- [x] Bloquear alterações de ordenação enquanto houver um script em edição.
+- [x] Validar os fluxos em desktop e mobile, atualizar a documentação e gerar o pacote revisado.

@@ -29,12 +29,12 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=3" />
     <link rel="shortcut icon" href="assets/favicon.png?v=3" />
-    <link rel="manifest" href="manifest.webmanifest?v=48" />
+    <link rel="manifest" href="manifest.webmanifest?v=49" />
     <meta name="theme-color" content="#101a43" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=48">
+    <link rel="stylesheet" href="css/style.css?v=49">
 </head>
 <body data-theme-default="midnight">
     <div class="layout" id="appLayout">
@@ -114,10 +114,8 @@
                 <button class="mobile-search-toggle" id="mobileSearchToggle" type="button" aria-controls="mobileSearchBar" aria-expanded="false" aria-label="Pesquisar scripts">⌕</button>
                 <div class="top-actions">
                     <select class="sort-select" id="sortSelect" onchange="applySort()">
-                        <option value="title" data-desktop-label="Ordenar por: Título" data-mobile-label="Título">Ordenar por: Título</option>
-                        <option value="category" data-desktop-label="Ordenar por: Categoria" data-mobile-label="Categoria">Ordenar por: Categoria</option>
-                        <option value="id" data-desktop-label="Ordenar por: Data (criação)" data-mobile-label="Data">Ordenar por: Data (criação)</option>
-                        <option value="custom" data-desktop-label="✨ Ordem personalizada" data-mobile-label="✨ Manual">✨ Ordem personalizada</option>
+                        <option value="custom" data-desktop-label="Ordem personalizada" data-mobile-label="Manual">Ordem personalizada</option>
+                        <option value="title" data-desktop-label="Ordem alfabética" data-mobile-label="A–Z">Ordem alfabética</option>
                     </select>
                     <button class="btn-add" onclick="openModal()"><span class="btn-icon" aria-hidden="true">➕</span><span class="btn-label">Novo script</span></button>
                 </div>
@@ -144,12 +142,11 @@
                 <input type="text" id="newTitle" placeholder="Ex: Solicitando documentos adicionais">
             </div>
             <div class="field">
-                <label>Categoria</label>
-                <div class="category-input-wrapper">
-                    <input type="text" id="newCategoryInput" placeholder="Digite o nome da categoria..." autocomplete="off" oninput="filterCategorySuggestions(this.value)">
-                    <div id="categorySuggestions" class="suggestions-list"></div>
+                <label>Categorias <span class="field-limit">até 2</span></label>
+                <div class="category-select-stack">
+                    <select id="newCategoryPrimary" aria-label="Categoria principal" onchange="onNewCategorySelectChange(0)"></select>
+                    <select id="newCategorySecondary" aria-label="Categoria secundária" onchange="onNewCategorySelectChange(1)"></select>
                 </div>
-                <input type="hidden" id="newCategoryHidden" value="">
             </div>
             <div class="field">
                 <label for="newGreeting">🕐 Saudação</label>
@@ -261,6 +258,6 @@
     <!-- TOAST -->
     <div class="toast" id="toast"><span class="icon"></span><span class="msg"></span></div>
 
-    <script src="js/app.js?v=48"></script>
+    <script src="js/app.js?v=49"></script>
 </body>
 </html>

@@ -50,6 +50,12 @@ Ao colar conteúdo com formatação, o Scriptz preserva elementos seguros de tex
 
 O seletor de saudação está disponível nos dois fluxos e oferece **Desabilitar**, uma saudação automática conforme o horário e **Prezado(a),**. A assinatura permanece opcional e é mantida separadamente como preferência local.
 
+### Categorias e rolagem na criação
+
+Cada Scriptz pode ser vinculado a **uma ou duas categorias**. A criação e a edição apresentam dois dropdowns consistentes: o primeiro define a categoria principal e o segundo é opcional. Ambos oferecem a ação **Nova categoria**, e a interface impede que a mesma categoria seja selecionada duas vezes no mesmo script.
+
+O campo principal legado `cat` continua armazenando a primeira categoria para preservar a compatibilidade com projetos anteriores. A nova lista `cats`, limitada a duas entradas, é salva localmente e transportada em JSONs de exportação e importação. O modal de criação e a área de texto possuem rolagem própria, mantendo **Cancelar** e **Adicionar** alcançáveis quando o conteúdo for longo.
+
 ## Ações contextuais
 
 Abaixo da assinatura, o menu expansível **Ações** concentra os recursos operacionais. Ele inicia recolhido para reduzir a densidade da barra lateral e mostra apenas os comandos aplicáveis ao contexto.
@@ -78,7 +84,7 @@ Quando uma importação padrão inclui uma categoria que não está presente no 
 
 ## Limites e produtividade
 
-O Scriptz aceita até **300 scripts por unidade** no Scriptz Padrão e até **500 scripts por projeto** no Modo Editor. A interface oferece busca por título, favoritos, filtros por categoria, ordenação por título, categoria, criação ou ordem personalizada e reordenação de categorias e scripts.
+O Scriptz aceita até **300 scripts por unidade** no Scriptz Padrão e até **500 scripts por projeto** no Modo Editor. A interface oferece busca por título, favoritos, filtros por categoria, **Ordem alfabética** e **Ordem personalizada**. A Ordem personalizada é o padrão e permite reorganizar scripts e categorias; toda alteração de ordenação fica bloqueada enquanto um script estiver em edição.
 
 A edição é exclusiva: enquanto um card estiver em edição, outro script não pode abrir seu editor. A cópia mantém a formatação do texto sempre que o navegador oferecer suporte à área de transferência rica.
 
@@ -86,7 +92,7 @@ A edição é exclusiva: enquanto um card estiver em edição, outro script não
 
 O aplicativo inclui `manifest.webmanifest`, service worker e ícones próprios. O botão **Instalar Scriptz como app** aciona o prompt nativo quando disponível; em navegadores que não o disponibilizam, a aplicação orienta a adicionar o site à tela inicial.
 
-O cache PWA atual é `scriptz-shell-v48` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
+O cache PWA atual é `scriptz-shell-v49` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
 
 ## Estrutura do projeto
 
