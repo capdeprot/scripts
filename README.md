@@ -1,6 +1,6 @@
-# Scriptz — Gerenciador de modelos de e-mail
+# Scriptz — Gerenciador de modelos de texto
 
-O **Scriptz** é uma aplicação web estática e instalável para organizar, criar, editar e reutilizar modelos de e-mail. Todo o funcionamento ocorre no navegador: não há backend obrigatório, e os dados de cada contexto permanecem separados no armazenamento local.
+O **Scriptz** é uma aplicação web estática e instalável para organizar, criar, editar e reutilizar modelos de texto. Todo o funcionamento ocorre no navegador: não há backend obrigatório, e os dados de cada contexto permanecem separados no armazenamento local.
 
 ## Contextos de uso
 
@@ -8,7 +8,7 @@ No primeiro acesso, a aplicação apresenta uma breve recepção e, em seguida, 
 
 | Contexto | Uso | Permissões | Exportação |
 |---|---|---|---|
-| **Scriptz Padrão** | Consulta e personalização local dos modelos de uma unidade. | Os scripts e categorias recebidos do JSON-base são protegidos; dados próprios permanecem editáveis. | Exporta apenas scripts, categorias e ordenações criados localmente. |
+| **Scriptz Padrão** | Consulta dos modelos institucionais e criação de conteúdos pessoais dentro de uma unidade. | **Modelos Padronizados** são protegidos; **Meus Scriptz** permanece totalmente editável. | Exporta apenas scripts, categorias e ordenações pessoais. |
 | **Modo Editor** | Criação livre de Scriptz, importação de projetos e uso opcional de bases CAP editáveis. | Todos os scripts e categorias são editáveis. | Exporta o projeto completo como `meus-scriptz.json`. |
 
 Tema, assinatura, contexto selecionado e largura da barra lateral são preferências locais. Por isso, não são transportados em JSONs de importação ou exportação.
@@ -50,11 +50,17 @@ Ao colar conteúdo com formatação, o Scriptz preserva elementos seguros de tex
 
 O seletor de saudação está disponível nos dois fluxos e oferece **Desabilitar**, uma saudação automática conforme o horário e **Prezado(a),**. A assinatura permanece opcional e é mantida separadamente como preferência local.
 
-### Categorias e rolagem na criação
+### Categorias, subcategorias e rolagem na criação
 
-Cada Scriptz pode ser vinculado a **uma ou duas categorias**. A criação e a edição apresentam dois dropdowns consistentes: o primeiro define a categoria principal e o segundo é opcional. Ambos oferecem a ação **Nova categoria**, e a interface impede que a mesma categoria seja selecionada duas vezes no mesmo script.
+Cada Scriptz deve ser vinculado obrigatoriamente a **uma ou duas classificações já existentes**, que podem ser categorias principais sem subcategorias ou subcategorias. A criação e a edição apresentam dois dropdowns consistentes: o primeiro define a classificação obrigatória e o segundo é opcional. Ambos permitem criar uma **Nova categoria**, e a interface impede que a mesma classificação seja selecionada duas vezes no mesmo script.
 
-O campo principal legado `cat` continua armazenando a primeira categoria para preservar a compatibilidade com projetos anteriores. A nova lista `cats`, limitada a duas entradas, é salva localmente e transportada em JSONs de exportação e importação. O modal de criação e a área de texto possuem rolagem própria, mantendo **Cancelar** e **Adicionar** alcançáveis quando o conteúdo for longo.
+No **Modo Editor**, a sidebar reúne as categorias principais e seus controles visíveis de criar, renomear, excluir e reordenar; não há uma etapa separada para gerenciá-las. Ao selecionar uma categoria principal vazia, a área principal apresenta dois caminhos destacados: **Criar script** ou **Criar subcategoria**. A primeira escolha determina a estrutura daquele espaço. Se o primeiro script for criado diretamente, a categoria não aceita subcategorias; se a primeira subcategoria for criada, os scripts passam a ser organizados dentro delas. A área principal mostra as **Subcategorias** em uma grade de duas colunas e reúne nesse mesmo local as ações de criar, renomear, excluir e reordenar o ramo. A abertura de uma subcategoria oferece um botão para retornar à categoria principal.
+
+No **Scriptz Padrão**, a sidebar é dividida em duas seções expansíveis. **Modelos Padronizados** apresenta exclusivamente as categorias e subcategorias do JSON institucional, sem criação, edição, exclusão ou reordenação de categorias principais. Nessa área, o usuário pode apenas reordenar localmente subcategorias e scripts. **Meus Scriptz** abriga os arquivos importados e os novos conteúdos do usuário, com suas próprias categorias, subcategorias, scripts e controles completos de edição. As duas bibliotecas são filtradas separadamente e não se misturam na navegação ou na lista principal.
+
+Uma categoria principal só pode receber subcategorias quando não possui scriptz diretos. Dessa forma, seus modelos ficam organizados dentro dos ramos criados. Quando uma categoria principal já possui scriptz, a criação de subcategorias é bloqueada para evitar estruturas ambíguas. A ordenação por arraste permanece aplicada às categorias principais e às subcategorias de cada ramo, preservando a relação hierárquica.
+
+O campo principal legado `cat` continua armazenando a primeira classificação para preservar a compatibilidade com projetos anteriores. A nova lista `cats`, limitada a duas entradas, e o objeto `categoryParents`, que relaciona cada subcategoria à sua categoria principal, são salvos localmente e transportados em JSONs de exportação e importação. JSONs de versões anteriores, sem `categoryParents`, continuam válidos e são tratados como estruturas sem subcategorias. O modal de criação e a área de texto possuem rolagem própria, mantendo **Cancelar** e **Adicionar** alcançáveis quando o conteúdo for longo.
 
 ## Ações contextuais
 
@@ -62,13 +68,13 @@ Abaixo da assinatura, o menu expansível **Ações** concentra os recursos opera
 
 | Ação | Scriptz Padrão | Modo Editor |
 |---|---:|---:|
-| Gerenciar categorias | Sim | Sim |
+| Gestão de categorias na sidebar | Sim, em Meus Scriptz | Sim |
 | Usar script padrão como base | Não | Sim |
 | Exportar meus scriptz | Sim | Sim |
-| Descartar Scriptz e reiniciar Modo Editor | Não | Sim |
+| Limpar Modo Editor | Não | Sim |
 | Reverter alterações locais | Sim | Não |
 
-No Modo Editor, **Descartar Scriptz e reiniciar Modo Editor** apaga todos os scripts, categorias e ordenações daquele projeto após confirmação. A antiga ação de baixar o JSON e iniciar um novo projeto foi removida.
+No Modo Editor, **Limpar Modo Editor** apaga todos os scriptz, categorias, subcategorias e ordenações daquele projeto após confirmação. A antiga ação de baixar o JSON e iniciar um novo projeto foi removida.
 
 ## Importação e exportação
 
@@ -76,15 +82,15 @@ O Scriptz usa formatos diferentes para impedir a mistura involuntária de dados 
 
 | Esquema | Gerado por | Pode ser importado em |
 |---|---|---|
-| `scriptz-standard-changes` | Uma unidade do Scriptz Padrão | Somente na mesma unidade. |
-| `scriptz-free-project` | Modo Editor | Somente no Modo Editor. |
-| Array legado | Versões anteriores do Scriptz | Modo Editor, como projeto editável. |
+| `scriptz-standard-changes` | Uma unidade do Scriptz Padrão | Na mesma unidade, dentro de **Meus Scriptz**. |
+| `scriptz-free-project` | Modo Editor ou Scriptz Padrão | No Scriptz Padrão, é carregado em **Meus Scriptz**. |
+| Array legado | Versões anteriores do Scriptz | Como conteúdo pessoal editável. |
 
-Quando uma importação padrão inclui uma categoria que não está presente no arquivo-base nem no próprio JSON de mudanças, o Scriptz move o item para **Geral** e informa o ajuste.
+Importações no Scriptz Padrão nunca alteram o conjunto de modelos institucionais. Seus scripts e categorias são carregados somente em **Meus Scriptz** e permanecem separados dos arquivos-base da unidade.
 
 ## Limites e produtividade
 
-O Scriptz aceita até **300 scripts por unidade** no Scriptz Padrão e até **500 scripts por projeto** no Modo Editor. A interface oferece busca por título, favoritos, filtros por categoria, **Ordem alfabética** e **Ordem personalizada**. A Ordem personalizada é o padrão e permite reorganizar scripts e categorias; toda alteração de ordenação fica bloqueada enquanto um script estiver em edição.
+O Scriptz aceita até **300 scripts por unidade** no Scriptz Padrão e até **500 scripts por projeto** no Modo Editor. A interface oferece busca por título, favoritos, filtros por categoria ou subcategoria, **Ordem alfabética** e **Ordem personalizada**. A Ordem personalizada é o padrão e permite reorganizar scripts e categorias principais; toda alteração de ordenação fica bloqueada enquanto um script estiver em edição.
 
 A edição é exclusiva: enquanto um card estiver em edição, outro script não pode abrir seu editor. A cópia mantém a formatação do texto sempre que o navegador oferecer suporte à área de transferência rica.
 
@@ -92,7 +98,7 @@ A edição é exclusiva: enquanto um card estiver em edição, outro script não
 
 O aplicativo inclui `manifest.webmanifest`, service worker e ícones próprios. O botão **Instalar Scriptz como app** aciona o prompt nativo quando disponível; em navegadores que não o disponibilizam, a aplicação orienta a adicionar o site à tela inicial.
 
-O cache PWA atual é `scriptz-shell-v50` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
+O cache PWA atual é `scriptz-shell-v52` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
 
 ## Estrutura do projeto
 
@@ -116,6 +122,7 @@ Para publicar modelos institucionais, edite exclusivamente o JSON da unidade cor
   "version": 1,
   "division": "DEPROT",
   "categories": ["Categoria padrão"],
+  "categoryParents": { "Subcategoria exemplo": "Categoria padrão" },
   "scripts": [
     {
       "id": 1,

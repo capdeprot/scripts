@@ -10,6 +10,14 @@ let sortBy = 'custom';
 let customCategoryOrder = [];
 let customScriptOrderByCategory = {};
 let categoryRegistry = [];
+let categoryParents = {};
+let expandedCategories = new Set();
+let subcategoryCreatorOpen = false;
+let sidebarCategoryCreatorOpen = false;
+let isInitialLanding = true;
+let activeLibrary = 'personal';
+let standardCategoryOrder = [];
+let standardScriptOrderByCategory = {};
 let isCustomOrderActive = false;
 let reorderMode = false;
 let deferredInstallPrompt = null;
@@ -17,10 +25,12 @@ let activeEditId = null;
 let workspace = { mode: null, division: null };
 let standardCategories = [];
 let standardScripts = [];
+let standardCategoryParents = {};
 let newScriptLinkRange = null;
 
 const SCRIPT_LIMITS = Object.freeze({ standard: 300, free: 500 });
 const MAX_SCRIPT_CATEGORIES = 2;
+const CATEGORY_ACTION_VALUES = new Set(['__new__', '__new_sub__']);
 const STANDARD_DIVISIONS = Object.freeze({
   DEPROT: 'templates/DEPROT.JSON',
   DPCI: 'templates/DPCI.JSON',
@@ -224,12 +234,13 @@ function saveCustomOrder() {
   }
 }
 
-function getOrderedCategories(cats) {
-  if (customCategoryOrder.length === 0) return cats;
+function getOrderedCategories(cats, library = activeLibraryKey()) {
+  const categoryOrder = getLibraryCategoryOrder(library);
+  if (categoryOrder.length === 0) return cats;
   const ordered = [];
   const remaining = [];
   const catSet = new Set(cats);
-  customCategoryOrder.forEach(cat => {
+  categoryOrder.forEach(cat => {
     if (catSet.has(cat)) {
       ordered.push(cat);
       catSet.delete(cat);
@@ -257,7 +268,46 @@ function isStandardScript(script) {
 }
 
 function isStandardCategory(category) {
-  return isStandardMode() && standardCategories.includes(category);
+  return isStandardLibrary() && standardCategories.includes(category);
+}
+
+function isStandardLibrary() {
+  return isStandardMode() && activeLibrary === 'standard';
+}
+
+function activeLibraryKey() {
+  return isStandardLibrary() ? 'standard' : 'personal';
+}
+
+function getLibraryScripts(library = activeLibraryKey()) {
+  if (!isStandardMode()) return scripts;
+  return library === 'standard' ? scripts.filter(script => script.isStandard) : scripts.filter(script => !script.isStandard);
+}
+
+function getLibraryCategoryRegistry(library = activeLibraryKey()) {
+  return isStandardMode() && library === 'standard' ? standardCategories : categoryRegistry;
+}
+
+function getLibraryCategoryParents(library = activeLibraryKey()) {
+  return isStandardMode() && library === 'standard' ? standardCategoryParents : categoryParents;
+}
+
+function getLibraryCategoryOrder(library = activeLibraryKey()) {
+  return isStandardMode() && library === 'standard' ? standardCategoryOrder : customCategoryOrder;
+}
+
+function getLibraryScriptOrders(library = activeLibraryKey()) {
+  return isStandardMode() && library === 'standard' ? standardScriptOrderByCategory : customScriptOrderByCategory;
+}
+
+function setLibraryCategoryOrder(order, library = activeLibraryKey()) {
+  if (isStandardMode() && library === 'standard') standardCategoryOrder = order;
+  else customCategoryOrder = order;
+}
+
+function setLibraryScriptOrder(category, order, library = activeLibraryKey()) {
+  if (isStandardMode() && library === 'standard') standardScriptOrderByCategory[category] = order;
+  else customScriptOrderByCategory[category] = order;
 }
 
 function currentScriptLimit() {
@@ -285,12 +335,151 @@ function scriptHasCategory(script, category) {
   return getScriptCategories(script).includes(category);
 }
 
-function allScriptCategories(collection = scripts) {
+function allScriptCategories(collection = getLibraryScripts()) {
   return collection.flatMap(script => getScriptCategories(script));
 }
 
+function normalizeCategoryName(value) {
+  return String(value || '').trim();
+}
+
+function normalizeCategoryParents(value) {
+  const relationships = {};
+  const pairs = Array.isArray(value)
+    ? value.map(entry => [entry?.child || entry?.category || entry?.name, entry?.parent])
+    : Object.entries(value && typeof value === 'object' ? value : {});
+  pairs.forEach(([child, parent]) => {
+    const childName = normalizeCategoryName(child);
+    const parentName = normalizeCategoryName(parent);
+    if (childName && parentName && childName !== parentName) relationships[childName] = parentName;
+  });
+  return relationships;
+}
+
+function reconcileCategoryHierarchy() {
+  const userScripts = isStandardMode() ? scripts.filter(script => !script.isStandard) : scripts;
+  const known = [...categoryRegistry, ...allScriptCategories(userScripts), ...Object.keys(categoryParents), ...Object.values(categoryParents)]
+    .map(normalizeCategoryName)
+    .filter(Boolean);
+  categoryRegistry = [...new Set(known)];
+  const valid = {};
+  Object.entries(categoryParents).forEach(([child, parent]) => {
+    const childName = normalizeCategoryName(child);
+    const parentName = normalizeCategoryName(parent);
+    if (childName && parentName && childName !== parentName && categoryRegistry.includes(childName) && categoryRegistry.includes(parentName)) {
+      valid[childName] = parentName;
+    }
+  });
+  Object.entries(valid).forEach(([child, parent]) => {
+    if (valid[parent] || hasDirectScripts(parent, 'personal')) delete valid[child];
+  });
+  categoryParents = valid;
+  expandedCategories = new Set([...expandedCategories].filter(category => categoryRegistry.includes(category)));
+}
+
+function getCategories(library = activeLibraryKey()) {
+  const registry = getLibraryCategoryRegistry(library);
+  const parents = getLibraryCategoryParents(library);
+  const libraryScripts = getLibraryScripts(library);
+  const categories = ['all'];
+  [...registry, ...allScriptCategories(libraryScripts), ...Object.keys(parents), ...Object.values(parents)]
+    .map(normalizeCategoryName)
+    .filter(Boolean)
+    .forEach(category => { if (!categories.includes(category)) categories.push(category); });
+  return categories;
+}
+
+function getCategoryParent(category, library = activeLibraryKey()) {
+  return normalizeCategoryName(getLibraryCategoryParents(library)[category]);
+}
+
+function getChildCategories(parent, library = activeLibraryKey()) {
+  return getCategories(library).filter(category => category !== 'all' && getCategoryParent(category, library) === parent);
+}
+
+function getRootCategories(library = activeLibraryKey()) {
+  return getCategories(library).filter(category => category !== 'all' && !getCategoryParent(category, library));
+}
+
+function isRootCategory(category, library = activeLibraryKey()) {
+  return Boolean(category) && !getCategoryParent(category, library);
+}
+
+function hasDirectScripts(category, library = activeLibraryKey()) {
+  return getLibraryScripts(library).some(script => scriptHasCategory(script, category));
+}
+
+function canManageSubcategories(category) {
+  return !isStandardLibrary() && isRootCategory(category) && (!hasDirectScripts(category) || getChildCategories(category).length > 0);
+}
+
+function getAssignableCategories(library = activeLibraryKey()) {
+  return getCategories(library).filter(category => category !== 'all' && !getChildCategories(category, library).length);
+}
+
+function getCategoryDescendants(category, seen = new Set(), library = activeLibraryKey()) {
+  if (seen.has(category)) return seen;
+  seen.add(category);
+  getChildCategories(category, library).forEach(child => getCategoryDescendants(child, seen, library));
+  return seen;
+}
+
+function getCategoryPath(category, library = activeLibraryKey()) {
+  const parts = [category];
+  const visited = new Set(parts);
+  let parent = getCategoryParent(category, library);
+  while (parent && !visited.has(parent)) {
+    parts.unshift(parent);
+    visited.add(parent);
+    parent = getCategoryParent(parent, library);
+  }
+  return parts.join(' › ');
+}
+
+function categoryScriptCount(category, includeDescendants = false, library = activeLibraryKey()) {
+  const categories = includeDescendants ? getCategoryDescendants(category, new Set(), library) : new Set([category]);
+  return getLibraryScripts(library).filter(script => getScriptCategories(script).some(scriptCategory => categories.has(scriptCategory))).length;
+}
+
+function scriptMatchesActiveCategory(script, category, library = activeLibraryKey()) {
+  const acceptedCategories = getCategoryDescendants(category, new Set(), library);
+  return getScriptCategories(script).some(scriptCategory => acceptedCategories.has(scriptCategory));
+}
+
+function isCategoryAction(value) {
+  return CATEGORY_ACTION_VALUES.has(value);
+}
+
+function registerCategory(name, parent = undefined) {
+  const category = normalizeCategoryName(name);
+  if (!category) return '';
+  let parentName = '';
+  if (parent !== undefined) {
+    parentName = normalizeCategoryName(parent);
+    if (!parentName) {
+    } else if (!isRootCategory(parentName)) {
+      showToast('⚠️', 'Uma subcategoria deve ficar vinculada diretamente a uma categoria principal.');
+      return '';
+    } else if (hasDirectScripts(parentName)) {
+      showToast('⚠️', 'Não é possível criar subcategorias em uma categoria principal que já possui scriptz.');
+      return '';
+    }
+  }
+  if (!categoryRegistry.includes(category)) categoryRegistry.push(category);
+  if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
+  if (parent !== undefined && !parentName) delete categoryParents[category];
+  if (parentName && parentName !== category && !getCategoryDescendants(category).has(parentName)) categoryParents[category] = parentName;
+  reconcileCategoryHierarchy();
+  return category;
+}
+
+function createSubcategoryFromPrompt() {
+  showToast('ℹ️', 'As subcategorias são criadas na tela da categoria principal.');
+  return '';
+}
+
 function categoryLabel(script) {
-  return getScriptCategories(script).join(' · ');
+  return getScriptCategories(script).map(getCategoryPath).join(' · ');
 }
 
 function normalizeScript(script, source = 'user') {
@@ -317,8 +506,13 @@ function normalizeWorkspaceState(savedState) {
   const source = isStandardMode() ? 'user' : 'user';
   scripts = savedScripts.map(script => normalizeScript(script, script.source || source));
   categoryRegistry = Array.isArray(state.categories) ? state.categories : [];
+  categoryParents = normalizeCategoryParents(state.categoryParents);
+  expandedCategories = new Set(Array.isArray(state.expandedCategories) ? state.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
   customCategoryOrder = Array.isArray(state.categoryOrder) ? state.categoryOrder : [];
   customScriptOrderByCategory = state.scriptOrders || {};
+  standardCategoryOrder = Array.isArray(state.standardCategoryOrder) ? state.standardCategoryOrder : [];
+  standardScriptOrderByCategory = state.standardScriptOrders || {};
+  reconcileCategoryHierarchy();
 }
 
 async function fetchStandardTemplate(division) {
@@ -336,17 +530,19 @@ function configureWorkspaceControls() {
   const reset = document.getElementById('resetLocalBtn');
   const discard = document.getElementById('discardTemplatesBtn');
   const templateBase = document.getElementById('loadTemplateBaseBtn');
+  const manageCategories = document.getElementById('manageCategoriesBtn');
   if (select) select.value = isStandardMode() ? `standard:${workspace.division}` : 'free';
   if (reset) reset.hidden = !isStandardMode();
   if (discard) discard.hidden = isStandardMode();
   if (templateBase) templateBase.hidden = isStandardMode();
+  if (manageCategories) manageCategories.hidden = true;
 }
 
 function refreshWorkspaceUI() {
-  const label = isStandardMode() ? `CAP · ${workspace.division}` : 'Modo Editor';
+  const label = isStandardMode() ? (isStandardLibrary() ? `CAP · ${workspace.division} · Modelos Padronizados` : `CAP · ${workspace.division} · Meus Scriptz`) : 'Modo Editor';
   document.body.dataset.workspaceMode = workspace.mode || '';
   document.body.dataset.workspaceDivision = workspace.division || '';
-  document.getElementById('pageTitle').textContent = activeCat === 'all' ? label : activeCat === 'favorites' ? 'Favoritos' : activeCat;
+  document.getElementById('pageTitle').textContent = activeCat === 'all' ? label : activeCat === 'favorites' ? 'Favoritos' : getCategoryPath(activeCat);
   configureWorkspaceControls();
   buildSidebar();
   render();
@@ -356,25 +552,31 @@ async function loadWorkspace(showFeedback = true) {
   if (!workspace.mode) return;
   activeCat = 'all';
   searchQ = '';
+  isInitialLanding = true;
   activeEditId = null;
+  activeLibrary = isStandardMode() ? 'standard' : 'personal';
   standardScripts = [];
   standardCategories = [];
+  standardCategoryParents = {};
   try {
     const local = localStorage.getItem(workspaceKey());
     if (isStandardMode()) {
       const template = await fetchStandardTemplate(workspace.division);
       standardCategories = Array.isArray(template.categories) ? template.categories.map(String) : [];
+      standardCategoryParents = normalizeCategoryParents(template.categoryParents);
       standardScripts = template.scripts.map(script => normalizeScript({ ...script, isStandard: true }, 'standard'));
       const saved = local ? JSON.parse(local) : null;
       normalizeWorkspaceState(saved);
       scripts = [...standardScripts, ...scripts.filter(script => !script.isStandard)];
-      categoryRegistry = [...new Set([...standardCategories, ...categoryRegistry, ...allScriptCategories()])];
+      reconcileCategoryHierarchy();
+      standardCategoryOrder = [...new Set([...standardCategoryOrder, ...standardCategories, ...Object.keys(standardCategoryParents)])];
       originalScripts = JSON.parse(JSON.stringify(standardScripts));
     } else {
       const saved = local ? JSON.parse(local) : null;
       normalizeWorkspaceState(saved);
       scripts = scripts.map(script => ({ ...script, isStandard: false, source: script.source || 'user' }));
       categoryRegistry = [...new Set([...categoryRegistry, ...allScriptCategories()])];
+      reconcileCategoryHierarchy();
       originalScripts = [];
     }
     customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
@@ -520,7 +722,7 @@ async function loadData() {
 // ============================================================
 function resetLocalData() {
   if (!isStandardMode()) return;
-  if (!confirm('⚠️ Isso vai apagar somente scripts, categorias e ordenações criados localmente neste contexto. Continuar?')) return;
+  if (!confirm('⚠️ Isso apagará somente scripts, categorias e ordenações criados localmente ou importados neste contexto. Continuar?')) return;
   localStorage.removeItem(workspaceKey());
   loadWorkspace(false);
   showToast('↩️', 'Alterações locais revertidas.');
@@ -529,38 +731,37 @@ function resetLocalData() {
 function saveToLocal() {
   if (!workspace.mode) return;
   const userScripts = isStandardMode() ? scripts.filter(script => !script.isStandard) : scripts;
-  const userCategories = isStandardMode()
-    ? categoryRegistry.filter(category => !standardCategories.includes(category))
-    : categoryRegistry;
+  const userCategories = categoryRegistry;
+  const persistedParents = { ...categoryParents };
   localStorage.setItem(workspaceKey(), JSON.stringify({
     schema: isStandardMode() ? 'scriptz-standard-changes' : 'scriptz-free-project',
-    version: 4,
+    version: 5,
     mode: workspace.mode,
     division: workspace.division,
     scripts: userScripts,
     categories: userCategories,
+    categoryParents: persistedParents,
     categoryOrder: customCategoryOrder,
-    scriptOrders: customScriptOrderByCategory
+    scriptOrders: customScriptOrderByCategory,
+    standardCategoryOrder: isStandardMode() ? standardCategoryOrder : undefined,
+    standardScriptOrders: isStandardMode() ? standardScriptOrderByCategory : undefined,
+    expandedCategories: [...expandedCategories]
   }));
 }
 
 // ============================================================
 //  CATEGORIAS & SIDEBAR
 // ============================================================
-function getCategories() {
-  const cats = ['all'];
-  [...categoryRegistry, ...allScriptCategories()].filter(Boolean).forEach(cat => { if (!cats.includes(cat)) cats.push(cat); });
-  return cats;
-}
-
 function getFilteredScripts() {
+  const library = activeLibraryKey();
   let filtered;
   if (activeCat === 'all') {
-    filtered = scripts;
+    filtered = getLibraryScripts(library);
   } else if (activeCat === 'favorites') {
-    filtered = scripts.filter(s => isFavorite(s));
+    filtered = getLibraryScripts(library).filter(s => isFavorite(s));
   } else {
-    filtered = scripts.filter(s => scriptHasCategory(s, activeCat));
+    const hasSubcategories = getChildCategories(activeCat, library).length > 0;
+    filtered = getLibraryScripts(library).filter(s => hasSubcategories ? scriptHasCategory(s, activeCat) : scriptMatchesActiveCategory(s, activeCat, library));
   }
 
   if (searchQ) {
@@ -581,7 +782,8 @@ function applySortFn(list) {
   const s = sortBy;
   if (s === 'title') return prioritizeFavorites(list, (a, b) => a.title.localeCompare(b.title));
   if (s === 'custom') {
-    const order = customScriptOrderByCategory[activeCat] || customScriptOrderByCategory.all || [];
+    const scriptOrders = getLibraryScriptOrders();
+    const order = scriptOrders[activeCat] || scriptOrders.all || [];
     const rank = new Map(order.map((id, index) => [String(id), index]));
     return prioritizeFavorites(list, (a, b) => (rank.get(String(a.id)) ?? 999999) - (rank.get(String(b.id)) ?? 999999));
   }
@@ -646,7 +848,7 @@ function toggleReorderMode() {
 let draggedItem = null;
 
 function initDragDrop() {
-  const items = document.querySelectorAll('#sidebarNav ul li');
+  const items = document.querySelectorAll('#sidebarNav .category-root-list[data-editable-roots="true"] > li[data-category]');
   items.forEach(item => {
     item.setAttribute('draggable', 'true');
     item.addEventListener('dragstart', (e) => {
@@ -691,13 +893,10 @@ function initDragDrop() {
 }
 
 function updateCustomOrderFromDOM() {
-  const items = document.querySelectorAll('#sidebarNav ul li a');
-  const newOrder = [];
-  items.forEach(a => {
-    const text = a.textContent.trim();
-    const catName = text.replace(/\s*\(\d+\)\s*$/, '').trim();
-    if (catName && catName !== 'Todos' && catName !== 'Favoritos') newOrder.push(catName);
-  });
+  const items = document.querySelectorAll('#sidebarNav .category-root-list[data-editable-roots="true"] > li[data-category]');
+  const rootOrder = [...items].map(item => item.dataset.category).filter(Boolean);
+  const nestedOrder = customCategoryOrder.filter(category => getCategoryParent(category, 'personal'));
+  const newOrder = [...new Set([...rootOrder, ...nestedOrder, ...getCategories('personal').filter(category => category !== 'all')])];
   const currentOrderStr = JSON.stringify(customCategoryOrder);
   const newOrderStr = JSON.stringify(newOrder);
   if (currentOrderStr !== newOrderStr && newOrder.length > 0) {
@@ -710,44 +909,80 @@ function updateCustomOrderFromDOM() {
 // ============================================================
 //  BUILD SIDEBAR
 // ============================================================
+function toggleSidebarCategoryCreator() {
+  if (isStandardLibrary()) return;
+  sidebarCategoryCreatorOpen = !sidebarCategoryCreatorOpen;
+  buildSidebar();
+  if (sidebarCategoryCreatorOpen) setTimeout(() => document.getElementById('sidebarNewCategoryName')?.focus(), 30);
+}
+
+function createCategoryFromSidebar() {
+  if (isStandardLibrary()) return;
+  const input = document.getElementById('sidebarNewCategoryName');
+  const name = normalizeCategoryName(input?.value);
+  if (!name) {
+    showToast('⚠️', 'Digite o nome da nova categoria.');
+    input?.focus();
+    return;
+  }
+  if (getCategories('personal').includes(name) || (isStandardMode() && getCategories('standard').includes(name))) {
+    showToast('⚠️', 'Este nome já está em uso.');
+    input?.focus();
+    return;
+  }
+  if (!registerCategory(name)) return;
+  sidebarCategoryCreatorOpen = false;
+  saveToLocal();
+  buildSidebar();
+  setCat(name);
+  showToast('✨', `Categoria “${name}” criada!`);
+}
+
+function renameCategoryFromSidebar(category) {
+  if (isStandardLibrary() || isStandardCategory(category)) return;
+  const nextName = normalizeCategoryName(prompt(`Novo nome para a categoria “${category}”:`, category));
+  if (!nextName || nextName === category) return;
+  confirmRenameCategory(category, nextName);
+}
+
 function buildSidebar() {
   const nav = document.getElementById('sidebarNav');
-  const cats = getCategories();
-  const counts = {};
-  scripts.forEach(script => getScriptCategories(script).forEach(category => { counts[category] = (counts[category] || 0) + 1; }));
-
-  const categoryList = cats.filter(c => c !== 'all');
-  let orderedCats = categoryList;
-  if (sortBy === 'custom' && customCategoryOrder.length > 0) {
-    orderedCats = getOrderedCategories(categoryList);
-  }
-
-  const favoriteCount = scripts.filter(s => isFavorite(s)).length;
+  const safeJs = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   const overviewButton = (cat, label, icon, count) => {
     const active = activeCat === cat;
-    return `<li><a class="cat-btn ${active ? 'active' : ''}" onclick="setCat('${cat}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-radius:8px;color:${active ? '#fff' : 'var(--text-secondary)'};font-size:13px;font-weight:${active ? '600' : '500'};cursor:pointer;transition:all var(--transition);text-decoration:none;background:${active ? 'var(--accent)' : 'var(--bg)'};border:1.5px solid ${active ? 'var(--accent)' : 'var(--border)'};user-select:none;${active ? 'box-shadow:0 2px 8px rgba(30,79,122,.2);' : ''}">
-      ${icon} ${label} <span class="nav-count" style="font-size:11px;background:${active ? 'rgba(255,255,255,.2)' : 'var(--surface2)'};padding:0px 10px;border-radius:12px;font-weight:500;color:${active ? '#fff' : 'var(--text-secondary)'};transition:all var(--transition);pointer-events:none;">${count}</span></a></li>`;
+    return `<li><button type="button" class="cat-btn overview-sidebar-btn ${active ? 'active' : ''}" onclick="setCat('${cat}')"><span>${icon} ${label}</span><span class="nav-count">${count}</span></button></li>`;
   };
-  let html = '<div class="cat-lbl">Visão geral</div><ul>' +
-    overviewButton('all', 'Todos', '📋', scripts.length) +
-    overviewButton('favorites', 'Favoritos', '⭐', favoriteCount) +
-    '</ul>';
+  const categoryButton = (category, library, editable = false) => {
+    const isActive = activeLibraryKey() === library && getCategoryDescendants(category, new Set(), library).has(activeCat);
+    const count = categoryScriptCount(category, true, library);
+    const actions = editable ? `<span class="sidebar-category-actions"><button type="button" onclick="renameCategoryFromSidebar('${safeJs(category)}')" aria-label="Renomear ${escapeHtml(category)}">✏️</button><button type="button" onclick="deleteCategory('${safeJs(category)}')" aria-label="Excluir ${escapeHtml(category)}">🗑️</button></span>` : '';
+    const arrow = editable ? '' : '<span class="category-root-arrow" aria-hidden="true">›</span>';
+    return `<li class="category-nav-item category-root ${editable ? 'is-editable' : ''}" data-category="${escapeHtml(category)}"><button type="button" class="cat-btn category-root-btn ${isActive ? 'active' : ''}" onclick="setCat('${safeJs(category)}')" title="${escapeHtml(category)}"><span class="category-root-symbol" aria-hidden="true">▰</span><span class="cat-btn-label">${escapeHtml(category)}</span><span class="nav-count">${count}</span>${arrow}</button>${actions}</li>`;
+  };
+  const rootCategoryList = (library, editable) => {
+    const roots = getOrderedCategories(getRootCategories(library), library);
+    const attributes = editable ? ' data-editable-roots="true"' : '';
+    const rows = roots.map(category => categoryButton(category, library, editable)).join('') || '<li class="sidebar-category-empty">Nenhuma categoria criada.</li>';
+    return `<ul class="category-root-list"${attributes}>${rows}</ul>`;
+  };
+  const personalManagement = () => `<div class="sidebar-category-manager"><div class="sidebar-category-tools"><button id="reorderBtn" type="button" class="sidebar-tool-btn" onclick="toggleReorderMode()">🔀 Reordenar</button><button type="button" class="sidebar-tool-btn" onclick="toggleSidebarCategoryCreator()">${sidebarCategoryCreatorOpen ? '✕ Cancelar' : '➕ Nova categoria'}</button></div>${sidebarCategoryCreatorOpen ? '<div class="sidebar-category-create"><input id="sidebarNewCategoryName" type="text" placeholder="Nome da categoria" onkeydown="if(event.key===\'Enter\') createCategoryFromSidebar()"><button type="button" onclick="createCategoryFromSidebar()">Adicionar</button></div>' : ''}</div>`;
 
-  html += '<div class="cat-lbl">Categorias</div><ul>';
-  orderedCats.forEach(cat => {
-    const count = counts[cat] || 0;
-    const isActive = activeCat === cat;
-    html += `<li>
-      <a class="cat-btn ${isActive ? 'active' : ''}" onclick="setCat('${cat.replace(/'/g, "\\'")}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-radius:8px;color:${isActive ? '#fff' : 'var(--text-secondary)'};font-size:13px;font-weight:${isActive ? '600' : '500'};cursor:pointer;transition:all var(--transition);text-decoration:none;background:${isActive ? 'var(--accent)' : 'var(--bg)'};border:1.5px solid ${isActive ? 'var(--accent)' : 'var(--border)'};user-select:none;${isActive ? 'box-shadow:0 2px 8px rgba(30,79,122,.2);' : ''}">
-        ${cat} <span class="nav-count" style="font-size:11px;background:${isActive ? 'rgba(255,255,255,.2)' : 'var(--surface2)'};padding:0px 10px;border-radius:12px;font-weight:500;color:${isActive ? '#fff' : 'var(--text-secondary)'};transition:all var(--transition);pointer-events:none;">${count}</span>
-      </a>
-    </li>`;
-  });
-  html += '</ul>';
+  if (!isStandardMode()) {
+    const favoriteCount = scripts.filter(script => isFavorite(script)).length;
+    let html = '<div class="cat-lbl">Visão geral</div><ul>' + overviewButton('all', 'Todos', '📋', scripts.length) + overviewButton('favorites', 'Favoritos', '⭐', favoriteCount) + '</ul>';
+    html += '<div class="cat-lbl">Categorias</div>' + rootCategoryList('personal', true) + personalManagement();
+    nav.innerHTML = html;
+  } else {
+    const librarySection = (library, label, icon, editable) => {
+      const count = getLibraryScripts(library).length;
+      const active = activeLibraryKey() === library;
+      return `<details class="sidebar-library-section ${active ? 'is-active' : ''}" ${active ? 'open' : ''}><summary onclick="event.preventDefault();setLibrary('${library}')"><span class="sidebar-library-title"><span aria-hidden="true">${icon}</span>${label}</span><span class="nav-count">${count}</span><span class="sidebar-library-chevron" aria-hidden="true">⌄</span></summary><div class="sidebar-library-content">${active ? `<button type="button" class="sidebar-library-overview" onclick="setCat('all')">Todos os scriptz desta área</button><div class="cat-lbl">Categorias</div>${rootCategoryList(library, editable)}${editable ? personalManagement() : ''}` : ''}</div></details>`;
+    };
+    nav.innerHTML = librarySection('standard', 'Modelos Padronizados', '📘', false) + librarySection('personal', 'Meus Scriptz', '✦', true);
+  }
 
-  nav.innerHTML = html;
   if (reorderMode) {
-    document.querySelectorAll('#sidebarNav ul li').forEach(el => {
+    document.querySelectorAll('#sidebarNav .category-root-list[data-editable-roots="true"] > li[data-category]').forEach(el => {
       el.classList.add('reorder-mode');
     });
   }
@@ -756,16 +991,39 @@ function buildSidebar() {
 
 function setCat(cat) {
   activeCat = cat;
+  isInitialLanding = false;
+  subcategoryCreatorOpen = false;
   searchQ = '';
   if (window.matchMedia('(max-width: 820px)').matches) closeMobileNav();
   document.getElementById('searchInput').value = '';
-  document.getElementById('pageTitle').innerHTML = cat === 'all' ? 'Todos os scriptz' : cat === 'favorites' ? 'Favoritos' : cat;
+  document.getElementById('pageTitle').textContent = cat === 'all' ? (isStandardMode() ? (isStandardLibrary() ? 'Modelos Padronizados' : 'Meus Scriptz') : 'Todos os scriptz') : cat === 'favorites' ? 'Favoritos' : getCategoryPath(cat);
+  buildSidebar();
+  render();
+}
+
+function setLibrary(library) {
+  if (!isStandardMode()) return;
+  const next = library === 'standard' ? 'standard' : 'personal';
+  if (activeEditId !== null) {
+    showToast('⚠️', 'Conclua ou cancele a edição antes de trocar de biblioteca.');
+    return;
+  }
+  activeLibrary = next;
+  reorderMode = false;
+  activeCat = 'all';
+  isInitialLanding = false;
+  subcategoryCreatorOpen = false;
+  searchQ = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('mobileSearchInput').value = '';
+  document.getElementById('pageTitle').textContent = next === 'standard' ? 'Modelos Padronizados' : 'Meus Scriptz';
   buildSidebar();
   render();
 }
 
 function onSearch(val) {
   searchQ = val;
+  if (val) isInitialLanding = false;
   const desktopInput = document.getElementById('searchInput');
   const mobileInput = document.getElementById('mobileSearchInput');
   if (desktopInput && desktopInput.value !== val) desktopInput.value = val;
@@ -786,33 +1044,68 @@ function toggleMobileSearch() {
 // ============================================================
 //  CATEGORIAS DA CRIAÇÃO (ATÉ DUAS)
 // ============================================================
+function getContextualPrimaryCategory() {
+  if (activeCat === 'all' || activeCat === 'favorites' || isStandardLibrary()) return '';
+  if (getChildCategories(activeCat).length > 0) return '';
+  return activeCat;
+}
+
+function canCreateScriptInContext() {
+  const contextualCategory = getContextualPrimaryCategory();
+  return Boolean(contextualCategory) && categoryScriptCount(contextualCategory) > 0;
+}
+
+function syncNewScriptButton() {
+  const button = document.getElementById('newScriptBtn');
+  if (!button) return;
+  const available = canCreateScriptInContext();
+  button.hidden = !available;
+  button.title = available ? `Criar script em ${getCategoryPath(getContextualPrimaryCategory())}` : '';
+}
+
 function createCategoryFromPrompt() {
   const value = prompt('Digite o nome da nova categoria:');
   if (!value || !value.trim()) return '';
-  const category = value.trim();
-  if (!categoryRegistry.includes(category)) {
-    categoryRegistry.push(category);
-    if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
+  const category = normalizeCategoryName(value);
+  if (getCategories().includes(category)) {
+    showToast('⚠️', 'Já existe uma categoria ou subcategoria com este nome.');
+    return '';
   }
-  return category;
+  return registerCategory(category);
 }
 
 function getNewScriptCategories() {
-  return normalizedCategoryList([
+  return selectedCategoryList([
     document.getElementById('newCategoryPrimary')?.value,
     document.getElementById('newCategorySecondary')?.value
-  ]).filter(category => category !== '__new__');
+  ]);
+}
+
+function selectedCategoryList(categories) {
+  const source = Array.isArray(categories) ? categories : [categories];
+  return [...new Set(source.map(normalizeCategoryName).filter(category => category && !isCategoryAction(category)))].slice(0, MAX_SCRIPT_CATEGORIES);
+}
+
+function hasValidScriptClassification(categories) {
+  return categories.length > 0 && categories.every(category => getAssignableCategories().includes(category));
+}
+
+function scriptHasDeclaredClassification(script) {
+  const categories = Array.isArray(script?.cats) ? script.cats : [script?.cat];
+  return categories.some(category => normalizeCategoryName(category));
 }
 
 function populateNewCategorySelects(categories = []) {
-  const selected = normalizedCategoryList(categories).filter(category => category !== 'Geral' || categories.includes('Geral'));
+  const selected = selectedCategoryList(categories);
   const primary = document.getElementById('newCategoryPrimary');
+  const context = document.getElementById('newCategoryContext');
   const secondary = document.getElementById('newCategorySecondary');
-  if (!primary || !secondary) return;
-  const primaryCategory = selected[0] || '';
+  if (!primary || !secondary || !context) return;
+  const primaryCategory = getContextualPrimaryCategory() || selected[0] || '';
   const secondaryCategory = selected[1] || '';
-  primary.innerHTML = getCategoryOptions(primaryCategory, { placeholder: 'Selecione uma categoria' });
-  secondary.innerHTML = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
+  primary.value = primaryCategory;
+  context.textContent = primaryCategory ? `Será vinculado a: ${getCategoryPath(primaryCategory)}` : 'Abra uma categoria ou subcategoria para criar um script.';
+  secondary.innerHTML = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda classificação', exclude: [primaryCategory], includeCreateAction: false });
   primary.value = primaryCategory;
   secondary.value = secondaryCategory;
 }
@@ -821,21 +1114,11 @@ function onNewCategorySelectChange(slot) {
   const primary = document.getElementById('newCategoryPrimary');
   const secondary = document.getElementById('newCategorySecondary');
   if (!primary || !secondary) return;
-  const select = slot === 0 ? primary : secondary;
-  if (select.value === '__new__') {
-    const newCategory = createCategoryFromPrompt();
-    select.value = newCategory || '';
-    if (newCategory) showToast('✨', 'Nova categoria criada!');
-  }
+  if (slot !== 1) return;
   if (primary.value && primary.value === secondary.value) {
-    if (slot === 0) secondary.value = '';
-    else {
-      secondary.value = '';
-      showToast('⚠️', 'Escolha uma segunda categoria diferente.');
-    }
+    secondary.value = '';
+    showToast('⚠️', 'Escolha uma classificação secundária diferente.');
   }
-  const categories = [primary.value, secondary.value].filter(value => value && value !== '__new__');
-  populateNewCategorySelects(categories);
 }
 
 // ============================================================
@@ -861,33 +1144,34 @@ function closeCategoryModal() {
 // ============================================================
 function renderCategoryList() {
     const container = document.getElementById('categoryListContainer');
-    const cats = getOrderedCategories(getCategories().filter(c => c !== 'all'));
-    const counts = {};
-    scripts.forEach(script => getScriptCategories(script).forEach(category => { counts[category] = (counts[category] || 0) + 1; }));
+    const cats = getOrderedCategories(getRootCategories());
     
     if (cats.length === 0) {
         container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">Nenhuma categoria criada ainda.</div>';
         return;
     }
     
-    let html = '';
-    cats.forEach(cat => {
-        const count = counts[cat] || 0;
+    const safeJs = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const row = (cat, level = 'root') => {
         const locked = isStandardCategory(cat);
         const lockLabel = locked ? '<span class="category-standard-lock" title="Categoria padrão protegida">🔒</span>' : '';
         const lockAttrs = locked ? 'disabled aria-disabled="true" title="Categoria padrão protegida"' : '';
-        html += `
-            <div class="category-item ${locked ? 'standard-category' : ''}" draggable="true" data-category="${cat.replace(/"/g, '&quot;')}">
-                <span class="category-drag-handle" title="Arrastar para reordenar" aria-label="Arrastar categoria">⠿</span>
-                <span class="category-name" ${locked ? '' : `onclick="startRenameCategory('${cat.replace(/'/g, "\\'")}')"`}>${cat}</span>${lockLabel}
-                <span class="category-count">${count} ${count === 1 ? 'scriptz' : 'scriptz'}</span>
-                <div class="category-actions">
-                    <button class="btn-rename" onclick="startRenameCategory('${cat.replace(/'/g, "\\'")}')" ${lockAttrs}>✏️</button>
-                    <button class="btn-delete" onclick="deleteCategory('${cat.replace(/'/g, "\\'")}')" ${lockAttrs}>🗑️</button>
-                </div>
+        const dragHandle = level === 'root' ? '<span class="category-drag-handle" title="Arrastar para reordenar" aria-label="Arrastar categoria">⠿</span>' : '<span class="category-drag-spacer" aria-hidden="true"></span>';
+        const levelLabel = level === 'root' ? 'Categoria principal' : `Subcategoria de ${getCategoryParent(cat)}`;
+        return `<div class="category-item category-${level} ${locked ? 'standard-category' : ''}" data-category="${escapeHtml(cat)}">
+            ${dragHandle}
+            <div class="category-item-details">
+                <span class="category-name" ${locked ? '' : `onclick="startRenameCategory('${safeJs(cat)}')"`}>${escapeHtml(cat)}</span>${lockLabel}
+                <span class="category-level">${escapeHtml(levelLabel)}</span>
             </div>
-        `;
-    });
+            <span class="category-count">${categoryScriptCount(cat, level === 'root' && getChildCategories(cat).length > 0) === 1 ? '1 script' : `${categoryScriptCount(cat, level === 'root' && getChildCategories(cat).length > 0)} scriptz`}</span>
+            <div class="category-actions">
+                <button type="button" class="btn-rename" onclick="startRenameCategory('${safeJs(cat)}')" ${lockAttrs} aria-label="Renomear ${escapeHtml(cat)}">✏️</button>
+                <button type="button" class="btn-delete" onclick="deleteCategory('${safeJs(cat)}')" ${lockAttrs} aria-label="Excluir ${escapeHtml(cat)}">🗑️</button>
+            </div>
+        </div>`;
+    };
+    const html = cats.map(cat => `<div class="category-group" draggable="true" data-category="${escapeHtml(cat)}">${row(cat)}</div>`).join('');
     
     container.innerHTML = html;
     setTimeout(initCategoryDragDrop, 50);
@@ -901,7 +1185,7 @@ let draggedCategoryItem = null;
 function initCategoryDragDrop() {
     const container = document.getElementById('categoryListContainer');
     if (!container) return;
-    const items = [...container.querySelectorAll('.category-item')];
+    const items = [...container.querySelectorAll('.category-group')];
     const clearDragState = () => items.forEach(el => el.classList.remove('dragging', 'drag-over'));
     const moveItem = (dragged, target, y = null) => {
         if (!dragged || !target || dragged === target) return false;
@@ -949,7 +1233,7 @@ function initCategoryDragDrop() {
         });
         handle.addEventListener('pointermove', e => {
             if (!pointerDrag) return;
-            const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.category-item');
+            const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.category-group');
             if (!target || target === item || !container.contains(target)) return;
             items.forEach(el => el.classList.remove('drag-over'));
             target.classList.add('drag-over');
@@ -968,14 +1252,9 @@ function initCategoryDragDrop() {
 }
 
 function saveCategoryOrderFromModal() {
-    const items = document.querySelectorAll('#categoryListContainer .category-item');
-    const newOrder = [];
-    items.forEach(item => {
-        const catName = item.getAttribute('data-category') || item.querySelector('.category-name').textContent.trim();
-        if (catName && catName !== 'Todos') {
-            newOrder.push(catName);
-        }
-    });
+    const roots = [...document.querySelectorAll('#categoryListContainer .category-group')].map(item => item.getAttribute('data-category')).filter(Boolean);
+    const nested = customCategoryOrder.filter(category => getCategoryParent(category));
+    const newOrder = [...new Set([...roots, ...nested, ...getCategories().filter(category => category !== 'all')])];
     
     const currentOrderStr = JSON.stringify(customCategoryOrder);
     const newOrderStr = JSON.stringify(newOrder);
@@ -1084,15 +1363,21 @@ function confirmRenameCategory(oldName, newName) {
     
     const registryIndex = categoryRegistry.indexOf(oldName);
     if (registryIndex !== -1) categoryRegistry[registryIndex] = newName;
+    if (categoryParents[oldName]) {
+        categoryParents[newName] = categoryParents[oldName];
+        delete categoryParents[oldName];
+    }
+    Object.entries(categoryParents).forEach(([child, parent]) => {
+        if (parent === oldName) categoryParents[child] = newName;
+    });
     if (customScriptOrderByCategory[oldName]) {
         customScriptOrderByCategory[newName] = customScriptOrderByCategory[oldName];
         delete customScriptOrderByCategory[oldName];
     }
-    const orderIndex = customCategoryOrder.indexOf(oldName);
-    if (orderIndex !== -1) {
-        customCategoryOrder[orderIndex] = newName;
-        saveCustomOrder();
-    }
+    customCategoryOrder = customCategoryOrder.map(category => category === oldName ? newName : category);
+    expandedCategories = new Set([...expandedCategories].map(category => category === oldName ? newName : category));
+    if (activeCat === oldName) activeCat = newName;
+    reconcileCategoryHierarchy();
     
     cancelRenameCategory();
     saveToLocal();
@@ -1110,12 +1395,15 @@ function deleteCategory(cat) {
         showToast('🔒', 'Categorias padrão não podem ser excluídas.');
         return;
     }
+    const parentBeforeDelete = getCategoryParent(cat);
     const count = scripts.filter(script => scriptHasCategory(script, cat)).length;
+    const children = getChildCategories(cat);
     
     if (count === 0) {
         if (!confirm(`Deseja excluir a categoria "${cat}"?`)) return;
     } else {
-        const confirmMsg = `A categoria "${cat}" possui ${count} ${count === 1 ? 'scriptz' : 'scriptz'}.\n\nExcluí-la fará com que esses scriptz fiquem sem categoria (categoria "Geral").\n\nDeseja continuar?`;
+        const childNotice = children.length ? `\n\nAs ${children.length} subcategoria(s) vinculada(s) passarão a ser categorias principais.` : '';
+        const confirmMsg = `A categoria "${cat}" possui ${count} scriptz.\n\nExcluí-la fará com que esses scriptz fiquem sem categoria (categoria "Geral").${childNotice}\n\nDeseja continuar?`;
         if (!confirm(confirmMsg)) return;
         
         scripts.forEach(script => {
@@ -1129,9 +1417,11 @@ function deleteCategory(cat) {
     customCategoryOrder = customCategoryOrder.filter(c => c !== cat);
     categoryRegistry = categoryRegistry.filter(c => c !== cat);
     delete customScriptOrderByCategory[cat];
-    saveCustomOrder();
-    saveToLocal();
-    
+    delete categoryParents[cat];
+    children.forEach(child => delete categoryParents[child]);
+    expandedCategories.delete(cat);
+    if (activeCat === cat) activeCat = parentBeforeDelete || 'all';
+    reconcileCategoryHierarchy();
     saveToLocal();
     buildSidebar();
     renderCategoryList();
@@ -1144,7 +1434,7 @@ function deleteCategory(cat) {
 // ============================================================
 function createCategoryFromModal() {
     const input = document.getElementById('newCategoryName');
-    const name = input.value.trim();
+    const name = normalizeCategoryName(input.value);
     
     if (!name) {
         showToast('⚠️', 'Digite o nome da nova categoria');
@@ -1159,16 +1449,14 @@ function createCategoryFromModal() {
         return;
     }
     
-    if (!categoryRegistry.includes(name)) categoryRegistry.push(name);
-    if (!customCategoryOrder.includes(name)) customCategoryOrder.push(name);
-    saveCustomOrder();
+    registerCategory(name);
     saveToLocal();
     
     input.value = '';
     input.focus();
     buildSidebar();
     renderCategoryList();
-    showToast('✨', 'Categoria "' + name + '" criada!');
+    showToast('✨', `Categoria principal "${name}" criada!`);
 }
 
 // ============================================================
@@ -1336,24 +1624,185 @@ function syncNewScriptEditorState() {
 // ============================================================
 //  RENDER
 // ============================================================
+function createSubcategoryFromMain() {
+  const parent = activeCat;
+  const input = document.getElementById('newSubcategoryName');
+  const name = normalizeCategoryName(input?.value);
+  if (!canManageSubcategories(parent)) {
+    showToast('⚠️', 'Esta categoria principal já possui scriptz e não pode receber subcategorias.');
+    return;
+  }
+  if (!name) {
+    showToast('⚠️', 'Digite o nome da nova subcategoria.');
+    input?.focus();
+    return;
+  }
+  if (getCategories().includes(name)) {
+    showToast('⚠️', 'Já existe uma categoria ou subcategoria com este nome.');
+    input?.focus();
+    return;
+  }
+  if (!registerCategory(name, parent)) return;
+  saveToLocal();
+  subcategoryCreatorOpen = false;
+  if (input) input.value = '';
+  buildSidebar();
+  render();
+  showToast('✨', `Subcategoria “${name}” criada!`);
+}
+
+function showSubcategoryCreator() {
+  if (!canManageSubcategories(activeCat)) {
+    showToast('⚠️', 'Esta categoria principal já possui scriptz e não pode receber subcategorias.');
+    return;
+  }
+  subcategoryCreatorOpen = true;
+  render();
+  setTimeout(() => document.getElementById('newSubcategoryName')?.focus(), 30);
+}
+
+function renameSubcategoryFromMain(category) {
+  const nextName = normalizeCategoryName(prompt(`Novo nome para a subcategoria “${category}”:`, category));
+  if (!nextName || nextName === category) return;
+  confirmRenameCategory(category, nextName);
+}
+
+function deleteSubcategoryFromMain(category) {
+  if (getCategoryParent(category) !== activeCat) return;
+  deleteCategory(category);
+}
+
+function initSubcategoryDragDrop() {
+  const list = document.getElementById('subcategoryManagementList');
+  if (!list) return;
+  if (activeEditId !== null) {
+    [...list.querySelectorAll('[data-subcategory]')].forEach(item => item.draggable = false);
+    return;
+  }
+  let dragged = null;
+  [...list.querySelectorAll('[data-subcategory]')].forEach(item => {
+    item.draggable = true;
+    item.addEventListener('dragstart', event => {
+      dragged = item;
+      item.classList.add('dragging');
+      event.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragover', event => {
+      event.preventDefault();
+      if (dragged && dragged !== item) item.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', event => {
+      event.preventDefault();
+      if (!dragged || dragged === item) return;
+      const before = event.clientY < item.getBoundingClientRect().top + item.getBoundingClientRect().height / 2;
+      list.insertBefore(dragged, before ? item : item.nextSibling);
+      item.classList.remove('drag-over');
+      saveSubcategoryOrderFromMain();
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      [...list.children].forEach(child => child.classList.remove('drag-over'));
+      dragged = null;
+    });
+  });
+}
+
+function saveSubcategoryOrderFromMain() {
+  const list = document.getElementById('subcategoryManagementList');
+  const orderedChildren = list ? [...list.querySelectorAll('[data-subcategory]')].map(item => item.dataset.subcategory).filter(Boolean) : [];
+  if (!orderedChildren.length) return;
+  const library = activeLibraryKey();
+  const remaining = getLibraryCategoryOrder(library).filter(category => !orderedChildren.includes(category));
+  setLibraryCategoryOrder([...remaining, ...orderedChildren], library);
+  saveToLocal();
+  render();
+  showToast('✨', 'Ordem das subcategorias atualizada!');
+}
+
+function buildEmptyCategoryChoice({ allowSubcategory = true } = {}) {
+  const safeCategory = String(activeCat).replace(/'/g, "\\'");
+  const contextName = getCategoryParent(activeCat) ? 'subcategoria' : 'categoria';
+  const secondaryAction = allowSubcategory ? `<button type="button" class="category-empty-secondary" onclick="showSubcategoryCreator()"><span aria-hidden="true">⌘</span><strong>Criar subcategoria</strong><small>Organizar os scriptz em subcategorias</small></button>` : '';
+  const subcategoryCreator = allowSubcategory && subcategoryCreatorOpen ? '<div class="subcategory-create-row"><input type="text" id="newSubcategoryName" placeholder="Nome da nova subcategoria" onkeydown="if(event.key===\'Enter\') createSubcategoryFromMain()"><button type="button" class="btn-primary" onclick="createSubcategoryFromMain()">➕ Adicionar subcategoria</button></div>' : '';
+  return `<section class="category-empty-choice" aria-label="Ações para ${contextName} vazia">
+    <div class="category-empty-choice-copy"><span class="subcategory-navigator-kicker">${contextName.charAt(0).toUpperCase() + contextName.slice(1)} vazia</span><p>${allowSubcategory ? 'Escolha como deseja iniciar esta categoria.' : 'Adicione o primeiro script desta subcategoria.'}</p></div>
+    <div class="category-empty-choice-actions${allowSubcategory ? '' : ' single-action'}"><button type="button" class="category-empty-primary" onclick="openModal('${safeCategory}')"><span aria-hidden="true">✚</span><strong>Criar script</strong><small>Adicionar um script diretamente nesta ${contextName}</small></button>${secondaryAction}</div>
+    ${subcategoryCreator}
+  </section>`;
+}
+
+function buildSubcategoryNavigator() {
+  if (activeCat === 'all' || activeCat === 'favorites') return '';
+  const readOnly = isStandardLibrary();
+  const parent = getCategoryParent(activeCat);
+  if (parent) {
+    const returnControl = `<section class="subcategory-return" aria-label="Navegação de categoria"><button type="button" onclick="setCat('${String(parent).replace(/'/g, "\\'")}' )"><span aria-hidden="true">‹</span> Voltar para ${escapeHtml(parent)}</button></section>`;
+    const emptySubcategoryChoice = !readOnly && categoryScriptCount(activeCat) === 0 ? buildEmptyCategoryChoice({ allowSubcategory: false }) : '';
+    return returnControl + emptySubcategoryChoice;
+  }
+  const children = getOrderedCategories(getChildCategories(activeCat));
+  if (readOnly && !children.length) return '';
+  if (!readOnly && !canManageSubcategories(activeCat)) return '';
+  if (!children.length) {
+    return buildEmptyCategoryChoice();
+  }
+  const safeJs = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  const cards = children.map(category => {
+    const count = categoryScriptCount(category, true);
+    return `<article class="subcategory-choice" data-subcategory="${escapeHtml(category)}">
+      <button type="button" class="subcategory-choice-open" onclick="setCat('${safeJs(category)}')" aria-label="Abrir subcategoria ${escapeHtml(category)}">
+        <span class="subcategory-choice-name">${escapeHtml(category)}</span>
+        <span class="subcategory-choice-count">${count === 1 ? '1 script' : `${count} scriptz`}</span>
+        <span class="subcategory-choice-arrow" aria-hidden="true">›</span>
+      </button>
+      ${readOnly ? '' : `<div class="subcategory-choice-actions" aria-label="Ações da subcategoria ${escapeHtml(category)}">
+        <button type="button" onclick="renameSubcategoryFromMain('${safeJs(category)}')" aria-label="Renomear ${escapeHtml(category)}">✏️</button>
+        <button type="button" onclick="deleteSubcategoryFromMain('${safeJs(category)}')" aria-label="Excluir ${escapeHtml(category)}">🗑️</button>
+      </div>`}
+    </article>`;
+  }).join('');
+  return `<section class="subcategory-navigator" aria-label="Subcategorias de ${escapeHtml(activeCat)}">
+    <div class="subcategory-navigator-heading"><span class="subcategory-navigator-kicker">Subcategorias</span><span>${children.length === 1 ? '1 opção' : `${children.length} opções`}</span></div>
+    ${children.length ? `<div class="subcategory-choice-list" id="subcategoryManagementList">${cards}</div>` : '<p class="subcategory-empty-state">Crie a primeira subcategoria para organizar os scriptz deste grupo.</p>'}
+    ${readOnly ? '' : '<div class="subcategory-create-row"><input type="text" id="newSubcategoryName" placeholder="Nome da nova subcategoria" onkeydown="if(event.key===\'Enter\') createSubcategoryFromMain()"><button type="button" class="btn-primary" onclick="createSubcategoryFromMain()">➕ Adicionar subcategoria</button></div>'}
+  </section>`;
+}
+
 function render() {
   const list = getFilteredScripts();
   const badge = document.getElementById('badge');
   const empty = document.getElementById('empty');
   const container = document.getElementById('cards');
+  const subcategoryNavigator = buildSubcategoryNavigator();
+  const main = document.querySelector('main');
+  syncNewScriptButton();
 
-    badge.hidden = list.length === 0;
+  if (isInitialLanding && !searchQ) {
+    badge.hidden = true;
+    empty.style.display = 'none';
+    main?.classList.add('is-initial-landing');
+    container.innerHTML = '<section class="scriptz-initial-landing" aria-label="Scriptz"><img src="assets/scriptz_icone_branco_transparente.png" alt="Logo Scriptz"></section>';
+    syncOrderingControls();
+    return;
+  }
+
+  main?.classList.remove('is-initial-landing');
+
+  badge.hidden = list.length === 0;
   badge.textContent = list.length === 0 ? '' : list.length === 1 ? '1 script' : `${list.length} scriptz`;
   if (list.length === 0) {
-    container.innerHTML = '';
-    empty.style.display = 'block';
+    container.innerHTML = subcategoryNavigator;
+    empty.style.display = subcategoryNavigator ? 'none' : 'block';
+    setTimeout(initSubcategoryDragDrop, 30);
     syncOrderingControls();
     return;
   }
   empty.style.display = 'none';
-  container.innerHTML = list.map(s => cardHTML(s)).join('');
+  container.innerHTML = subcategoryNavigator + list.map(s => cardHTML(s)).join('');
   setTimeout(() => {
     initScriptDragDrop();
+    initSubcategoryDragDrop();
     syncOrderingControls();
   }, 30);
 }
@@ -1362,13 +1811,14 @@ function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function getCategoryOptions(selected = '', { placeholder = '', exclude = [] } = {}) {
-  const cats = getCategories().filter(c => c !== 'all');
+function getCategoryOptions(selected = '', { placeholder = '', exclude = [], includeCreateAction = true } = {}) {
+  const hierarchy = getOrderedCategories(getAssignableCategories()).map(category => ({ category, depth: getCategoryParent(category) ? 1 : 0 }));
   let html = placeholder ? `<option value="">${escapeHtml(placeholder)}</option>` : '';
-  cats.filter(category => !exclude.includes(category)).forEach(c => {
-    html += `<option value="${escapeHtml(c)}" ${c === selected ? 'selected' : ''}>${escapeHtml(c)}</option>`;
+  hierarchy.filter(({ category }) => !exclude.includes(category)).forEach(({ category, depth }) => {
+    const label = depth ? `${getCategoryParent(category)} › ${category}` : category;
+    html += `<option value="${escapeHtml(category)}" ${category === selected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
   });
-  html += `<option value="__new__">➕ Nova categoria...</option>`;
+  if (includeCreateAction) html += `<option value="__new__">➕ Nova categoria...</option>`;
   return html;
 }
 
@@ -1385,19 +1835,58 @@ function buildFullText(script) {
   return htmlContent;
 }
 
-function cardHTML(s) {
-  const plainText = s.html.replace(/<[^>]*>/g, '');
-  const fullHTML = buildFullText(s);
-  
+function scriptEditorHTML(s) {
   const greetingMode = getGreetingMode(s);
   const greetingOptions = greetingSelectOptions(greetingMode);
   const hasSignatureFeature = hasSignature(s);
-  const isFav = isFavorite(s);
   const categories = getScriptCategories(s);
   const primaryCategory = categories[0] || 'Geral';
   const secondaryCategory = categories[1] || '';
-  const primaryOptions = getCategoryOptions(primaryCategory);
+  const primaryOptions = getCategoryOptions(primaryCategory, { placeholder: 'Selecione uma categoria' });
   const secondaryOptions = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
+  const locked = isStandardScript(s);
+  const lockAttrs = locked ? 'disabled aria-disabled="true" title="Script padrão protegido"' : '';
+  const plainText = s.html.replace(/<[^>]*>/g, '');
+  return `<div class="editor-wrap" id="ew${s.id}">
+    <div class="editor-meta">
+      <input class="title-field" id="tt${s.id}" placeholder="Título do script" value="${escapeHtml(s.title)}" ${lockAttrs}>
+      <div class="category-select-stack editor-category-stack">
+        <select class="category-select" id="catPrimary${s.id}" onchange="onEditCategoryChange(${s.id}, 0)" ${lockAttrs}>${primaryOptions}</select>
+        <select class="category-select" id="catSecondary${s.id}" onchange="onEditCategoryChange(${s.id}, 1)" ${lockAttrs}>${secondaryOptions}</select>
+      </div>
+      <div class="editor-checkboxes">
+        <label class="editor-greeting-label">🕐 Saudação
+          <select class="editor-greeting-select ${greetingMode === GREETING_MODES.off ? 'is-disabled' : ''}" id="greeting${s.id}" onchange="syncGreetingSelectState(this); livePreview(${s.id})" ${lockAttrs}>${greetingOptions}</select>
+        </label>
+        <label><input type="checkbox" id="chkSignature${s.id}" ${hasSignatureFeature ? 'checked' : ''} ${lockAttrs}> ✍️ Assinatura</label>
+      </div>
+    </div>
+    <div class="fmt-bar">
+      <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
+      <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
+      <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
+      <div class="fmt-sep"></div>
+      <button class="fmt-btn fmt-btn-link" onmousedown="event.preventDefault();toggleLinkInput(${s.id})">🔗</button>
+      <div class="fmt-sep"></div>
+      <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('insertUnorderedList')">•</button>
+    </div>
+    <div class="link-url-input" id="li${s.id}">
+      <input type="url" id="liInput${s.id}" placeholder="https://exemplo.com" onkeydown="if(event.key==='Enter'){event.preventDefault();applyLink(${s.id});}">
+      <button onclick="applyLink(${s.id})">Inserir</button>
+      <button class="btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="toggleLinkInput(${s.id})">✕</button>
+    </div>
+    <div contenteditable="${locked ? 'false' : 'true'}" id="ce${s.id}" data-placeholder="Texto do script (somente o corpo, sem saudação e sem assinatura)" oninput="livePreview(${s.id})">${plainText}</div>
+    <div class="edit-bar">
+      <button class="btn btn-save" onclick="saveEdit(${s.id})">💾 Salvar</button>
+      <button class="btn btn-ghost" onclick="cancelEdit(${s.id})">Cancelar</button>
+    </div>
+  </div>`;
+}
+
+function cardHTML(s) {
+  const plainText = s.html.replace(/<[^>]*>/g, '');
+  const fullHTML = buildFullText(s);
+  const isFav = isFavorite(s);
   const locked = isStandardScript(s);
   const lockedBadge = locked ? '<span class="standard-lock" role="img" aria-label="Script padrão protegido" title="Script padrão protegido"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v2"></path></svg></span>' : '';
   const lockAttrs = locked ? 'disabled aria-disabled="true" title="Script padrão protegido"' : '';
@@ -1426,40 +1915,7 @@ function cardHTML(s) {
           <div class="preview" id="pv${s.id}">${fullHTML}</div>
         </div>
       </div>
-      <div class="editor-wrap" id="ew${s.id}">
-        <div class="editor-meta">
-          <input class="title-field" id="tt${s.id}" placeholder="Título do script" value="${escapeHtml(s.title)}" ${lockAttrs}>
-          <div class="category-select-stack editor-category-stack">
-            <select class="category-select" id="catPrimary${s.id}" onchange="onEditCategoryChange(${s.id}, 0)" ${lockAttrs}>${primaryOptions}</select>
-            <select class="category-select" id="catSecondary${s.id}" onchange="onEditCategoryChange(${s.id}, 1)" ${lockAttrs}>${secondaryOptions}</select>
-          </div>
-          <div class="editor-checkboxes">
-            <label class="editor-greeting-label">🕐 Saudação
-              <select class="editor-greeting-select ${greetingMode === GREETING_MODES.off ? 'is-disabled' : ''}" id="greeting${s.id}" onchange="syncGreetingSelectState(this); livePreview(${s.id})" ${lockAttrs}>${greetingOptions}</select>
-            </label>
-            <label><input type="checkbox" id="chkSignature${s.id}" ${hasSignatureFeature ? 'checked' : ''} ${lockAttrs}> ✍️ Assinatura</label>
-          </div>
-        </div>
-        <div class="fmt-bar">
-          <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
-          <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
-          <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
-          <div class="fmt-sep"></div>
-          <button class="fmt-btn fmt-btn-link" onmousedown="event.preventDefault();toggleLinkInput(${s.id})">🔗</button>
-          <div class="fmt-sep"></div>
-          <button class="fmt-btn" onmousedown="event.preventDefault();document.execCommand('insertUnorderedList')">•</button>
-        </div>
-        <div class="link-url-input" id="li${s.id}">
-          <input type="url" id="liInput${s.id}" placeholder="https://exemplo.com" onkeydown="if(event.key==='Enter'){event.preventDefault();applyLink(${s.id});}">
-          <button onclick="applyLink(${s.id})">Inserir</button>
-          <button class="btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="toggleLinkInput(${s.id})">✕</button>
-        </div>
-        <div contenteditable="${locked ? 'false' : 'true'}" id="ce${s.id}" data-placeholder="Texto do script (somente o corpo, sem saudação e sem assinatura)" oninput="livePreview(${s.id})">${plainText}</div>
-        <div class="edit-bar">
-          <button class="btn btn-save" onclick="saveEdit(${s.id})">💾 Salvar</button>
-          <button class="btn btn-ghost" onclick="cancelEdit(${s.id})">Cancelar</button>
-        </div>
-      </div>
+      ${activeEditId === s.id ? scriptEditorHTML(s) : `<div class="editor-wrap" id="ew${s.id}"></div>`}
     </div>
   </div>`;
 }
@@ -1479,7 +1935,7 @@ function moveScriptOrder(id, direction) {
   const next = index + direction;
   if (index < 0 || next < 0 || next >= list.length) return;
   [list[index], list[next]] = [list[next], list[index]];
-  customScriptOrderByCategory[activeCat] = list;
+  setLibraryScriptOrder(activeCat, list);
   saveToLocal();
   render();
 }
@@ -1493,7 +1949,7 @@ function initScriptDragDrop() {
     card.addEventListener('dragstart', () => { dragged = card; card.classList.add('dragging'); });
     card.addEventListener('dragend', () => {
       card.classList.remove('dragging');
-      customScriptOrderByCategory[activeCat] = [...container.querySelectorAll('.card')].map(el => el.id.slice(1));
+      setLibraryScriptOrder(activeCat, [...container.querySelectorAll('.card')].map(el => el.id.slice(1)));
       saveToLocal();
       render();
       showToast('✨', 'Ordem dos scriptz atualizada!');
@@ -1512,18 +1968,18 @@ function initScriptDragDrop() {
 //  CATEGORIAS NA EDIÇÃO (ATÉ DUAS)
 // ============================================================
 function getEditCategories(id) {
-  return normalizedCategoryList([
+  return selectedCategoryList([
     document.getElementById('catPrimary' + id)?.value,
     document.getElementById('catSecondary' + id)?.value
-  ]).filter(category => category !== '__new__');
+  ]);
 }
 
 function populateEditCategorySelects(id, categories = []) {
   const primary = document.getElementById('catPrimary' + id);
   const secondary = document.getElementById('catSecondary' + id);
   if (!primary || !secondary) return;
-  const selected = normalizedCategoryList(categories).filter(category => category !== 'Geral' || categories.includes('Geral'));
-  const primaryCategory = selected[0] || 'Geral';
+  const selected = selectedCategoryList(categories);
+  const primaryCategory = selected[0] || '';
   const secondaryCategory = selected[1] || '';
   primary.innerHTML = getCategoryOptions(primaryCategory);
   secondary.innerHTML = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
@@ -1545,6 +2001,10 @@ function onEditCategoryChange(id, slot) {
     const newCategory = createCategoryFromPrompt();
     changed.value = newCategory || '';
     if (newCategory) showToast('✨', 'Nova categoria criada!');
+  } else if (changed.value === '__new_sub__') {
+    const newCategory = createSubcategoryFromPrompt();
+    changed.value = newCategory || '';
+    if (newCategory) showToast('✨', 'Nova subcategoria criada!');
   }
   if (primary.value && primary.value === secondary.value) {
     secondary.value = '';
@@ -1567,6 +2027,7 @@ function startEdit(id) {
     return;
   }
   activeEditId = id;
+  render();
   const card = document.getElementById('c' + id);
   card.classList.add('open', 'editing');
   card.draggable = false;
@@ -1583,13 +2044,10 @@ function startEdit(id) {
 function cancelEdit(id) {
   const card = document.getElementById('c' + id);
   if (card) card.classList.remove('editing');
-  document.getElementById('pv' + id).classList.remove('editing-mode');
-    document.getElementById('ew' + id).classList.remove('visible');
+  document.getElementById('pv' + id)?.classList.remove('editing-mode');
+  document.getElementById('ew' + id)?.classList.remove('visible');
   if (activeEditId === id) activeEditId = null;
-  if (card && sortBy === 'custom') {
-    card.draggable = true;
-    card.querySelector('.script-order-controls')?.removeAttribute('hidden');
-  }
+  render();
   syncOrderingControls();
 }
 function livePreview(id) {
@@ -1625,17 +2083,18 @@ function saveEdit(id) {
 
   newHTML = cleanEditorHtml(newHTML);
 
+  if (!hasValidScriptClassification(newCategories)) {
+    showToast('⚠️', 'Selecione ao menos uma categoria ou subcategoria existente.');
+    document.getElementById('catPrimary' + id)?.focus();
+    return;
+  }
+
   scripts[idx].html = newHTML;
   scripts[idx].greetingMode = greetingMode;
   scripts[idx].hasGreeting = greetingMode !== GREETING_MODES.off;
   scripts[idx].hasSignature = hasSignatureFeature;
   if (newTitle) scripts[idx].title = newTitle;
-  const categories = newCategories.length ? newCategories : getScriptCategories(scripts[idx]);
-  categories.forEach(category => {
-    if (!categoryRegistry.includes(category)) categoryRegistry.push(category);
-    if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
-  });
-  setScriptCategories(scripts[idx], categories);
+  setScriptCategories(scripts[idx], newCategories);
 
   const fullHTML = buildFullText(scripts[idx]);
   document.getElementById('pv' + id).innerHTML = fullHTML;
@@ -1709,9 +2168,19 @@ async function copyScript(id) {
 // ============================================================
 //  ADICIONAR SCRIPT
 // ============================================================
-function openModal() {
+function openModal(preselectedCategory = '') {
+    if (isStandardLibrary()) {
+      setLibrary('personal');
+      setTimeout(() => openModal(preselectedCategory), 0);
+      return;
+    }
+    const contextualCategory = getContextualPrimaryCategory();
+    if (!contextualCategory) {
+      showToast('⚠️', 'Abra uma categoria ou subcategoria para criar um script.');
+      return;
+    }
     document.getElementById('newTitle').value = '';
-    populateNewCategorySelects([]);
+    populateNewCategorySelects([contextualCategory]);
     const editor = document.getElementById('newText');
     editor.innerHTML = '';
     editor.dataset.hasContent = 'false';
@@ -1726,7 +2195,7 @@ function openModal() {
     document.getElementById('overlay').classList.add('show');
     
     setTimeout(() => {
-        document.getElementById('newCategoryPrimary').focus();
+        document.getElementById('newTitle').focus();
     }, 100);
 }
 
@@ -1747,6 +2216,7 @@ function addScript() {
     const text = editor.innerText.trim();
     const html = cleanEditorHtml(editor.innerHTML);
     const categories = getNewScriptCategories();
+    const contextualCategory = getContextualPrimaryCategory();
     const greetingMode = document.getElementById('newGreeting').value;
     const includeSignature = document.getElementById('newSignature').checked;
 
@@ -1754,17 +2224,16 @@ function addScript() {
         showToast('⚠️', 'Preencha título e texto');
         return;
     }
+    if (!contextualCategory || categories[0] !== contextualCategory || !hasValidScriptClassification(categories)) {
+        showToast('⚠️', 'Abra uma categoria ou subcategoria válida antes de salvar o script.');
+        return;
+    }
     if (scripts.length >= currentScriptLimit()) {
         showToast('⚠️', `Limite de ${currentScriptLimit()} scriptz atingido neste contexto.`);
         return;
     }
 
-    const scriptCategories = categories.length ? categories : ['Geral'];
-    const created = scriptCategories.filter(category => !getCategories().includes(category));
-    scriptCategories.forEach(category => {
-      if (!categoryRegistry.includes(category)) categoryRegistry.push(category);
-      if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
-    });
+    const scriptCategories = categories;
 
     scripts.push({
         id: nextId++,
@@ -1787,7 +2256,7 @@ function addScript() {
     saveToLocal();
     buildSidebar();
     render();
-    showToast(created.length ? '✨' : '✅', created.length ? 'Script adicionado e nova categoria criada!' : 'Script adicionado!');
+    showToast('✅', 'Script adicionado!');
 }
 
 // ============================================================
@@ -1801,13 +2270,15 @@ function exportJSON() {
   const standard = isStandardMode();
   const payload = {
     schema: standard ? 'scriptz-standard-changes' : 'scriptz-free-project',
-    version: 4,
+    version: 5,
     mode: workspace.mode,
     division: workspace.division,
     scripts: standard ? scripts.filter(script => !script.isStandard) : scripts,
-    categories: standard ? categoryRegistry.filter(category => !standardCategories.includes(category)) : categoryRegistry,
+    categories: categoryRegistry,
+    categoryParents: categoryParents,
     categoryOrder: customCategoryOrder,
-    scriptOrders: customScriptOrderByCategory
+    scriptOrders: customScriptOrderByCategory,
+    expandedCategories: [...expandedCategories]
   };
   const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -1825,36 +2296,39 @@ function importProjectData(imported) {
   const data = legacy ? { schema: 'legacy-scriptz', scripts: imported, categories: [] } : imported;
   if (!data || !Array.isArray(data.scripts)) throw new Error('Formato inválido');
   if (data.scripts.length > currentScriptLimit()) throw new Error(`O arquivo excede o limite de ${currentScriptLimit()} scriptz.`);
+  if (data.scripts.some(script => !scriptHasDeclaredClassification(script))) {
+    throw new Error('Todo script precisa pertencer a uma categoria ou subcategoria existente.');
+  }
 
   if (isStandardMode()) {
-    if (data.schema !== 'scriptz-standard-changes' || data.division !== workspace.division) {
+    const isDivisionChanges = data.schema === 'scriptz-standard-changes' && data.division === workspace.division;
+    const isExternalProject = data.schema === 'scriptz-free-project' || data.schema === 'legacy-scriptz';
+    if (!isDivisionChanges && !isExternalProject) {
       throw new Error('Este arquivo não pertence à divisão atual do Scriptz Padrão.');
     }
     const importedCategories = Array.isArray(data.categories) ? data.categories.map(String) : [];
-    const allowedCategories = new Set([...standardCategories, ...importedCategories, 'Geral']);
-    let movedToGeneral = 0;
+    const importedParents = normalizeCategoryParents(data.categoryParents);
     const userScripts = data.scripts.map(script => {
       const normalized = normalizeScript({ ...script, isStandard: false }, 'user');
-      const categories = getScriptCategories(normalized);
-      const allowed = categories.filter(category => allowedCategories.has(category));
-      if (allowed.length !== categories.length) {
-        setScriptCategories(normalized, allowed.length ? allowed : ['Geral']);
-        movedToGeneral += 1;
-      }
       return normalized;
     });
     scripts = [...standardScripts, ...userScripts];
-    categoryRegistry = [...new Set([...standardCategories, ...importedCategories, ...allScriptCategories()])];
+    categoryRegistry = [...new Set([...importedCategories, ...allScriptCategories(userScripts)])];
+    categoryParents = importedParents;
     customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : categoryRegistry;
     customScriptOrderByCategory = data.scriptOrders || {};
-    if (movedToGeneral) showToast('ℹ️', `${movedToGeneral} scriptz foram movidos para Geral porque a categoria padrão não existe.`);
+    expandedCategories = new Set(Array.isArray(data.expandedCategories) ? data.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
+    reconcileCategoryHierarchy();
   } else {
     if (data.schema === 'scriptz-standard-changes') throw new Error('Alterações do Scriptz Padrão devem ser importadas na divisão correspondente.');
     scripts = data.scripts.map(script => normalizeScript({ ...script, isStandard: false }, 'user'));
     categoryRegistry = Array.isArray(data.categories) ? data.categories : [];
+    categoryParents = normalizeCategoryParents(data.categoryParents);
     customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : [];
     customScriptOrderByCategory = data.scriptOrders || {};
+    expandedCategories = new Set(Array.isArray(data.expandedCategories) ? data.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
     categoryRegistry = [...new Set([...categoryRegistry, ...allScriptCategories()])];
+    reconcileCategoryHierarchy();
   }
   nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
   saveToLocal();
@@ -1920,6 +2394,8 @@ async function loadStandardBaseIntoFree(division) {
     if (scripts.length + incoming.length > SCRIPT_LIMITS.free) throw new Error(`O Modo Editor aceita até ${SCRIPT_LIMITS.free} scriptz.`);
     scripts = [...scripts, ...incoming];
     categoryRegistry = [...new Set([...categoryRegistry, ...(template.categories || []), ...allScriptCategories(incoming)])];
+    categoryParents = { ...categoryParents, ...normalizeCategoryParents(template.categoryParents) };
+    reconcileCategoryHierarchy();
     customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
     nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
     saveToLocal();
@@ -1933,10 +2409,12 @@ async function loadStandardBaseIntoFree(division) {
 
 function discardFreeTemplates() {
   if (isStandardMode()) return;
-  if (!confirm('Isso apagará todos os seus Scriptz deste Modo Editor e o reiniciará em branco. Continuar?')) return;
+  if (!confirm('Isso apagará todos os seus scriptz deste Modo Editor e o reiniciará em branco. Continuar?')) return;
   localStorage.removeItem(workspaceKey());
   scripts = [];
   categoryRegistry = [];
+  categoryParents = {};
+  expandedCategories = new Set();
   customCategoryOrder = [];
   customScriptOrderByCategory = {};
   nextId = 100;

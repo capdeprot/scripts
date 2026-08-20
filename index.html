@@ -25,16 +25,16 @@
         }
       })();
     </script>
-    <title>Scriptz — Gerenciador de modelos de e-mail</title>
+    <title>Scriptz — Gerenciador de modelos de texto</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=3" />
     <link rel="shortcut icon" href="assets/favicon.png?v=3" />
-    <link rel="manifest" href="manifest.webmanifest?v=51" />
+    <link rel="manifest" href="manifest.webmanifest?v=52" />
     <meta name="theme-color" content="#101a43" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=51">
+    <link rel="stylesheet" href="css/style.css?v=52">
 </head>
 <body data-theme-default="midnight">
     <div class="layout" id="appLayout">
@@ -48,7 +48,7 @@
                         <img class="brand-icon" src="assets/scriptz_icone_branco_transparente.png" alt="" />
                         <span class="brand-wordmark">scriptz</span>
                     </div>
-                    <p>Gerenciador de modelos de e-mail</p>
+                    <p>Gerenciador de modelos de texto</p>
                 </div>
                 <div class="theme-control">
                     <label for="themeSelect">Tema</label>
@@ -85,10 +85,10 @@
                 <details class="actions-menu" id="actionsMenu">
                     <summary>Ações <span aria-hidden="true">⌄</span></summary>
                     <div class="actions-menu-content">
-                        <button type="button" onclick="openCategoryModal()">📂 Gerenciar categorias</button>
+                        <button id="manageCategoriesBtn" type="button" onclick="openCategoryModal()" hidden>📂 Gerenciar categorias principais</button>
                         <button id="loadTemplateBaseBtn" type="button" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar script padrão como base</button>
                         <button id="exportScriptsBtn" type="button" onclick="exportJSON()">📤 Exportar meus scriptz</button>
-                        <button id="discardTemplatesBtn" type="button" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Descartar Scriptz e reiniciar Modo Editor</button>
+                        <button id="discardTemplatesBtn" type="button" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Limpar Modo Editor</button>
                         <button id="resetLocalBtn" type="button" onclick="resetLocalData()" class="btn-reset" hidden>↩️ Reverter alterações locais</button>
                     </div>
                 </details>
@@ -117,7 +117,7 @@
                         <option value="custom" data-desktop-label="Ordem personalizada" data-mobile-label="Manual">Ordem personalizada</option>
                         <option value="title" data-desktop-label="Ordem alfabética" data-mobile-label="A–Z">Ordem alfabética</option>
                     </select>
-                    <button class="btn-add" onclick="openModal()"><span class="btn-icon" aria-hidden="true">➕</span><span class="btn-label">Novo script</span></button>
+                    <button id="newScriptBtn" class="btn-add" onclick="openModal()" hidden><span class="btn-icon" aria-hidden="true">➕</span><span class="btn-label">Novo script</span></button>
                 </div>
             </div>
             <div class="mobile-search-bar" id="mobileSearchBar" aria-hidden="true">
@@ -142,10 +142,11 @@
                 <input type="text" id="newTitle" placeholder="Ex: Solicitando documentos adicionais">
             </div>
             <div class="field">
-                <label>Categorias <span class="field-limit">até 2</span></label>
+                <label>Vinculação <span class="field-required">obrigatório</span><span class="field-limit">até 2</span></label>
                 <div class="category-select-stack">
-                    <select id="newCategoryPrimary" aria-label="Categoria principal" onchange="onNewCategorySelectChange(0)"></select>
-                    <select id="newCategorySecondary" aria-label="Categoria secundária" onchange="onNewCategorySelectChange(1)"></select>
+                    <input type="hidden" id="newCategoryPrimary">
+                    <div id="newCategoryContext" class="new-category-context" aria-live="polite"></div>
+                    <select id="newCategorySecondary" aria-label="Categoria ou subcategoria secundária" onchange="onNewCategorySelectChange(1)"></select>
                 </div>
             </div>
             <div class="field">
@@ -190,8 +191,8 @@
     <!-- MODAL GERENCIAR CATEGORIAS -->
     <div class="overlay" id="categoryModal" onclick="if(event.target===this) closeCategoryModal()">
         <div class="modal modal-category">
-            <h3>📂 Gerenciar categorias</h3>
-            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Arraste para reordenar. Clique no nome para renomear. Clique em "🗑️" para excluir.</p>
+            <h3>📂 Gerenciar categorias principais</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Arraste as categorias principais para reordenar. Clique no nome para renomear. As subcategorias são gerenciadas dentro da tela de cada categoria principal.</p>
             <div id="categoryListContainer">
                 <div class="category-list-loading">Carregando...</div>
             </div>
@@ -258,6 +259,6 @@
     <!-- TOAST -->
     <div class="toast" id="toast"><span class="icon"></span><span class="msg"></span></div>
 
-    <script src="js/app.js?v=51"></script>
+    <script src="js/app.js?v=52"></script>
 </body>
 </html>

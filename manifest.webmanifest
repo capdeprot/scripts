@@ -1,7 +1,7 @@
 {
-  "name": "Scriptz — Gerenciador de modelos de e-mail",
+  "name": "Scriptz — Gerenciador de modelos de texto",
   "short_name": "Scriptz",
-  "description": "Gerenciador de modelos de e-mail Scriptz.",
+  "description": "Gerenciador de modelos de texto Scriptz.",
   "lang": "pt-BR",
   "start_url": "./",
   "scope": "./",
