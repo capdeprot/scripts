@@ -230,3 +230,18 @@
 - [x] Ocultar o botão superior Novo script em categorias e subcategorias pessoais vazias.
 - [x] Preservar os dois caminhos de criação na tela vazia de uma categoria e de uma subcategoria.
 - [x] Validar o comportamento contextual em desktop e mobile e gerar o pacote v54.
+
+## Unidades CAP-G
+
+- [x] Substituir a mensagem de seleção por “Escolha sua unidade para acessar modelos padronizados”.
+- [x] Criar a unidade CAP-G e seu arquivo de dados padrão vazio.
+- [x] Aplicar a ordem solicitada às seis unidades e validar a jornada atualizada.
+
+## Grade inicial de unidades
+
+- [x] Organizar a seleção inicial em duas linhas de três unidades, na ordem solicitada.
+- [x] Validar a grade em desktop e smartphone e gerar entrega corrigida.
+
+## Rótulo da CAP-G no seletor
+
+- [x] Exibir “CAP · G” exclusivamente no seletor lateral, preservando CAP-G como identificação interna.

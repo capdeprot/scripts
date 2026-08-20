@@ -35,6 +35,7 @@ const STANDARD_DIVISIONS = Object.freeze({
   DEPROT: 'templates/DEPROT.JSON',
   DPCI: 'templates/DPCI.JSON',
   DPD: 'templates/DPD.JSON',
+  'CAP-G': 'templates/CAP-G.JSON',
   'Núcleo': 'templates/SMUL-CAP.JSON',
   'Sala Arthur Saboya': 'templates/SALA-ARTHUR-SABOYA.JSON'
 });
@@ -518,7 +519,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=51`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=55`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template' || !Array.isArray(data.scripts)) throw new Error('Template inválido');

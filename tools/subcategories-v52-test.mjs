@@ -290,6 +290,41 @@ try {
       noNavigationError: editorNavigationHealthy
     };
   })()`);
+  const capg = await evaluate(`fetchStandardTemplate('CAP-G').then(template => {
+    const expectedOrder = ['DEPROT', 'DPCI', 'DPD', 'CAP-G', 'Núcleo', 'Sala Arthur Saboya'];
+    const welcomeOrder = [...document.querySelectorAll('#welcomeMenu .welcome-units-grid button')].map(button => button.textContent.trim());
+    const selectValues = [...document.querySelectorAll('#workspaceSelect optgroup option')].map(option => option.value);
+    const selectLabels = [...document.querySelectorAll('#workspaceSelect optgroup option')].map(option => option.textContent.trim());
+    const baseOrder = [...document.querySelectorAll('#templateBaseModal .template-base-grid button')].map(button => button.textContent.replace('CAP · ', '').trim());
+    return {
+      templateValid: template.division === 'CAP-G' && Array.isArray(template.scripts) && template.scripts.length === 0 && Array.isArray(template.categories) && template.categories.length === 0,
+      messageUpdated: document.querySelector('#welcomeMenu h1')?.textContent.trim() === 'Escolha sua unidade para acessar modelos padronizados',
+      welcomeOrder,
+      selectValues,
+      selectLabels,
+      baseOrder,
+      desktopGridColumns: getComputedStyle(document.querySelector('.welcome-units-grid')).gridTemplateColumns.split(' ').length,
+      expectedOrder,
+      expectedSelectValues: expectedOrder.map(division => 'standard:' + division),
+      expectedSelectLabels: ['CAP · DEPROT', 'CAP · DPCI', 'CAP · DPD', 'CAP · G', 'CAP · Núcleo', 'CAP · Sala Arthur Saboya']
+    };
+  })`);
+  await evaluate(`(() => {
+    const screen = document.getElementById('welcomeScreen');
+    const splash = document.getElementById('welcomeSplash');
+    const menu = document.getElementById('welcomeMenu');
+    screen.hidden = false;
+    screen.classList.add('visible');
+    splash.hidden = true;
+    splash.classList.remove('visible', 'leaving');
+    menu.hidden = false;
+    menu.classList.add('visible');
+    return true;
+  })()`);
+  await pause(120);
+  const unitSelectionDesktopScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
+  await writeFile('/home/ubuntu/screenshots/scriptz-v55-unit-selection-desktop.png', Buffer.from(unitSelectionDesktopScreenshot.data, 'base64'));
+  await evaluate(`(() => { document.getElementById('welcomeScreen').hidden = true; return true; })()`);
   await evaluate(`(() => { closeCategoryModal(); setLibrary('standard'); setCat('Institucional'); return true; })()`);
   await pause(120);
   const standardScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
@@ -324,6 +359,22 @@ try {
   await pause(1000);
   const initialMobileScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
   await writeFile('/home/ubuntu/screenshots/scriptz-v53-initial-mobile.png', Buffer.from(initialMobileScreenshot.data, 'base64'));
+  await evaluate(`(() => {
+    const screen = document.getElementById('welcomeScreen');
+    const splash = document.getElementById('welcomeSplash');
+    const menu = document.getElementById('welcomeMenu');
+    screen.hidden = false;
+    screen.classList.add('visible');
+    splash.hidden = true;
+    splash.classList.remove('visible', 'leaving');
+    menu.hidden = false;
+    menu.classList.add('visible');
+    return true;
+  })()`);
+  await pause(120);
+  const unitSelectionMobileScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
+  await writeFile('/home/ubuntu/screenshots/scriptz-v55-unit-selection-mobile.png', Buffer.from(unitSelectionMobileScreenshot.data, 'base64'));
+  await evaluate(`(() => { document.getElementById('welcomeScreen').hidden = true; return true; })()`);
   const mobile = await evaluate(`(() => {
     workspace = { mode: 'free', division: null };
     activeLibrary = 'personal';
@@ -370,6 +421,16 @@ try {
     const mobileStandardSections = document.getElementById('sidebarNav').textContent.includes('Modelos Padronizados') && document.getElementById('sidebarNav').textContent.includes('Meus Scriptz');
     setLibrary('personal');
     const mobilePersonalControls = Boolean(document.querySelector('.sidebar-category-tools')) && document.getElementById('sidebarNav').textContent.includes('Pessoal móvel');
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const welcomeMenu = document.getElementById('welcomeMenu');
+    welcomeScreen.hidden = false;
+    welcomeScreen.classList.add('visible');
+    welcomeMenu.hidden = false;
+    welcomeMenu.classList.add('visible');
+    const unitButtons = [...document.querySelectorAll('.welcome-units-grid button')];
+    const firstRowTop = unitButtons[0]?.getBoundingClientRect().top;
+    const mobileUnitGridColumns = unitButtons.filter(button => Math.abs(button.getBoundingClientRect().top - firstRowTop) < 2).length;
+    welcomeScreen.hidden = true;
     return {
       navigatorVisible: freeNavigatorVisible,
       emptyActionsVisible: Boolean(emptyActions && getComputedStyle(emptyActions).display !== 'none'),
@@ -381,7 +442,8 @@ try {
       rootColumns: freeRootColumns,
       noHorizontalOverflow: freeNoHorizontalOverflow && document.documentElement.scrollWidth <= window.innerWidth,
       mobileStandardSections,
-      mobilePersonalControls
+      mobilePersonalControls,
+      mobileUnitGridColumns
     };
   })()`);
   await evaluate(`(() => { setLibrary('personal'); setCat('Pessoal móvel'); openModal(); return true; })()`);
@@ -456,10 +518,18 @@ try {
     && mobile.choiceColumns === 2
     && mobile.mobileStandardSections
     && mobile.mobilePersonalControls
+    && mobile.mobileUnitGridColumns === 2
     && mobile.navigatorVisible
     && mobile.sidebarOnlyRoots
-    && mobile.noHorizontalOverflow;
-  const result = { desktop, mobile, valid };
+    && mobile.noHorizontalOverflow
+    && capg.templateValid
+    && capg.messageUpdated
+    && capg.desktopGridColumns === 3
+    && JSON.stringify(capg.welcomeOrder) === JSON.stringify(capg.expectedOrder)
+    && JSON.stringify(capg.selectValues) === JSON.stringify(capg.expectedSelectValues)
+    && JSON.stringify(capg.selectLabels) === JSON.stringify(capg.expectedSelectLabels)
+    && JSON.stringify(capg.baseOrder) === JSON.stringify(capg.expectedOrder);
+  const result = { desktop, mobile, capg, valid };
   if (!valid) throw new Error(`Validação de subcategorias inválida: ${JSON.stringify(result)}`);
   await writeFile(outputPath, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));

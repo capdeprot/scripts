@@ -4,7 +4,7 @@ O **Scriptz** é uma aplicação web estática e instalável para organizar, cri
 
 ## Contextos de uso
 
-No primeiro acesso, a aplicação apresenta uma breve recepção e, em seguida, a tela **SMUL · CAP**. A pessoa usuária pode escolher a unidade que deseja consultar ou acessar o **Modo Editor** pelo link da própria jornada. A escolha também permanece disponível no seletor de contexto da barra lateral.
+No primeiro acesso, a aplicação apresenta uma breve recepção e, em seguida, a tela **SMUL · CAP**, com a orientação **“Escolha sua unidade para acessar modelos padronizados”**. A pessoa usuária pode escolher a unidade que deseja consultar ou acessar o **Modo Editor** pelo link da própria jornada. A escolha também permanece disponível no seletor de contexto da barra lateral.
 
 | Contexto | Uso | Permissões | Exportação |
 |---|---|---|---|
@@ -35,6 +35,7 @@ Os arquivos-base desta distribuição começam vazios e estão prontos para rece
 | DEPROT | `templates/DEPROT.JSON` — base institucional com 10 scripts e 5 categorias. |
 | DPCI | `templates/DPCI.JSON` |
 | DPD | `templates/DPD.JSON` |
+| CAP-G | `templates/CAP-G.JSON` |
 | Núcleo | `templates/SMUL-CAP.JSON` |
 | Sala Arthur Saboya | `templates/SALA-ARTHUR-SABOYA.JSON` |
 
@@ -98,7 +99,7 @@ A edição é exclusiva: enquanto um card estiver em edição, outro script não
 
 O aplicativo inclui `manifest.webmanifest`, service worker e ícones próprios. O botão **Instalar Scriptz como app** aciona o prompt nativo quando disponível; em navegadores que não o disponibilizam, a aplicação orienta a adicionar o site à tela inicial.
 
-O cache PWA atual é `scriptz-shell-v52` e inclui os recursos de interface, os ícones e os cinco JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
+O cache PWA atual é `scriptz-shell-v57` e inclui os recursos de interface, os ícones e os seis JSONs-base. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone.
 
 ## Estrutura do projeto
 
@@ -106,7 +107,7 @@ O cache PWA atual é `scriptz-shell-v52` e inclui os recursos de interface, os �
 assets/                  Ícones, logo e favicons
 css/style.css            Temas, layout responsivo, editor rico e menu Ações
 js/app.js                Estado, contexto, proteção, editor, persistência e importação
-templates/               JSONs-base das cinco unidades CAP
+templates/               JSONs-base das seis unidades CAP
 index.html                Estrutura da interface, modais e jornada inicial
 manifest.webmanifest     Metadados do aplicativo instalável
 sw.js                    Cache offline do PWA

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scriptz-shell-v54';
+const CACHE_NAME = 'scriptz-shell-v57';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const APP_SHELL = [
   './templates/DEPROT.JSON',
   './templates/DPCI.JSON',
   './templates/DPD.JSON',
+  './templates/CAP-G.JSON',
   './templates/SMUL-CAP.JSON',
   './templates/SALA-ARTHUR-SABOYA.JSON',
   './assets/favicon.svg',

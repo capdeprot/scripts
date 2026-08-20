@@ -6,7 +6,7 @@ As preferências de tema, assinatura, contexto, unidade e largura da barra later
 
 | Contexto | Fonte inicial | Edição de scripts-base | Exportação |
 |---|---|---|---|
-| Scriptz Padrão | JSON-base de DEPROT, DPCI, DPD, Núcleo ou Sala Arthur Saboya | Bloqueada | Apenas alterações do usuário na mesma unidade |
+| Scriptz Padrão | JSON-base de DEPROT, DPCI, DPD, CAP-G, Núcleo ou Sala Arthur Saboya | Bloqueada | Apenas alterações do usuário na mesma unidade |
 | Modo Editor | Projeto vazio ou base CAP editável | Livre | Projeto completo como `scriptz-free-project` |
 
 ## Unidades
@@ -16,6 +16,7 @@ As preferências de tema, assinatura, contexto, unidade e largura da barra later
 | DEPROT | `templates/DEPROT.JSON` |
 | DPCI | `templates/DPCI.JSON` |
 | DPD | `templates/DPD.JSON` |
+| CAP-G | `templates/CAP-G.JSON` |
 | Núcleo | `templates/SMUL-CAP.JSON` |
 | Sala Arthur Saboya | `templates/SALA-ARTHUR-SABOYA.JSON` |
 
@@ -25,4 +26,4 @@ Contextos antigos persistidos como `Coord.` são normalizados para **Núcleo** a
 
 O limite é de **300 scripts por unidade** no Scriptz Padrão e **500 scripts por projeto** no Modo Editor. O editor de criação e o editor existente armazenam HTML tratado, preservando formatação segura de texto e rejeitando elementos executáveis.
 
-No primeiro acesso, uma breve boas-vindas antecede a tela **SMUL · CAP**, que apresenta as cinco unidades e o acesso textual ao Modo Editor. O menu expansível **Ações** concentra os comandos operacionais aplicáveis ao contexto e mantém a barra lateral mais limpa em desktop e mobile.
+No primeiro acesso, uma breve boas-vindas antecede a tela **SMUL · CAP**, que apresenta as seis unidades e o acesso textual ao Modo Editor. O menu expansível **Ações** concentra os comandos operacionais aplicáveis ao contexto e mantém a barra lateral mais limpa em desktop e mobile.
