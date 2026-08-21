@@ -245,3 +245,42 @@
 ## Rótulo da CAP-G no seletor
 
 - [x] Exibir “CAP · G” exclusivamente no seletor lateral, preservando CAP-G como identificação interna.
+
+## Bloqueio da abertura mobile
+
+- [x] Reproduzir e identificar por que a tela mobile fica apenas com o envelope na abertura.
+- [x] Garantir que a jornada de unidades ou o contexto salvo se torne acessível no smartphone.
+- [x] Validar em smartphone com perfil novo e com contexto existente; gerar entrega corrigida.
+
+## Estimativa indicativa de valor
+
+- [x] Definir o escopo e as limitações de uma estimativa de valor para o Scriptz no estágio atual.
+- [x] Comparar métodos de avaliação aplicáveis a um produto sem métricas comerciais informadas.
+- [x] Apresentar faixas indicativas, premissas e dados necessários para refinamento.
+
+## Mapa de ferramentas semelhantes
+
+- [x] Pesquisar soluções de gestão de modelos, redação assistida por IA e atendimento institucional relacionadas ao Scriptz.
+- [x] Comparar funcionalidades, público e diferenciais do Scriptz em relação às soluções encontradas.
+
+## Entrada B2B
+
+- [x] Mapear barreiras de produto, segurança, jurídico, vendas e operação para comercializar o Scriptz em B2B.
+- [x] Priorizar os primeiros requisitos e caminhos de superação por impacto e dependência.
+
+## Estabilização visual e funcional
+
+- [x] Revisar responsividade, modais e transições de tema em desktop e smartphone.
+- [x] Testar renderização, ordenação por arraste e exportação de dados.
+- [x] Corrigir problemas identificados, validar novamente e gerar uma entrega atualizada.
+
+## Indicadores expansíveis de bibliotecas
+
+- [x] Exibir ▲ e ▼ nos controles de Modelos Padronizados e Meus Scriptz.
+- [x] Sincronizar a animação do indicador com o recolhimento gradual do conteúdo, respeitando redução de movimento.
+
+## Padronização de dropdowns
+
+- [x] Mapear todos os controles expansíveis e seletores da interface.
+- [x] Aplicar indicadores ▲ / ▼ e transições graduais onde o controle permitir abertura e recolhimento.
+- [x] Validar estados em desktop e smartphone e gerar a entrega atualizada.

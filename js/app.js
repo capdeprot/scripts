@@ -27,6 +27,9 @@ let standardCategories = [];
 let standardScripts = [];
 let standardCategoryParents = {};
 let newScriptLinkRange = null;
+let themeTransitionTimer = null;
+let newScriptModalTrigger = null;
+const librarySectionOpen = { standard: true, personal: true };
 
 const SCRIPT_LIMITS = Object.freeze({ standard: 300, free: 500 });
 const MAX_SCRIPT_CATEGORIES = 2;
@@ -59,11 +62,23 @@ function getTheme() {
 
 function setTheme(theme) {
   const safeTheme = THEME_OPTIONS[theme] ? theme : 'midnight';
-  document.documentElement.setAttribute('data-theme', safeTheme);
+  const root = document.documentElement;
+  const shouldAnimate = root.getAttribute('data-theme') !== safeTheme
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (shouldAnimate) {
+    window.clearTimeout(themeTransitionTimer);
+    root.classList.remove('theme-transitioning');
+    void root.offsetWidth;
+    root.classList.add('theme-transitioning');
+  }
+  root.setAttribute('data-theme', safeTheme);
   localStorage.setItem('theme', safeTheme);
   const select = document.getElementById('themeSelect');
   if (select) select.value = safeTheme;
   document.body.dataset.themeLabel = THEME_OPTIONS[safeTheme].label;
+  if (shouldAnimate) {
+    themeTransitionTimer = window.setTimeout(() => root.classList.remove('theme-transitioning'), 260);
+  }
 }
 
 function showInstallHelp() {
@@ -588,6 +603,7 @@ async function loadWorkspace(showFeedback = true) {
     nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
     saveToLocal();
     refreshWorkspaceUI();
+    if (isInitialLanding && window.matchMedia('(max-width: 820px)').matches) openMobileNav();
     if (showFeedback) showToast('📂', isStandardMode() ? `CAP · ${workspace.division} carregado` : 'Modo Editor carregado');
   } catch (err) {
     console.error(err);
@@ -977,7 +993,8 @@ function buildSidebar() {
     const librarySection = (library, label, icon, editable) => {
       const count = getLibraryScripts(library).length;
       const active = activeLibraryKey() === library;
-      return `<details class="sidebar-library-section ${active ? 'is-active' : ''}" ${active ? 'open' : ''}><summary onclick="event.preventDefault();setLibrary('${library}')"><span class="sidebar-library-title"><span aria-hidden="true">${icon}</span>${label}</span><span class="nav-count">${count}</span><span class="sidebar-library-chevron" aria-hidden="true">⌄</span></summary><div class="sidebar-library-content">${active ? `<button type="button" class="sidebar-library-overview" onclick="setCat('all')">Todos os scriptz desta área</button><div class="cat-lbl">Categorias</div>${rootCategoryList(library, editable)}${editable ? personalManagement() : ''}` : ''}</div></details>`;
+      const open = active && librarySectionOpen[library] !== false;
+      return `<details class="sidebar-library-section ${active ? 'is-active' : ''} ${open ? 'is-open' : ''}" data-library="${library}" ${active ? 'open' : ''}><summary aria-expanded="${open}" onclick="event.preventDefault();toggleLibrarySection('${library}')"><span class="sidebar-library-title"><span aria-hidden="true">${icon}</span>${label}</span><span class="nav-count">${count}</span><span class="sidebar-library-chevron" aria-hidden="true">${open ? '▲' : '▼'}</span></summary><div class="sidebar-library-clip"><div class="sidebar-library-content">${active ? `<button type="button" class="sidebar-library-overview" onclick="setCat('all')">Todos os scriptz desta área</button><div class="cat-lbl">Categorias</div>${rootCategoryList(library, editable)}${editable ? personalManagement() : ''}` : ''}</div></div></details>`;
     };
     nav.innerHTML = librarySection('standard', 'Modelos Padronizados', '📘', false) + librarySection('personal', 'Meus Scriptz', '✦', true);
   }
@@ -1010,6 +1027,7 @@ function setLibrary(library) {
     return;
   }
   activeLibrary = next;
+  librarySectionOpen[next] = true;
   reorderMode = false;
   activeCat = 'all';
   isInitialLanding = false;
@@ -1020,6 +1038,34 @@ function setLibrary(library) {
   document.getElementById('pageTitle').textContent = next === 'standard' ? 'Modelos Padronizados' : 'Meus Scriptz';
   buildSidebar();
   render();
+}
+
+function toggleLibrarySection(library) {
+  if (!isStandardMode()) return;
+  const next = library === 'standard' ? 'standard' : 'personal';
+  if (activeLibraryKey() !== next) {
+    librarySectionOpen[next] = true;
+    setLibrary(next);
+    return;
+  }
+  librarySectionOpen[next] = !librarySectionOpen[next];
+  const section = document.querySelector(`.sidebar-library-section[data-library="${next}"]`);
+  if (!section) return;
+  const isOpen = librarySectionOpen[next];
+  section.classList.toggle('is-open', isOpen);
+  section.querySelector('summary')?.setAttribute('aria-expanded', String(isOpen));
+  const chevron = section.querySelector('.sidebar-library-chevron');
+  if (chevron) chevron.textContent = isOpen ? '▲' : '▼';
+}
+
+function syncActionsMenuIndicator() {
+  const menu = document.getElementById('actionsMenu');
+  if (!menu) return;
+  const open = menu.open;
+  menu.classList.toggle('is-open', open);
+  menu.querySelector('summary')?.setAttribute('aria-expanded', String(open));
+  const chevron = menu.querySelector('.actions-menu-chevron');
+  if (chevron) chevron.textContent = open ? '▲' : '▼';
 }
 
 function onSearch(val) {
@@ -2180,6 +2226,7 @@ function openModal(preselectedCategory = '') {
       showToast('⚠️', 'Abra uma categoria ou subcategoria para criar um script.');
       return;
     }
+    newScriptModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.getElementById('newTitle').value = '';
     populateNewCategorySelects([contextualCategory]);
     const editor = document.getElementById('newText');
@@ -2202,6 +2249,11 @@ function openModal(preselectedCategory = '') {
 
 function closeModal() {
     document.getElementById('overlay').classList.remove('show');
+    const trigger = newScriptModalTrigger;
+    newScriptModalTrigger = null;
+    window.setTimeout(() => {
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    }, 0);
 }
 
 function textToHTML(txt) {
@@ -2286,8 +2338,13 @@ function exportJSON() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = standard ? `${workspace.division}-alteracoes.json` : 'meus-scriptz.json';
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(a.href);
+  window.setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 0);
   showToast('📤', standard ? 'Alterações exportadas!' : 'Meus Scriptz exportados!');
 }
 
@@ -2514,6 +2571,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
   const select = document.getElementById('themeSelect');
   if (select) select.addEventListener('change', (event) => selectTheme(event.target.value));
+  const actionsMenu = document.getElementById('actionsMenu');
+  if (actionsMenu) {
+    actionsMenu.addEventListener('toggle', syncActionsMenuIndicator);
+    syncActionsMenuIndicator();
+  }
   const mobileToggle = document.getElementById('mobileNavToggle');
   if (mobileToggle) mobileToggle.addEventListener('click', () => document.body.classList.contains('mobile-nav-open') ? closeMobileNav() : openMobileNav());
   const mobileSearchToggle = document.getElementById('mobileSearchToggle');

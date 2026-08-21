@@ -72,7 +72,7 @@ try {
   await send('Runtime.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
   await send('Page.addScriptToEvaluateOnNewDocument', {
-    source: `const now=new Date();const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');localStorage.setItem('scriptz_workspace',JSON.stringify({mode:'free',division:null}));localStorage.setItem('scriptz_daily_welcome_date',today);localStorage.setItem('theme','midnight');`
+    source: `const now=new Date();const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');if(!sessionStorage.getItem('scriptz_test_new_user')){localStorage.setItem('scriptz_workspace',JSON.stringify({mode:'free',division:null}));localStorage.setItem('scriptz_daily_welcome_date',today);}localStorage.setItem('theme','midnight');`
   });
   await send('Page.navigate', { url: `http://127.0.0.1:${webPort}/?test=subcategories-v52` });
   await pause(1000);
@@ -224,6 +224,34 @@ try {
     buildSidebar();
     const standardSectionVisible = document.getElementById('sidebarNav').textContent.includes('Modelos Padronizados') && document.getElementById('sidebarNav').textContent.includes('Meus Scriptz');
     const standardNoPersonalCategory = !document.getElementById('sidebarNav').textContent.includes('Pessoal');
+    const standardLibrarySection = document.querySelector('.sidebar-library-section[data-library="standard"]');
+    const libraryIndicatorInitiallyOpen = standardLibrarySection?.querySelector('.sidebar-library-chevron')?.textContent === '▲'
+      && standardLibrarySection?.classList.contains('is-open')
+      && standardLibrarySection?.querySelector('summary')?.getAttribute('aria-expanded') === 'true';
+    toggleLibrarySection('standard');
+    const libraryCollapses = standardLibrarySection?.querySelector('.sidebar-library-chevron')?.textContent === '▼'
+      && !standardLibrarySection?.classList.contains('is-open')
+      && standardLibrarySection?.querySelector('summary')?.getAttribute('aria-expanded') === 'false'
+      && getComputedStyle(standardLibrarySection?.querySelector('.sidebar-library-clip')).transitionDuration !== '0s';
+    toggleLibrarySection('standard');
+    const libraryReopens = standardLibrarySection?.querySelector('.sidebar-library-chevron')?.textContent === '▲'
+      && standardLibrarySection?.classList.contains('is-open');
+    const actionsMenu = document.getElementById('actionsMenu');
+    actionsMenu.open = true;
+    syncActionsMenuIndicator();
+    const actionsMenuOpens = actionsMenu.querySelector('.actions-menu-chevron')?.textContent === '▲'
+      && actionsMenu.classList.contains('is-open')
+      && actionsMenu.querySelector('summary')?.getAttribute('aria-expanded') === 'true'
+      && getComputedStyle(actionsMenu.querySelector('.actions-menu-clip')).transitionDuration !== '0s';
+    actionsMenu.open = false;
+    syncActionsMenuIndicator();
+    const actionsMenuCloses = actionsMenu.querySelector('.actions-menu-chevron')?.textContent === '▼'
+      && !actionsMenu.classList.contains('is-open')
+      && actionsMenu.querySelector('summary')?.getAttribute('aria-expanded') === 'false';
+    const selectsHaveUnifiedIndicator = [...document.querySelectorAll('select:not([multiple]):not([size])')].every(select => {
+      const style = getComputedStyle(select);
+      return style.appearance === 'none' && style.backgroundImage.includes('svg');
+    });
     setCat('Institucional');
     const standardNavigatorReadOnly = Boolean(document.querySelector('.subcategory-navigator')) && !document.getElementById('newSubcategoryName') && document.querySelectorAll('.subcategory-choice-actions').length === 0;
     const standardNewScriptHidden = !isNewScriptButtonVisible();
@@ -279,6 +307,12 @@ try {
       deleteMovesDirectScripts,
       standardSectionVisible,
       standardNoPersonalCategory,
+      libraryIndicatorInitiallyOpen,
+      libraryCollapses,
+      libraryReopens,
+      actionsMenuOpens,
+      actionsMenuCloses,
+      selectsHaveUnifiedIndicator,
       standardNavigatorReadOnly,
       standardNewScriptHidden,
       personalOnlyContent,
@@ -309,6 +343,66 @@ try {
       expectedSelectLabels: ['CAP · DEPROT', 'CAP · DPCI', 'CAP · DPD', 'CAP · G', 'CAP · Núcleo', 'CAP · Sala Arthur Saboya']
     };
   })`);
+  const resilience = await evaluate(`(async () => {
+    workspace = { mode: 'free', division: null };
+    activeLibrary = 'personal';
+    categoryRegistry = ['Respostas'];
+    categoryParents = {};
+    customCategoryOrder = ['Respostas'];
+    customScriptOrderByCategory = {};
+    scripts = [
+      normalizeScript({ id: 9901, cat: 'Respostas', cats: ['Respostas'], title: 'Primeiro modelo', html: '<p>Primeiro</p>' }),
+      normalizeScript({ id: 9902, cat: 'Respostas', cats: ['Respostas'], title: 'Segundo modelo', html: '<p>Segundo</p>' })
+    ];
+    reconcileCategoryHierarchy();
+    setCat('Respostas');
+    setLibraryScriptOrder('Respostas', ['9902', '9901']);
+    saveToLocal();
+    render();
+    const orderedTitles = getFilteredScripts().map(script => script.title);
+    const persistedOrder = JSON.parse(localStorage.getItem('scriptz_workspace_free')).scriptOrders?.Respostas;
+    let exportedBlob;
+    let exportedName = '';
+    const createObjectURL = URL.createObjectURL;
+    const revokeObjectURL = URL.revokeObjectURL;
+    const anchorClick = HTMLAnchorElement.prototype.click;
+    URL.createObjectURL = blob => { exportedBlob = blob; return 'blob:scriptz-export'; };
+    URL.revokeObjectURL = () => {};
+    HTMLAnchorElement.prototype.click = function () { exportedName = this.download; };
+    exportJSON();
+    const exported = JSON.parse(await exportedBlob.text());
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    HTMLAnchorElement.prototype.click = anchorClick;
+    const oldTheme = getTheme();
+    setTheme('purple');
+    const themeTransitionStarts = document.documentElement.classList.contains('theme-transitioning')
+      && document.documentElement.dataset.theme === 'purple'
+      && localStorage.getItem('theme') === 'purple';
+    await new Promise(resolvePromise => setTimeout(resolvePromise, 300));
+    const themeTransitionSettles = !document.documentElement.classList.contains('theme-transitioning');
+    setTheme(oldTheme);
+    const trigger = document.getElementById('newScriptBtn');
+    trigger?.focus();
+    openModal();
+    await new Promise(resolvePromise => setTimeout(resolvePromise, 120));
+    const modalFocusesTitle = document.activeElement?.id === 'newTitle';
+    closeModal();
+    await new Promise(resolvePromise => setTimeout(resolvePromise, 20));
+    const modalRestoresTrigger = document.activeElement === trigger;
+    return {
+      orderedTitles,
+      persistedOrder,
+      exportedSchema: exported.schema,
+      exportedName,
+      exportedTitles: exported.scripts.map(script => script.title),
+      exportedOrder: exported.scriptOrders?.Respostas,
+      themeTransitionStarts,
+      themeTransitionSettles,
+      modalFocusesTitle,
+      modalRestoresTrigger
+    };
+  })()`);
   await evaluate(`(() => {
     const screen = document.getElementById('welcomeScreen');
     const splash = document.getElementById('welcomeSplash');
@@ -325,7 +419,24 @@ try {
   const unitSelectionDesktopScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
   await writeFile('/home/ubuntu/screenshots/scriptz-v55-unit-selection-desktop.png', Buffer.from(unitSelectionDesktopScreenshot.data, 'base64'));
   await evaluate(`(() => { document.getElementById('welcomeScreen').hidden = true; return true; })()`);
-  await evaluate(`(() => { closeCategoryModal(); setLibrary('standard'); setCat('Institucional'); return true; })()`);
+  await evaluate(`(() => {
+    closeCategoryModal();
+    workspace = { mode: 'standard', division: 'DEPROT' };
+    activeLibrary = 'standard';
+    standardCategories = ['Institucional', 'Padronizado filho'];
+    standardCategoryParents = { 'Padronizado filho': 'Institucional' };
+    standardScripts = [normalizeScript({ id: 8001, cat: 'Padronizado filho', cats: ['Padronizado filho'], title: 'Modelo institucional', html: '<p>Modelo</p>', isStandard: true }, 'standard')];
+    categoryRegistry = ['Pessoal'];
+    categoryParents = {};
+    customCategoryOrder = ['Pessoal'];
+    standardCategoryOrder = ['Institucional', 'Padronizado filho'];
+    standardScriptOrderByCategory = {};
+    scripts = [...standardScripts, normalizeScript({ id: 8002, cat: 'Pessoal', cats: ['Pessoal'], title: 'Script pessoal', html: '<p>Pessoal</p>' })];
+    reconcileCategoryHierarchy();
+    configureWorkspaceControls();
+    setCat('Institucional');
+    return true;
+  })()`);
   await pause(120);
   const standardScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
   await writeFile('/home/ubuntu/screenshots/subcategories-v52-standard.png', Buffer.from(standardScreenshot.data, 'base64'));
@@ -359,6 +470,16 @@ try {
   await pause(1000);
   const initialMobileScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
   await writeFile('/home/ubuntu/screenshots/scriptz-v53-initial-mobile.png', Buffer.from(initialMobileScreenshot.data, 'base64'));
+  const savedMobile = await evaluate(`(() => {
+    const aside = document.querySelector('aside');
+    return {
+      mobileNavOpen: document.body.classList.contains('mobile-nav-open'),
+      navigationVisible: Boolean(aside && aside.getBoundingClientRect().right > 0),
+      navigationHasWorkspaceControl: document.getElementById('workspaceSelect') !== null,
+      initialEnvelopeVisible: document.querySelector('.scriptz-initial-landing img') !== null
+    };
+  })()`);
+  await writeFile('/home/ubuntu/screenshots/scriptz-v58-saved-context-mobile.json', JSON.stringify(savedMobile, null, 2));
   await evaluate(`(() => {
     const screen = document.getElementById('welcomeScreen');
     const splash = document.getElementById('welcomeSplash');
@@ -406,6 +527,15 @@ try {
     const freeChoiceColumns = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
     const freeSidebarOnlyRoots = !document.getElementById('sidebarNav').textContent.includes('Protocolos');
     const freeRootColumns = getComputedStyle(rootList).gridTemplateColumns;
+    const mobileActionsMenu = document.getElementById('actionsMenu');
+    mobileActionsMenu.open = true;
+    syncActionsMenuIndicator();
+    const mobileActionsMenuOpens = mobileActionsMenu.querySelector('.actions-menu-chevron')?.textContent === '▲'
+      && mobileActionsMenu.classList.contains('is-open')
+      && getComputedStyle(mobileActionsMenu.querySelector('.actions-menu-clip')).transitionDuration !== '0s';
+    mobileActionsMenu.open = false;
+    syncActionsMenuIndicator();
+    const mobileSelectsHaveUnifiedIndicator = [...document.querySelectorAll('select:not([multiple]):not([size])')].every(select => getComputedStyle(select).appearance === 'none');
     workspace = { mode: 'standard', division: 'DEPROT' };
     activeLibrary = 'standard';
     standardCategories = ['Institucional', 'Padronizado filho'];
@@ -441,6 +571,8 @@ try {
       sidebarOnlyRoots: freeSidebarOnlyRoots,
       rootColumns: freeRootColumns,
       noHorizontalOverflow: freeNoHorizontalOverflow && document.documentElement.scrollWidth <= window.innerWidth,
+      mobileActionsMenuOpens,
+      mobileSelectsHaveUnifiedIndicator,
       mobileStandardSections,
       mobilePersonalControls,
       mobileUnitGridColumns
@@ -458,6 +590,24 @@ try {
   await pause(160);
   const emptySubcategoryMobileScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
   await writeFile('/home/ubuntu/screenshots/scriptz-v54-empty-subcategory-mobile.png', Buffer.from(emptySubcategoryMobileScreenshot.data, 'base64'));
+
+  await evaluate(`(() => {
+    sessionStorage.setItem('scriptz_test_new_user', 'true');
+    localStorage.removeItem('scriptz_workspace');
+    localStorage.removeItem('scriptz_onboarding_complete');
+    localStorage.removeItem('scriptz_daily_welcome_date');
+    return true;
+  })()`);
+  await send('Page.reload', { ignoreCache: true });
+  await pause(4100);
+  const newUserMobile = await evaluate(`(() => ({
+    welcomeVisible: document.getElementById('welcomeScreen')?.hidden === false,
+    unitSelectionVisible: document.getElementById('welcomeMenu')?.hidden === false && document.getElementById('welcomeMenu')?.classList.contains('visible') === true,
+    unitButtonCount: document.querySelectorAll('#welcomeMenu .welcome-units-grid button').length,
+    noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth
+  }))()`);
+  const newUserMobileScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
+  await writeFile('/home/ubuntu/screenshots/scriptz-v58-new-user-mobile.png', Buffer.from(newUserMobileScreenshot.data, 'base64'));
 
   const valid = desktop.sidebarOnlyRoots
     && desktop.initialLandingVisible
@@ -502,6 +652,12 @@ try {
     && desktop.deleteMovesDirectScripts
     && desktop.standardSectionVisible
     && desktop.standardNoPersonalCategory
+    && desktop.libraryIndicatorInitiallyOpen
+    && desktop.libraryCollapses
+    && desktop.libraryReopens
+    && desktop.actionsMenuOpens
+    && desktop.actionsMenuCloses
+    && desktop.selectsHaveUnifiedIndicator
     && desktop.standardNavigatorReadOnly
     && desktop.standardNewScriptHidden
     && desktop.personalOnlyContent
@@ -518,6 +674,8 @@ try {
     && mobile.choiceColumns === 2
     && mobile.mobileStandardSections
     && mobile.mobilePersonalControls
+    && mobile.mobileActionsMenuOpens
+    && mobile.mobileSelectsHaveUnifiedIndicator
     && mobile.mobileUnitGridColumns === 2
     && mobile.navigatorVisible
     && mobile.sidebarOnlyRoots
@@ -528,8 +686,26 @@ try {
     && JSON.stringify(capg.welcomeOrder) === JSON.stringify(capg.expectedOrder)
     && JSON.stringify(capg.selectValues) === JSON.stringify(capg.expectedSelectValues)
     && JSON.stringify(capg.selectLabels) === JSON.stringify(capg.expectedSelectLabels)
-    && JSON.stringify(capg.baseOrder) === JSON.stringify(capg.expectedOrder);
-  const result = { desktop, mobile, capg, valid };
+    && JSON.stringify(capg.baseOrder) === JSON.stringify(capg.expectedOrder)
+    && savedMobile.mobileNavOpen
+    && savedMobile.navigationVisible
+    && savedMobile.navigationHasWorkspaceControl
+    && savedMobile.initialEnvelopeVisible
+    && newUserMobile.welcomeVisible
+    && newUserMobile.unitSelectionVisible
+    && newUserMobile.unitButtonCount === 6
+    && newUserMobile.noHorizontalOverflow
+    && JSON.stringify(resilience.orderedTitles) === JSON.stringify(['Segundo modelo', 'Primeiro modelo'])
+    && JSON.stringify(resilience.persistedOrder) === JSON.stringify(['9902', '9901'])
+    && resilience.exportedSchema === 'scriptz-free-project'
+    && resilience.exportedName === 'meus-scriptz.json'
+    && JSON.stringify(resilience.exportedTitles) === JSON.stringify(['Primeiro modelo', 'Segundo modelo'])
+    && JSON.stringify(resilience.exportedOrder) === JSON.stringify(['9902', '9901'])
+    && resilience.themeTransitionStarts
+    && resilience.themeTransitionSettles
+    && resilience.modalFocusesTitle
+    && resilience.modalRestoresTrigger;
+  const result = { desktop, mobile, capg, resilience, savedMobile, newUserMobile, valid };
   if (!valid) throw new Error(`Validação de subcategorias inválida: ${JSON.stringify(result)}`);
   await writeFile(outputPath, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));

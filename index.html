@@ -84,13 +84,15 @@
                     <input type="text" id="userNameInput" placeholder="Escreva aqui seu nome e sobrenome" onblur="updateSignature()">
                 </div>
                 <details class="actions-menu" id="actionsMenu">
-                    <summary>Ações <span aria-hidden="true">⌄</span></summary>
-                    <div class="actions-menu-content">
-                        <button id="manageCategoriesBtn" type="button" onclick="openCategoryModal()" hidden>📂 Gerenciar categorias principais</button>
-                        <button id="loadTemplateBaseBtn" type="button" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar script padrão como base</button>
-                        <button id="exportScriptsBtn" type="button" onclick="exportJSON()">📤 Exportar meus scriptz</button>
-                        <button id="discardTemplatesBtn" type="button" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Limpar Modo Editor</button>
-                        <button id="resetLocalBtn" type="button" onclick="resetLocalData()" class="btn-reset" hidden>↩️ Reverter alterações locais</button>
+                    <summary aria-expanded="false">Ações <span class="actions-menu-chevron" aria-hidden="true">▼</span></summary>
+                    <div class="actions-menu-clip">
+                        <div class="actions-menu-content">
+                            <button id="manageCategoriesBtn" type="button" onclick="openCategoryModal()" hidden>📂 Gerenciar categorias principais</button>
+                            <button id="loadTemplateBaseBtn" type="button" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar script padrão como base</button>
+                            <button id="exportScriptsBtn" type="button" onclick="exportJSON()">📤 Exportar meus scriptz</button>
+                            <button id="discardTemplatesBtn" type="button" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Limpar Modo Editor</button>
+                            <button id="resetLocalBtn" type="button" onclick="resetLocalData()" class="btn-reset" hidden>↩️ Reverter alterações locais</button>
+                        </div>
                     </div>
                 </details>
                 <div class="drop-zone" id="dropZone" onclick="document.getElementById('importFile').click()">
