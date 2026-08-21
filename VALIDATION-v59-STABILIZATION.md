@@ -30,3 +30,15 @@ Os controles de **Modelos Padronizados** e **Meus Scriptz** exibem agora `▲` q
 ## Dropdowns v61
 
 O menu **Ações** agora usa os mesmos indicadores `▲` e `▼`, com contenção de altura, opacidade e deslocamento sincronizados. Os seletores nativos de tema, contexto, ordenação, classificação e saudação recebem uma seta `▼` consistente; em navegadores que oferecem o estado `:open`, ela passa a `▲` durante a abertura. A regressão confirmou esses estados em desktop e smartphone.
+
+## Assinatura v62
+
+Em tela ampla de 1918×977, o bloco **Sua assinatura** foi confirmado como elemento fixo no canto inferior direito do painel principal, fora da navegação lateral. O campo usa Rajdhani em 19px, negrito e itálico, com altura mínima de 48px. Em viewport móvel, retorna ao fluxo do conteúdo principal e ocupa toda a largura disponível, sem rolagem horizontal.
+
+## Encaixe de referência v63
+
+No mesmo viewport de 1918×977, o bloco foi reposicionado para `left = 1310px`, largura de `282px` e distância de `10px` da base do viewport, acompanhando o encaixe indicado ao lado dos cards. O texto preenchido e o placeholder foram validados com alinhamento à direita.
+
+## Composição por dispositivo v64
+
+No desktop amplo, a assinatura foi revalidada no encaixe lateral indicado ao lado dos cards. Em smartphone, uma captura com a navegação móvel aberta confirma o mesmo bloco de assinatura entre a lista de categorias e o menu Ações, preservando o fluxo original da sidebar e sem rolagem horizontal.

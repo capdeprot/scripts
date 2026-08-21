@@ -79,10 +79,6 @@
             </div>
             <div id="sidebarNav"></div>
             <div class="sb-foot">
-                <div class="config-section">
-                    <label>👤 Sua assinatura</label>
-                    <input type="text" id="userNameInput" placeholder="Escreva aqui seu nome e sobrenome" onblur="updateSignature()">
-                </div>
                 <details class="actions-menu" id="actionsMenu">
                     <summary aria-expanded="false">Ações <span class="actions-menu-chevron" aria-hidden="true">▼</span></summary>
                     <div class="actions-menu-clip">
@@ -90,6 +86,7 @@
                             <button id="manageCategoriesBtn" type="button" onclick="openCategoryModal()" hidden>📂 Gerenciar categorias principais</button>
                             <button id="loadTemplateBaseBtn" type="button" onclick="openTemplateBaseModal()" class="context-action" hidden>📂 Usar script padrão como base</button>
                             <button id="exportScriptsBtn" type="button" onclick="exportJSON()">📤 Exportar meus scriptz</button>
+                            <button id="exportTemplateBtn" type="button" onclick="openTemplateExportModal()" class="context-action" hidden>🏛️ Exportar como template padrão</button>
                             <button id="discardTemplatesBtn" type="button" onclick="discardFreeTemplates()" class="btn-reset context-action" hidden>🧹 Limpar Modo Editor</button>
                             <button id="resetLocalBtn" type="button" onclick="resetLocalData()" class="btn-reset" hidden>↩️ Reverter alterações locais</button>
                         </div>
@@ -133,6 +130,10 @@
                 <div class="icon">📭</div>
                 <p>Nenhum script encontrado.</p>
             </div>
+            <section class="signature-dock" id="signatureDock" aria-label="Sua assinatura">
+                <label for="userNameInput">👤 Sua assinatura</label>
+                <input type="text" id="userNameInput" placeholder="Seu nome" onblur="updateSignature()">
+            </section>
         </main>
     </div>
 
@@ -223,6 +224,23 @@
                 <button onclick="loadStandardBaseIntoFree('Sala Arthur Saboya')">CAP · Sala Arthur Saboya</button>
             </div>
             <div class="modal-btns"><button class="btn-sec" onclick="closeTemplateBaseModal()">Cancelar</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: EXPORTAÇÃO DE TEMPLATE PADRÃO -->
+    <div class="overlay" id="templateExportModal" onclick="if(event.target===this) closeTemplateExportModal()">
+        <div class="modal template-base-modal">
+            <h3>🏛️ Exportar como template padrão</h3>
+            <p>Este arquivo preserva categorias, subcategorias, ordem e modelos do Modo Editor. Depois, substitua o arquivo correspondente em <code>templates/</code> no repositório.</p>
+            <div class="template-base-grid">
+                <button onclick="exportStandardTemplate('DEPROT')">CAP · DEPROT</button>
+                <button onclick="exportStandardTemplate('DPCI')">CAP · DPCI</button>
+                <button onclick="exportStandardTemplate('DPD')">CAP · DPD</button>
+                <button onclick="exportStandardTemplate('CAP-G')">CAP · G</button>
+                <button onclick="exportStandardTemplate('Núcleo')">CAP · Núcleo</button>
+                <button onclick="exportStandardTemplate('Sala Arthur Saboya')">CAP · Sala Arthur Saboya</button>
+            </div>
+            <div class="modal-btns"><button class="btn-sec" onclick="closeTemplateExportModal()">Cancelar</button></div>
         </div>
     </div>
 

@@ -302,6 +302,44 @@ nav ul li.reorder-mode.dragging a.cat-btn {
   color: #fff;
 }
 
+/* Signature dock: a deliberately separate working aid, outside the crowded navigation rail. */
+.signature-dock {
+  display: grid;
+  gap: 7px;
+  width: min(100%, 340px);
+  margin: 28px 0 0;
+  padding: 13px 14px 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+.signature-dock label {
+  color: var(--text-secondary);
+  font: 700 11px/1 'Rajdhani', sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.signature-dock input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: .015em;
+  line-height: 1;
+  text-align: right;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition), background-color var(--transition);
+}
+.signature-dock input::placeholder { text-align: right; font-style: italic; font-weight: 700; color: color-mix(in srgb, var(--text-secondary) 74%, transparent); }
+.signature-dock input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+
 main { padding: 32px 40px; max-width: 1000px; }
 main.is-initial-landing { max-width: none; width: 100%; }
 .scriptz-initial-landing { display: grid; place-items: center; min-height: calc(100vh - 64px); }
@@ -1015,6 +1053,16 @@ main.is-initial-landing .mobile-search-bar { display: none; }
   .layout { grid-template-columns: 1fr; }
   aside { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
   main { padding: 20px; }
+  .signature-dock { width: 100%; margin-top: 22px; }
+  .sb-foot > .signature-dock {
+    width: 100%;
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .sb-foot > .signature-dock input { width: 100% !important; max-width: none; }
 }
 
 @media (max-width: 480px) {
@@ -2481,3 +2529,34 @@ select:not([multiple]):not([size]):open {
 
 /* O atalho superior de criação só existe em contextos pessoais que já possuem scriptz. */
 #newScriptBtn[hidden] { display: none !important; }
+
+/* No desktop, a assinatura é uma janela de trabalho sempre visível e independente do conteúdo do painel. */
+@media (min-width: 821px) {
+  :root { --signature-reserve: 250px; }
+  main {
+    width: 100%;
+    max-width: min(1000px, calc(100vw - var(--sidebar-width) - var(--signature-reserve)));
+  }
+  main > .signature-dock {
+    position: fixed;
+    z-index: 20;
+    right: 12px;
+    bottom: clamp(12px, 2vh, 22px);
+    width: max-content;
+    max-width: calc(var(--signature-reserve) - 12px);
+    margin: 0;
+    padding: 8px 9px 9px;
+    gap: 4px;
+    justify-items: end;
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--bg) 55%, transparent);
+  }
+  main > .signature-dock label { font-size: 10px; text-align: right; }
+  main > .signature-dock input {
+    width: 11ch;
+    min-width: 11ch;
+    max-width: calc(var(--signature-reserve) - 30px);
+    min-height: 40px;
+    padding: 7px 8px;
+    font-size: 18px;
+  }
+}

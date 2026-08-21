@@ -84,6 +84,19 @@ try {
       const button = document.getElementById('newScriptBtn');
       return Boolean(button && !button.hidden && getComputedStyle(button).display !== 'none');
     };
+    const signatureDock = document.querySelector('main > .signature-dock');
+    const signatureInput = document.getElementById('userNameInput');
+    const signatureStyle = signatureInput ? getComputedStyle(signatureInput) : null;
+    const signatureDockInMain = signatureDock?.parentElement === document.querySelector('main');
+    const signatureTypography = Boolean(signatureStyle)
+      && signatureStyle.fontFamily.includes('Rajdhani')
+      && Number(signatureStyle.fontSize.replace('px', '')) >= 18
+      && signatureStyle.fontWeight === '700'
+      && signatureStyle.fontStyle === 'italic'
+      && signatureStyle.textAlign === 'right'
+      && getComputedStyle(signatureInput, '::placeholder').textAlign === 'right'
+      && Number(signatureStyle.minHeight.replace('px', '')) >= 40;
+    const signaturePlaceholder = signatureInput?.placeholder === 'Seu nome';
     categoryRegistry = ['Atendimento', 'Fiscalização', 'Geral', 'Protocolos', 'Prazos', 'Serviços', 'Solicitações'];
     categoryParents = { Protocolos: 'Atendimento', Prazos: 'Atendimento', Solicitações: 'Serviços' };
     customCategoryOrder = ['Atendimento', 'Fiscalização', 'Geral', 'Serviços', 'Protocolos', 'Prazos', 'Solicitações'];
@@ -265,6 +278,9 @@ try {
     const standardContentStillIsolated = getFilteredScripts().length === 1 && getFilteredScripts()[0].title === 'Modelo institucional';
     return {
       sidebarOnlyRoots,
+      signatureDockInMain,
+      signatureTypography,
+      signaturePlaceholder,
       initialLandingVisible,
       initialListControlsHidden,
       newScriptHiddenOnAll,
@@ -343,6 +359,22 @@ try {
       expectedSelectLabels: ['CAP · DEPROT', 'CAP · DPCI', 'CAP · DPD', 'CAP · G', 'CAP · Núcleo', 'CAP · Sala Arthur Saboya']
     };
   })`);
+  const deprot = await evaluate(`fetchStandardTemplate('DEPROT').then(template => {
+    const parents = template.categoryParents || {};
+    const scriptsById = new Map(template.scripts.map(script => [script.id, script]));
+    const expectedMessages = [11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 24, 25];
+    const expectedGuides = [18, 19, 29];
+    const parentCategories = new Set(Object.values(parents));
+    return {
+      aprovaChildren: parents['Mensagens externas'] === 'Aprova Digital' && parents['Guias AD'] === 'Aprova Digital',
+      cotasChildren: parents['Alvará de Reforma'] === 'Cotas do SEI'
+        && parents['Projeto Modificativo'] === 'Cotas do SEI'
+        && parents['Restituição de Guia'] === 'Cotas do SEI',
+      noScriptsAtParents: template.scripts.every(script => !parentCategories.has(script.cat)),
+      messagesClassified: expectedMessages.every(id => scriptsById.get(id)?.cat === 'Mensagens externas'),
+      guidesClassified: expectedGuides.every(id => scriptsById.get(id)?.cat === 'Guias AD')
+    };
+  })`);
   const resilience = await evaluate(`(async () => {
     workspace = { mode: 'free', division: null };
     activeLibrary = 'personal';
@@ -374,6 +406,45 @@ try {
     URL.createObjectURL = createObjectURL;
     URL.revokeObjectURL = revokeObjectURL;
     HTMLAnchorElement.prototype.click = anchorClick;
+    categoryRegistry = ['E-mail', 'Respostas'];
+    categoryParents = { Respostas: 'E-mail' };
+    customCategoryOrder = ['E-mail', 'Respostas'];
+    customScriptOrderByCategory = { Respostas: ['9901', '9902'] };
+    configureWorkspaceControls();
+    const templateExportVisible = document.getElementById('exportTemplateBtn')?.hidden === false;
+    let exportedTemplateBlob;
+    let exportedTemplateName = '';
+    URL.createObjectURL = blob => { exportedTemplateBlob = blob; return 'blob:scriptz-template'; };
+    URL.revokeObjectURL = () => {};
+    HTMLAnchorElement.prototype.click = function () { exportedTemplateName = this.download; };
+    exportStandardTemplate('DEPROT');
+    const exportedTemplate = JSON.parse(await exportedTemplateBlob.text());
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    HTMLAnchorElement.prototype.click = anchorClick;
+    const nativeFetch = window.fetch;
+    workspace = { mode: 'standard', division: 'DEPROT' };
+    localStorage.removeItem(workspaceKey());
+    window.fetch = async () => new Response(JSON.stringify(exportedTemplate), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    await loadWorkspace(false);
+    const templateReimportsByStandardLoader = standardCategoryParents.Respostas === 'E-mail'
+      && standardCategories.includes('E-mail')
+      && standardCategories.includes('Respostas')
+      && standardScripts.length === 2
+      && standardScripts.every(script => script.isStandard && script.source === 'standard');
+    window.fetch = nativeFetch;
+    workspace = { mode: 'free', division: null };
+    activeLibrary = 'personal';
+    categoryRegistry = ['E-mail', 'Respostas'];
+    categoryParents = { Respostas: 'E-mail' };
+    customCategoryOrder = ['E-mail', 'Respostas'];
+    customScriptOrderByCategory = { Respostas: ['9901', '9902'] };
+    scripts = [
+      normalizeScript({ id: 9901, cat: 'Respostas', cats: ['Respostas'], title: 'Primeiro modelo', html: '<p>Primeiro</p>' }),
+      normalizeScript({ id: 9902, cat: 'Respostas', cats: ['Respostas'], title: 'Segundo modelo', html: '<p>Segundo</p>' })
+    ];
+    reconcileCategoryHierarchy();
+    setCat('Respostas');
     const oldTheme = getTheme();
     setTheme('purple');
     const themeTransitionStarts = document.documentElement.classList.contains('theme-transitioning')
@@ -397,6 +468,15 @@ try {
       exportedName,
       exportedTitles: exported.scripts.map(script => script.title),
       exportedOrder: exported.scriptOrders?.Respostas,
+      templateExportVisible,
+      exportedTemplateName,
+      templateSchema: exportedTemplate.schema,
+      templateDivision: exportedTemplate.division,
+      templateCategories: exportedTemplate.categories,
+      templateParents: exportedTemplate.categoryParents,
+      templateScriptOrder: exportedTemplate.scripts.map(script => String(script.id)),
+      templateProjectFieldsRemoved: exportedTemplate.scripts.every(script => script.isStandard === undefined && script.source === undefined),
+      templateReimportsByStandardLoader,
       themeTransitionStarts,
       themeTransitionSettles,
       modalFocusesTitle,
@@ -440,6 +520,41 @@ try {
   await pause(120);
   const standardScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
   await writeFile('/home/ubuntu/screenshots/subcategories-v52-standard.png', Buffer.from(standardScreenshot.data, 'base64'));
+  await send('Emulation.setDeviceMetricsOverride', { width: 1918, height: 977, deviceScaleFactor: 1, mobile: false });
+  await pause(120);
+  const signatureWide = await evaluate(`(() => {
+    const dock = document.querySelector('.signature-dock');
+    const style = dock ? getComputedStyle(dock) : null;
+    const input = document.getElementById('userNameInput');
+    input.value = 'Scriptz';
+    syncSignatureInputWidth();
+    const compactWidth = input.getBoundingClientRect().width;
+    input.value = 'Maria de Oliveira Santos';
+    syncSignatureInputWidth();
+    const expandedWidth = input.getBoundingClientRect().width;
+    const expectedRight = 12;
+    const expectedBottom = Math.min(22, Math.max(12, window.innerHeight * .02));
+    const dockBounds = dock?.getBoundingClientRect();
+    const mainBounds = document.querySelector('main')?.getBoundingClientRect();
+    return {
+      visible: Boolean(dock && dock.getBoundingClientRect().width > 0),
+      fixed: style?.position === 'fixed',
+      nearViewportRight: Math.abs((window.innerWidth - (dock?.getBoundingClientRect().right || 0)) - expectedRight) < 4,
+      nearViewportBottom: Math.abs((window.innerHeight - (dock?.getBoundingClientRect().bottom || 0)) - expectedBottom) < 4,
+      outsideContentArea: Boolean(dockBounds && mainBounds && dockBounds.left >= mainBounds.right - 1),
+      inputStartsCompact: compactWidth > 0 && compactWidth < 190,
+      inputGrowsForLongName: expandedWidth > compactWidth && expandedWidth <= 400
+    };
+  })()`);
+  const signatureWideScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
+  await writeFile('/home/ubuntu/screenshots/scriptz-v62-signature-wide.png', Buffer.from(signatureWideScreenshot.data, 'base64'));
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
+  await pause(120);
+  const signatureDesktop = await evaluate(`(() => {
+    const dock = document.getElementById('signatureDock')?.getBoundingClientRect();
+    const main = document.querySelector('main')?.getBoundingClientRect();
+    return Boolean(dock && main && dock.left >= main.right - 1);
+  })()`);
   await evaluate(`(() => {
     workspace = { mode: 'free', division: null };
     activeLibrary = 'personal';
@@ -499,6 +614,14 @@ try {
   const mobile = await evaluate(`(() => {
     workspace = { mode: 'free', division: null };
     activeLibrary = 'personal';
+    syncSignatureDockPlacement();
+    const mobileSignatureDock = document.querySelector('.sb-foot > .signature-dock');
+    const mobileSignatureStyle = mobileSignatureDock ? getComputedStyle(mobileSignatureDock) : null;
+    const mobileSignatureInput = document.getElementById('userNameInput');
+    const mobileSignatureUsable = Boolean(mobileSignatureDock && mobileSignatureInput)
+      && mobileSignatureStyle?.position !== 'fixed'
+      && mobileSignatureDock.getBoundingClientRect().width >= Math.min(300, window.innerWidth - 24)
+      && mobileSignatureInput.getBoundingClientRect().width > 0;
     standardCategories = [];
     standardCategoryParents = {};
     categoryRegistry = ['Atendimento', 'Protocolos', 'Prazos'];
@@ -573,11 +696,16 @@ try {
       noHorizontalOverflow: freeNoHorizontalOverflow && document.documentElement.scrollWidth <= window.innerWidth,
       mobileActionsMenuOpens,
       mobileSelectsHaveUnifiedIndicator,
+      mobileSignatureUsable,
       mobileStandardSections,
       mobilePersonalControls,
       mobileUnitGridColumns
     };
   })()`);
+  await evaluate(`(() => { openMobileNav(); const aside = document.querySelector('aside'); if (aside) aside.scrollTop = aside.scrollHeight; return Boolean(document.querySelector('.sb-foot > .signature-dock')); })()`);
+  await pause(120);
+  const mobileSignatureSidebarScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
+  await writeFile('/home/ubuntu/screenshots/scriptz-v64-signature-mobile-sidebar.png', Buffer.from(mobileSignatureSidebarScreenshot.data, 'base64'));
   await evaluate(`(() => { setLibrary('personal'); setCat('Pessoal móvel'); openModal(); return true; })()`);
   await pause(180);
   const contextualMobileScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
@@ -610,6 +738,17 @@ try {
   await writeFile('/home/ubuntu/screenshots/scriptz-v58-new-user-mobile.png', Buffer.from(newUserMobileScreenshot.data, 'base64'));
 
   const valid = desktop.sidebarOnlyRoots
+    && desktop.signatureDockInMain
+    && desktop.signatureTypography
+    && desktop.signaturePlaceholder
+    && signatureWide.visible
+    && signatureWide.fixed
+    && signatureWide.nearViewportRight
+    && signatureWide.nearViewportBottom
+    && signatureWide.outsideContentArea
+    && signatureWide.inputStartsCompact
+    && signatureWide.inputGrowsForLongName
+    && signatureDesktop
     && desktop.initialLandingVisible
     && desktop.initialListControlsHidden
     && desktop.newScriptHiddenOnAll
@@ -676,6 +815,7 @@ try {
     && mobile.mobilePersonalControls
     && mobile.mobileActionsMenuOpens
     && mobile.mobileSelectsHaveUnifiedIndicator
+    && mobile.mobileSignatureUsable
     && mobile.mobileUnitGridColumns === 2
     && mobile.navigatorVisible
     && mobile.sidebarOnlyRoots
@@ -687,6 +827,11 @@ try {
     && JSON.stringify(capg.selectValues) === JSON.stringify(capg.expectedSelectValues)
     && JSON.stringify(capg.selectLabels) === JSON.stringify(capg.expectedSelectLabels)
     && JSON.stringify(capg.baseOrder) === JSON.stringify(capg.expectedOrder)
+    && deprot.aprovaChildren
+    && deprot.cotasChildren
+    && deprot.noScriptsAtParents
+    && deprot.messagesClassified
+    && deprot.guidesClassified
     && savedMobile.mobileNavOpen
     && savedMobile.navigationVisible
     && savedMobile.navigationHasWorkspaceControl
@@ -701,11 +846,20 @@ try {
     && resilience.exportedName === 'meus-scriptz.json'
     && JSON.stringify(resilience.exportedTitles) === JSON.stringify(['Primeiro modelo', 'Segundo modelo'])
     && JSON.stringify(resilience.exportedOrder) === JSON.stringify(['9902', '9901'])
+    && resilience.templateExportVisible
+    && resilience.exportedTemplateName === 'DEPROT.JSON'
+    && resilience.templateSchema === 'scriptz-standard-template'
+    && resilience.templateDivision === 'DEPROT'
+    && JSON.stringify(resilience.templateCategories) === JSON.stringify(['E-mail', 'Respostas'])
+    && JSON.stringify(resilience.templateParents) === JSON.stringify({ Respostas: 'E-mail' })
+    && JSON.stringify(resilience.templateScriptOrder) === JSON.stringify(['9901', '9902'])
+    && resilience.templateProjectFieldsRemoved
+    && resilience.templateReimportsByStandardLoader
     && resilience.themeTransitionStarts
     && resilience.themeTransitionSettles
     && resilience.modalFocusesTitle
     && resilience.modalRestoresTrigger;
-  const result = { desktop, mobile, capg, resilience, savedMobile, newUserMobile, valid };
+  const result = { desktop, mobile, capg, deprot, resilience, savedMobile, newUserMobile, valid };
   if (!valid) throw new Error(`Validação de subcategorias inválida: ${JSON.stringify(result)}`);
   await writeFile(outputPath, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));

@@ -284,3 +284,77 @@
 - [x] Mapear todos os controles expansíveis e seletores da interface.
 - [x] Aplicar indicadores ▲ / ▼ e transições graduais onde o controle permitir abertura e recolhimento.
 - [x] Validar estados em desktop e smartphone e gerar a entrega atualizada.
+
+## Posição e tipografia da assinatura
+
+- [x] Mover o bloco Sua assinatura para fora da sidebar e para o painel principal.
+- [x] Posicionar o bloco no canto inferior direito do painel principal, conforme a referência.
+- [x] Aumentar o campo de nome e sobrenome e aplicar Rajdhani maior, em negrito e itálico.
+- [x] Validar a posição em desktop e smartphone e gerar entrega atualizada.
+
+## Correção fina da assinatura v63
+
+- [x] Ajustar o bloco para o encaixe exato ao lado dos cards, conforme a referência.
+- [x] Alinhar o texto inserido e o texto de orientação à direita.
+- [x] Validar em tela ampla e mobile e gerar entrega corrigida.
+
+## Assinatura por dispositivo v64
+
+- [x] Revalidar e corrigir o encaixe desktop conforme a referência visual.
+- [x] Exibir Sua assinatura na sidebar em smartphone, como antes.
+- [x] Validar desktop e smartphone e gerar entrega atualizada.
+
+## Template padrão DEPROT
+
+- [x] Inspecionar e normalizar o JSON fornecido para o schema de template do Scriptz.
+- [x] Substituir o template padrão protegido da DEPROT e manter a compatibilidade da v61.
+- [x] Validar o carregamento da DEPROT e entregar o arquivo/pacote atualizado.
+
+## Correção do schema DEPROT
+
+- [x] Converter o arquivo exportado `scriptz-free-project` para `scriptz-standard-template`.
+- [x] Remover dados específicos de projeto e normalizar o conteúdo HTML importado.
+- [x] Validar o carregamento automático da DEPROT após a substituição do arquivo em `templates/`.
+
+## Hierarquia DEPROT
+
+- [x] Preservar `categoryParents` do JSON exportado no template padrão.
+- [x] Garantir que categorias com subcategorias não recebam scripts diretos no template convertido.
+- [x] Comparar a árvore carregada em Modo Editor e Scriptz Padrão antes da entrega.
+
+## Exportação compatível de template
+
+- [x] Disponibilizar uma exportação de template padrão para a divisão aberta.
+- [x] Preservar schema, divisão, categorias, `categoryParents` e ordem de modelos.
+- [x] Validar que o arquivo exportado pode substituir diretamente `templates/<DIVISÃO>.JSON`.
+
+## Critérios de entrega para commit
+
+- [x] Validar sintaxe e schema do template DEPROT com hierarquia.
+- [x] Testar a nova exportação de template e sua reimportação pelo carregador padrão.
+- [x] Executar a regressão completa antes de gerar o pacote final.
+
+## Correção da assinatura fixa no desktop
+
+- [x] Fixar a janela Sua assinatura no canto inferior direito do painel em desktop, independente da rolagem ou do conteúdo exibido.
+- [x] Dimensionar o campo inicialmente para cerca de sete letras e fazê-lo crescer conforme o nome e sobrenome informados.
+- [x] Preservar a assinatura dentro da sidebar em smartphone e validar os dois contextos antes da entrega.
+
+## Refinamento de escala da assinatura
+
+- [x] Reduzir discretamente a escala visual da janela Sua assinatura em desktop, preservando a largura dinâmica do campo.
+- [x] Validar posição fixa, crescimento do campo e apresentação mobile antes da entrega.
+
+## Ajuste de assinatura e Aprova Digital
+
+- [x] Substituir a orientação do campo de assinatura por “Seu nome”.
+- [x] Redimensionar a janela de assinatura no desktop para que permaneça inteiramente no espaço livre e não cubra cards ou subcategorias.
+- [x] Criar em Aprova Digital as subcategorias Mensagens externas e Guias AD.
+- [x] Classificar os modelos atuais de Aprova Digital em Guias AD quando aplicável e em Mensagens externas nos demais casos.
+- [x] Validar a hierarquia, a distribuição dos modelos e a interface desktop/mobile antes da entrega.
+
+## Cotas do SEI no padrão DEPROT
+
+- [x] Criar a categoria-pai Cotas do SEI no template padrão DEPROT.
+- [x] Adicionar sob Cotas do SEI as subcategorias Alvará de Reforma, Projeto Modificativo e Restituição de Guia.
+- [x] Validar a nova árvore sem scripts diretos na categoria-pai e com carregamento correto no Scriptz Padrão.

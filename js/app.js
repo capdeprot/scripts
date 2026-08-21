@@ -174,6 +174,28 @@ function hasGreeting(script) {
 // ============================================================
 //  ASSINATURA
 // ============================================================
+function syncSignatureInputWidth() {
+  const input = document.getElementById('userNameInput');
+  if (!input) return;
+  if (window.matchMedia('(max-width: 820px)').matches) {
+    input.style.removeProperty('width');
+    return;
+  }
+  const styles = getComputedStyle(input);
+  const canvas = syncSignatureInputWidth.canvas || (syncSignatureInputWidth.canvas = document.createElement('canvas'));
+  const context = canvas.getContext('2d');
+  if (!context) return;
+  context.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+  const content = input.value || 'Scriptz';
+  const tracking = Number.parseFloat(styles.letterSpacing) || 0;
+  const contentWidth = context.measureText(content).width + Math.max(0, content.length - 1) * tracking;
+  const padding = Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight) + 2;
+  const minimum = context.measureText('Scriptz').width + 6 * tracking + padding;
+  const desktopReserve = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--signature-reserve'));
+  const maximum = Math.min(400, Number.isFinite(desktopReserve) ? desktopReserve - 30 : window.innerWidth - 64);
+  input.style.width = `${Math.ceil(Math.min(maximum, Math.max(minimum, contentWidth + padding)))}px`;
+}
+
 function getSignature() {
   const name = document.getElementById('userNameInput').value.trim();
   return name || '------';
@@ -184,6 +206,7 @@ function hasSignature(script) {
 }
 
 function updateSignature() {
+  syncSignatureInputWidth();
   localStorage.setItem('user_signature', document.getElementById('userNameInput').value.trim());
   render();
   showToast('✅', 'Assinatura atualizada!');
@@ -192,6 +215,7 @@ function updateSignature() {
 function loadUserName() {
   const saved = localStorage.getItem('user_signature');
   if (saved) document.getElementById('userNameInput').value = saved;
+  syncSignatureInputWidth();
 }
 
 // ============================================================
@@ -546,11 +570,13 @@ function configureWorkspaceControls() {
   const reset = document.getElementById('resetLocalBtn');
   const discard = document.getElementById('discardTemplatesBtn');
   const templateBase = document.getElementById('loadTemplateBaseBtn');
+  const templateExport = document.getElementById('exportTemplateBtn');
   const manageCategories = document.getElementById('manageCategoriesBtn');
   if (select) select.value = isStandardMode() ? `standard:${workspace.division}` : 'free';
   if (reset) reset.hidden = !isStandardMode();
   if (discard) discard.hidden = isStandardMode();
   if (templateBase) templateBase.hidden = isStandardMode();
+  if (templateExport) templateExport.hidden = isStandardMode();
   if (manageCategories) manageCategories.hidden = true;
 }
 
@@ -2348,6 +2374,97 @@ function exportJSON() {
   showToast('📤', standard ? 'Alterações exportadas!' : 'Meus Scriptz exportados!');
 }
 
+function downloadJSON(payload, filename) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  window.setTimeout(() => {
+    URL.revokeObjectURL(link.href);
+    link.remove();
+  }, 0);
+}
+
+function orderedTemplateScripts(templateCategories) {
+  const sourceScripts = scripts.filter(script => !script.isStandard);
+  const emitted = new Set();
+  const ordered = [];
+  templateCategories.forEach(category => {
+    const rank = new Map((customScriptOrderByCategory[category] || []).map((id, index) => [String(id), index]));
+    sourceScripts
+      .filter(script => script.cat === category)
+      .sort((left, right) => (rank.get(String(left.id)) ?? Number.MAX_SAFE_INTEGER) - (rank.get(String(right.id)) ?? Number.MAX_SAFE_INTEGER))
+      .forEach(script => {
+        emitted.add(String(script.id));
+        ordered.push(script);
+      });
+  });
+  sourceScripts.filter(script => !emitted.has(String(script.id))).forEach(script => ordered.push(script));
+  return ordered;
+}
+
+function buildStandardTemplatePayload(division) {
+  if (!STANDARD_DIVISIONS[division]) throw new Error('Divisão inválida para exportação.');
+  if (isStandardMode()) throw new Error('Prepare o conteúdo no Modo Editor antes de exportar um template padrão.');
+  const knownCategories = [...new Set([
+    ...categoryRegistry,
+    ...allScriptCategories(scripts),
+    ...Object.keys(categoryParents),
+    ...Object.values(categoryParents)
+  ].map(normalizeCategoryName).filter(Boolean))];
+  const categories = getOrderedCategories(knownCategories, 'personal');
+  const categorySet = new Set(categories);
+  const templateParents = Object.fromEntries(Object.entries(categoryParents)
+    .map(([child, parent]) => [normalizeCategoryName(child), normalizeCategoryName(parent)])
+    .filter(([child, parent]) => child && parent && child !== parent && categorySet.has(child) && categorySet.has(parent)));
+  const parentCategories = new Set(Object.values(templateParents));
+  const parentScripts = scripts.filter(script => !script.isStandard && parentCategories.has(script.cat));
+  if (parentScripts.length) throw new Error('Categorias com subcategorias não podem ter scripts diretos. Mova esses scripts antes de exportar.');
+  return {
+    schema: 'scriptz-standard-template',
+    version: 1,
+    division,
+    categories,
+    categoryParents: templateParents,
+    scripts: orderedTemplateScripts(categories).map(script => ({
+      id: Number(script.id),
+      cat: script.cat,
+      cats: getScriptCategories(script),
+      title: script.title,
+      html: script.html,
+      greetingMode: getGreetingMode(script),
+      hasGreeting: getGreetingMode(script) !== GREETING_MODES.off,
+      hasSignature: script.hasSignature !== false,
+      isFavorite: false
+    }))
+  };
+}
+
+function openTemplateExportModal() {
+  if (isStandardMode()) return;
+  document.getElementById('templateExportModal')?.classList.add('show');
+}
+
+function closeTemplateExportModal() {
+  document.getElementById('templateExportModal')?.classList.remove('show');
+}
+
+function exportStandardTemplate(division) {
+  try {
+    const payload = buildStandardTemplatePayload(division);
+    downloadJSON(payload, `${division}.JSON`);
+    closeTemplateExportModal();
+    showToast('🏛️', `Template CAP · ${division} exportado!`);
+    return payload;
+  } catch (error) {
+    showToast('⚠️', error.message || 'Não foi possível exportar o template.');
+    return null;
+  }
+}
+
 function importProjectData(imported) {
   if (!workspace.mode) throw new Error('Selecione um modo antes de importar.');
   const legacy = Array.isArray(imported);
@@ -2443,6 +2560,10 @@ function openTemplateBaseModal() {
 function closeTemplateBaseModal() {
   document.getElementById('templateBaseModal')?.classList.remove('show');
 }
+
+document.getElementById('templateExportModal')?.addEventListener('click', (event) => {
+  if (event.target === document.getElementById('templateExportModal')) closeTemplateExportModal();
+});
 
 async function loadStandardBaseIntoFree(division) {
   if (!workspace.mode || isStandardMode()) return;
@@ -2542,6 +2663,23 @@ function initSidebarResize() {
   });
 }
 
+function syncSignatureDockPlacement() {
+  const dock = document.getElementById('signatureDock');
+  const sidebarFooter = document.querySelector('.sb-foot');
+  const main = document.querySelector('main');
+  if (!dock || !sidebarFooter || !main) return;
+  if (window.matchMedia('(max-width: 820px)').matches) {
+    const actionsMenu = document.getElementById('actionsMenu');
+    if (dock.parentElement !== sidebarFooter || dock.nextElementSibling !== actionsMenu) {
+      sidebarFooter.insertBefore(dock, actionsMenu || null);
+    }
+    syncSignatureInputWidth();
+    return;
+  }
+  if (dock.parentElement !== main) main.appendChild(dock);
+  syncSignatureInputWidth();
+}
+
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   deferredInstallPrompt = event;
@@ -2562,6 +2700,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTheme(getTheme());
   updateSortLabelsForViewport();
   window.addEventListener('resize', updateSortLabelsForViewport, { passive: true });
+  window.addEventListener('resize', syncSignatureDockPlacement, { passive: true });
   const installButton = document.getElementById('installAppBtn');
   if (installButton) {
     installButton.hidden = false;
@@ -2571,6 +2710,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
   const select = document.getElementById('themeSelect');
   if (select) select.addEventListener('change', (event) => selectTheme(event.target.value));
+  document.getElementById('userNameInput')?.addEventListener('input', syncSignatureInputWidth);
   const actionsMenu = document.getElementById('actionsMenu');
   if (actionsMenu) {
     actionsMenu.addEventListener('toggle', syncActionsMenuIndicator);
@@ -2589,6 +2729,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   initSidebarResize();
+  syncSignatureDockPlacement();
   loadData();
 });
 
