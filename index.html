@@ -131,14 +131,16 @@
                 <p>Nenhum script encontrado.</p>
             </div>
             <section class="signature-dock" id="signatureDock" aria-label="Sua assinatura">
-                <label for="userNameInput">👤 Sua assinatura</label>
+                <label for="userNameInput">Atenciosamente,</label>
                 <input type="text" id="userNameInput" placeholder="Seu nome" onblur="updateSignature()">
             </section>
         </main>
+        <button class="mobile-persistent-nav-toggle" id="mobilePersistentNavToggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu">☰</button>
     </div>
+    <button type="button" id="helpInfoBtn" class="scriptz-help-button" aria-label="Informações, ajuda e feedback" aria-haspopup="dialog" aria-controls="helpInfoModal" onclick="openHelpInfoModal()">?</button>
 
     <!-- MODAL NOVO SCRIPT -->
-    <div class="overlay" id="overlay" onclick="if(event.target===this) closeModal()">
+    <div class="overlay" id="overlay">
         <div class="modal new-script-modal">
             <h3>➕ Novo script</h3>
             <div class="field">
@@ -146,23 +148,23 @@
                 <input type="text" id="newTitle" placeholder="Ex: Solicitando documentos adicionais">
             </div>
             <div class="field">
-                <label>Vinculação <span class="field-required">obrigatório</span><span class="field-limit">até 2</span></label>
-                <div class="category-select-stack">
+                <label>Vinculação <span class="field-required">obrigatória</span></label>
+                <div class="category-select-stack dynamic-category-select-stack">
                     <input type="hidden" id="newCategoryPrimary">
                     <div id="newCategoryContext" class="new-category-context" aria-live="polite"></div>
-                    <select id="newCategorySecondary" aria-label="Categoria ou subcategoria secundária" onchange="onNewCategorySelectChange(1)"></select>
+                    <div id="newCategorySelects" class="category-select-list" aria-label="Categorias ou subcategorias adicionais"></div>
                 </div>
             </div>
             <div class="field">
                 <label for="newGreeting">🕐 Saudação</label>
                 <select id="newGreeting" class="greeting-select" onchange="syncGreetingSelectState(this)">
-                    <option value="off">Desabilitar</option>
+                    <option value="off">Nenhuma</option>
                     <option value="auto">Saudação automática</option>
                     <option value="formal">Prezado(a),</option>
                 </select>
             </div>
             <div class="field checkbox-field">
-                <input type="checkbox" id="newSignature" checked>
+                <input type="checkbox" id="newSignature">
                 <label for="newSignature">✍️ Incluir assinatura</label>
             </div>
             <div class="field">
@@ -219,7 +221,7 @@
                 <button onclick="loadStandardBaseIntoFree('DEPROT')">CAP · DEPROT</button>
                 <button onclick="loadStandardBaseIntoFree('DPCI')">CAP · DPCI</button>
                 <button onclick="loadStandardBaseIntoFree('DPD')">CAP · DPD</button>
-                <button onclick="loadStandardBaseIntoFree('CAP-G')">CAP · CAP-G</button>
+                <button onclick="loadStandardBaseIntoFree('CAP-G')">CAP · G</button>
                 <button onclick="loadStandardBaseIntoFree('Núcleo')">CAP · Núcleo</button>
                 <button onclick="loadStandardBaseIntoFree('Sala Arthur Saboya')">CAP · Sala Arthur Saboya</button>
             </div>
@@ -242,6 +244,19 @@
             </div>
             <div class="modal-btns"><button class="btn-sec" onclick="closeTemplateExportModal()">Cancelar</button></div>
         </div>
+    </div>
+
+    <!-- MODAL: INFORMAÇÕES, AJUDA E FEEDBACK -->
+    <div class="overlay" id="helpInfoModal" onclick="if(event.target===this) closeHelpInfoModal()">
+        <section class="modal help-info-modal" role="dialog" aria-modal="true" aria-labelledby="helpInfoTitle">
+            <button type="button" class="help-info-close" aria-label="Fechar informações" onclick="closeHelpInfoModal()">✕</button>
+            <p class="help-info-kicker">INFORMAÇÕES, AJUDA E FEEDBACK</p>
+            <h3 id="helpInfoTitle" class="help-brand-line"><span class="help-brand-envelope" aria-hidden="true"></span><span>scriptz</span></h3>
+            <p class="help-author-line">O Scriptz foi projetado e desenvolvido por <strong>Anderson Andrade</strong>.</p>
+            <p>Para informações, ajuda ou feedback, entre em contato pelo e-mail <a href="mailto:afandrade@prefeitura.sp.gov.br">afandrade@prefeitura.sp.gov.br</a>.</p>
+            <div class="help-license-note"><strong>Licença de uso:</strong> uso interno em SMUL/CAP.</div>
+            <div class="modal-btns"><button type="button" class="btn-sec" onclick="closeHelpInfoModal()">Fechar</button></div>
+        </section>
     </div>
 
     <!-- PRIMEIRO ACESSO -->

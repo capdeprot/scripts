@@ -32,7 +32,6 @@ let newScriptModalTrigger = null;
 const librarySectionOpen = { standard: true, personal: true };
 
 const SCRIPT_LIMITS = Object.freeze({ standard: 300, free: 500 });
-const MAX_SCRIPT_CATEGORIES = 2;
 const CATEGORY_ACTION_VALUES = new Set(['__new__', '__new_sub__']);
 const STANDARD_DIVISIONS = Object.freeze({
   DEPROT: 'templates/DEPROT.JSON',
@@ -42,6 +41,7 @@ const STANDARD_DIVISIONS = Object.freeze({
   'Núcleo': 'templates/SMUL-CAP.JSON',
   'Sala Arthur Saboya': 'templates/SALA-ARTHUR-SABOYA.JSON'
 });
+const DEPROT_ROOT_CATEGORY_ORDER = Object.freeze(['E-mail', 'Mensagens externas AD', 'Guias AD', 'Cotas do SEI']);
 const LEGACY_DIVISIONS = Object.freeze({ 'Coord.': 'Núcleo' });
 
 // ============================================================
@@ -155,9 +155,9 @@ function greetingHTML(mode) {
 }
 
 function greetingSelectOptions(selectedMode) {
-  const mode = Object.values(GREETING_MODES).includes(selectedMode) ? selectedMode : GREETING_MODES.auto;
+  const mode = Object.values(GREETING_MODES).includes(selectedMode) ? selectedMode : GREETING_MODES.off;
   return `
-    <option value="${GREETING_MODES.off}" ${mode === GREETING_MODES.off ? 'selected' : ''}>Desabilitar</option>
+    <option value="${GREETING_MODES.off}" ${mode === GREETING_MODES.off ? 'selected' : ''}>Nenhuma</option>
     <option value="${GREETING_MODES.auto}" ${mode === GREETING_MODES.auto ? 'selected' : ''}>${escapeHtml(greetingText(GREETING_MODES.auto))}</option>
     <option value="${GREETING_MODES.formal}" ${mode === GREETING_MODES.formal ? 'selected' : ''}>Prezado(a),</option>`;
 }
@@ -186,11 +186,11 @@ function syncSignatureInputWidth() {
   const context = canvas.getContext('2d');
   if (!context) return;
   context.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
-  const content = input.value || 'Scriptz';
+  const content = input.value || 'Seu nome';
   const tracking = Number.parseFloat(styles.letterSpacing) || 0;
   const contentWidth = context.measureText(content).width + Math.max(0, content.length - 1) * tracking;
   const padding = Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight) + 2;
-  const minimum = context.measureText('Scriptz').width + 6 * tracking + padding;
+  const minimum = context.measureText('Seu nome').width + 7 * tracking + padding;
   const desktopReserve = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--signature-reserve'));
   const maximum = Math.min(400, Number.isFinite(desktopReserve) ? desktopReserve - 30 : window.innerWidth - 64);
   input.style.width = `${Math.ceil(Math.min(maximum, Math.max(minimum, contentWidth + padding)))}px`;
@@ -336,6 +336,13 @@ function getLibraryCategoryOrder(library = activeLibraryKey()) {
   return isStandardMode() && library === 'standard' ? standardCategoryOrder : customCategoryOrder;
 }
 
+function prioritizedStandardCategoryOrder(categories = [], parents = {}, division = workspace.division) {
+  const known = [...new Set([...categories, ...Object.keys(parents)])];
+  if (division !== 'DEPROT') return known;
+  const priority = DEPROT_ROOT_CATEGORY_ORDER.filter(category => known.includes(category));
+  return [...priority, ...known.filter(category => !priority.includes(category))];
+}
+
 function getLibraryScriptOrders(library = activeLibraryKey()) {
   return isStandardMode() && library === 'standard' ? standardScriptOrderByCategory : customScriptOrderByCategory;
 }
@@ -357,7 +364,7 @@ function currentScriptLimit() {
 function normalizedCategoryList(categories, fallback = 'Geral') {
   const source = Array.isArray(categories) ? categories : [categories];
   const unique = [...new Set(source.map(category => String(category || '').trim()).filter(Boolean))];
-  return unique.slice(0, MAX_SCRIPT_CATEGORIES).length ? unique.slice(0, MAX_SCRIPT_CATEGORIES) : [fallback];
+  return unique.length ? unique : [fallback];
 }
 
 function getScriptCategories(script) {
@@ -611,7 +618,10 @@ async function loadWorkspace(showFeedback = true) {
       normalizeWorkspaceState(saved);
       scripts = [...standardScripts, ...scripts.filter(script => !script.isStandard)];
       reconcileCategoryHierarchy();
-      standardCategoryOrder = [...new Set([...standardCategoryOrder, ...standardCategories, ...Object.keys(standardCategoryParents)])];
+      const templateCategoryOrder = prioritizedStandardCategoryOrder(standardCategories, standardCategoryParents, workspace.division);
+      standardCategoryOrder = workspace.division === 'DEPROT'
+        ? templateCategoryOrder
+        : [...new Set([...standardCategoryOrder, ...templateCategoryOrder])];
       originalScripts = JSON.parse(JSON.stringify(standardScripts));
     } else {
       const saved = local ? JSON.parse(local) : null;
@@ -1115,7 +1125,7 @@ function toggleMobileSearch() {
 }
 
 // ============================================================
-//  CATEGORIAS DA CRIAÇÃO (ATÉ DUAS)
+//  CATEGORIAS DA CRIAÇÃO (SOMENTE VÍNCULOS EXISTENTES)
 // ============================================================
 function getContextualPrimaryCategory() {
   if (activeCat === 'all' || activeCat === 'favorites' || isStandardLibrary()) return '';
@@ -1150,13 +1160,13 @@ function createCategoryFromPrompt() {
 function getNewScriptCategories() {
   return selectedCategoryList([
     document.getElementById('newCategoryPrimary')?.value,
-    document.getElementById('newCategorySecondary')?.value
+    ...[...document.querySelectorAll('#newCategorySelects select[data-category-select]')].map(select => select.value)
   ]);
 }
 
 function selectedCategoryList(categories) {
   const source = Array.isArray(categories) ? categories : [categories];
-  return [...new Set(source.map(normalizeCategoryName).filter(category => category && !isCategoryAction(category)))].slice(0, MAX_SCRIPT_CATEGORIES);
+  return [...new Set(source.map(normalizeCategoryName).filter(category => category && !isCategoryAction(category)))];
 }
 
 function hasValidScriptClassification(categories) {
@@ -1172,26 +1182,37 @@ function populateNewCategorySelects(categories = []) {
   const selected = selectedCategoryList(categories);
   const primary = document.getElementById('newCategoryPrimary');
   const context = document.getElementById('newCategoryContext');
-  const secondary = document.getElementById('newCategorySecondary');
-  if (!primary || !secondary || !context) return;
+  const selectList = document.getElementById('newCategorySelects');
+  if (!primary || !selectList || !context) return;
   const primaryCategory = getContextualPrimaryCategory() || selected[0] || '';
-  const secondaryCategory = selected[1] || '';
   primary.value = primaryCategory;
   context.textContent = primaryCategory ? `Será vinculado a: ${getCategoryPath(primaryCategory)}` : 'Abra uma categoria ou subcategoria para criar um script.';
-  secondary.innerHTML = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda classificação', exclude: [primaryCategory], includeCreateAction: false });
-  primary.value = primaryCategory;
-  secondary.value = secondaryCategory;
+  renderNewCategorySelects([primaryCategory, ...selected.filter(category => category !== primaryCategory)]);
 }
 
-function onNewCategorySelectChange(slot) {
+function renderNewCategorySelects(categories = []) {
   const primary = document.getElementById('newCategoryPrimary');
-  const secondary = document.getElementById('newCategorySecondary');
-  if (!primary || !secondary) return;
-  if (slot !== 1) return;
-  if (primary.value && primary.value === secondary.value) {
-    secondary.value = '';
-    showToast('⚠️', 'Escolha uma classificação secundária diferente.');
-  }
+  const selectList = document.getElementById('newCategorySelects');
+  if (!primary || !selectList) return;
+  const primaryCategory = primary.value;
+  const selected = selectedCategoryList(categories).filter(category => category !== primaryCategory);
+  const used = [primaryCategory];
+  const values = [...selected, ''];
+  selectList.innerHTML = values.map((category, index) => {
+    const options = getCategoryOptions(category, {
+      placeholder: 'Adicionar categoria ou subcategoria',
+      exclude: used,
+      includeCreateAction: false
+    });
+    if (category) used.push(category);
+    return `<select class="category-select" id="newCategoryAdditional${index}" data-category-select aria-label="Categoria ou subcategoria adicional ${index + 1}" onchange="onNewCategorySelectChange(${index})">${options}</select>`;
+  }).join('');
+}
+
+function onNewCategorySelectChange(index) {
+  const select = document.getElementById(`newCategoryAdditional${index}`);
+  if (!select) return;
+  renderNewCategorySelects(getNewScriptCategories());
 }
 
 // ============================================================
@@ -1913,10 +1934,6 @@ function scriptEditorHTML(s) {
   const greetingOptions = greetingSelectOptions(greetingMode);
   const hasSignatureFeature = hasSignature(s);
   const categories = getScriptCategories(s);
-  const primaryCategory = categories[0] || 'Geral';
-  const secondaryCategory = categories[1] || '';
-  const primaryOptions = getCategoryOptions(primaryCategory, { placeholder: 'Selecione uma categoria' });
-  const secondaryOptions = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
   const locked = isStandardScript(s);
   const lockAttrs = locked ? 'disabled aria-disabled="true" title="Script padrão protegido"' : '';
   const plainText = s.html.replace(/<[^>]*>/g, '');
@@ -1924,8 +1941,7 @@ function scriptEditorHTML(s) {
     <div class="editor-meta">
       <input class="title-field" id="tt${s.id}" placeholder="Título do script" value="${escapeHtml(s.title)}" ${lockAttrs}>
       <div class="category-select-stack editor-category-stack">
-        <select class="category-select" id="catPrimary${s.id}" onchange="onEditCategoryChange(${s.id}, 0)" ${lockAttrs}>${primaryOptions}</select>
-        <select class="category-select" id="catSecondary${s.id}" onchange="onEditCategoryChange(${s.id}, 1)" ${lockAttrs}>${secondaryOptions}</select>
+        <div class="category-select-list" id="catSelectList${s.id}">${editCategorySelectMarkup(s.id, categories, locked)}</div>
       </div>
       <div class="editor-checkboxes">
         <label class="editor-greeting-label">🕐 Saudação
@@ -2038,26 +2054,33 @@ function initScriptDragDrop() {
 }
 
 // ============================================================
-//  CATEGORIAS NA EDIÇÃO (ATÉ DUAS)
+//  CATEGORIAS NA EDIÇÃO (VINCULAÇÕES ILIMITADAS)
 // ============================================================
 function getEditCategories(id) {
-  return selectedCategoryList([
-    document.getElementById('catPrimary' + id)?.value,
-    document.getElementById('catSecondary' + id)?.value
-  ]);
+  return selectedCategoryList([...document.querySelectorAll(`#catSelectList${id} select[data-category-select]`)].map(select => select.value));
+}
+
+function editCategorySelectMarkup(id, categories = [], locked = false) {
+  const selected = selectedCategoryList(categories);
+  const used = [];
+  const values = locked ? selected : [...selected, ''];
+  return values.map((category, index) => {
+    const options = getCategoryOptions(category, {
+      placeholder: 'Adicionar categoria ou subcategoria',
+      exclude: used,
+      includeCreateAction: false
+    });
+    if (category) used.push(category);
+    const lockAttrs = locked ? 'disabled aria-disabled="true" title="Script padrão protegido"' : '';
+    return `<select class="category-select" id="catCategory${id}_${index}" data-category-select aria-label="Categoria ou subcategoria ${index + 1}" onchange="onEditCategoryChange(${id}, ${index})" ${lockAttrs}>${options}</select>`;
+  }).join('');
 }
 
 function populateEditCategorySelects(id, categories = []) {
-  const primary = document.getElementById('catPrimary' + id);
-  const secondary = document.getElementById('catSecondary' + id);
-  if (!primary || !secondary) return;
-  const selected = selectedCategoryList(categories);
-  const primaryCategory = selected[0] || '';
-  const secondaryCategory = selected[1] || '';
-  primary.innerHTML = getCategoryOptions(primaryCategory);
-  secondary.innerHTML = getCategoryOptions(secondaryCategory, { placeholder: 'Sem segunda categoria', exclude: [primaryCategory] });
-  primary.value = primaryCategory;
-  secondary.value = secondaryCategory;
+  const container = document.getElementById(`catSelectList${id}`);
+  const script = scripts.find(item => item.id === id);
+  if (!container || !script) return;
+  container.innerHTML = editCategorySelectMarkup(id, categories, isStandardScript(script));
 }
 
 function onEditCategoryChange(id, slot) {
@@ -2066,24 +2089,9 @@ function onEditCategoryChange(id, slot) {
     showToast('🔒', 'A categoria de um Script Padrão não pode ser alterada.');
     return;
   }
-  const primary = document.getElementById('catPrimary' + id);
-  const secondary = document.getElementById('catSecondary' + id);
-  if (!primary || !secondary) return;
-  const changed = slot === 0 ? primary : secondary;
-  if (changed.value === '__new__') {
-    const newCategory = createCategoryFromPrompt();
-    changed.value = newCategory || '';
-    if (newCategory) showToast('✨', 'Nova categoria criada!');
-  } else if (changed.value === '__new_sub__') {
-    const newCategory = createSubcategoryFromPrompt();
-    changed.value = newCategory || '';
-    if (newCategory) showToast('✨', 'Nova subcategoria criada!');
-  }
-  if (primary.value && primary.value === secondary.value) {
-    secondary.value = '';
-    showToast('⚠️', 'Escolha uma segunda categoria diferente.');
-  }
-  populateEditCategorySelects(id, [primary.value, secondary.value].filter(Boolean));
+  const changed = document.getElementById(`catCategory${id}_${slot}`);
+  if (!changed) return;
+  populateEditCategorySelects(id, getEditCategories(id));
 }
 
 // ============================================================
@@ -2262,10 +2270,10 @@ function openModal(preselectedCategory = '') {
     document.getElementById('newLinkUrl').value = '';
     newScriptLinkRange = null;
     const greetingSelect = document.getElementById('newGreeting');
-    greetingSelect.innerHTML = greetingSelectOptions(GREETING_MODES.auto);
-    greetingSelect.value = GREETING_MODES.auto;
+    greetingSelect.innerHTML = greetingSelectOptions(GREETING_MODES.off);
+    greetingSelect.value = GREETING_MODES.off;
     syncGreetingSelectState(greetingSelect);
-    document.getElementById('newSignature').checked = true;
+    document.getElementById('newSignature').checked = false;
     document.getElementById('overlay').classList.add('show');
     
     setTimeout(() => {
@@ -2452,6 +2460,18 @@ function closeTemplateExportModal() {
   document.getElementById('templateExportModal')?.classList.remove('show');
 }
 
+function openHelpInfoModal() {
+  const modal = document.getElementById('helpInfoModal');
+  if (!modal) return;
+  modal.classList.add('show');
+  modal.querySelector('.help-info-close')?.focus();
+}
+
+function closeHelpInfoModal() {
+  document.getElementById('helpInfoModal')?.classList.remove('show');
+  document.getElementById('helpInfoBtn')?.focus({ preventScroll: true });
+}
+
 function exportStandardTemplate(division) {
   try {
     const payload = buildStandardTemplatePayload(division);
@@ -2620,20 +2640,18 @@ function showToast(icon, msg) {
 // ============================================================
 function closeMobileNav() {
   document.body.classList.remove('mobile-nav-open');
-  const toggle = document.getElementById('mobileNavToggle');
-  if (toggle) {
+  document.querySelectorAll('#mobileNavToggle, #mobilePersistentNavToggle').forEach(toggle => {
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', 'Abrir menu');
-  }
+  });
 }
 
 function openMobileNav() {
   document.body.classList.add('mobile-nav-open');
-  const toggle = document.getElementById('mobileNavToggle');
-  if (toggle) {
+  document.querySelectorAll('#mobileNavToggle, #mobilePersistentNavToggle').forEach(toggle => {
     toggle.setAttribute('aria-expanded', 'true');
     toggle.setAttribute('aria-label', 'Fechar menu');
-  }
+  });
   document.getElementById('mobileNavClose')?.focus();
 }
 
@@ -2718,6 +2736,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   const mobileToggle = document.getElementById('mobileNavToggle');
   if (mobileToggle) mobileToggle.addEventListener('click', () => document.body.classList.contains('mobile-nav-open') ? closeMobileNav() : openMobileNav());
+  const mobilePersistentToggle = document.getElementById('mobilePersistentNavToggle');
+  if (mobilePersistentToggle) mobilePersistentToggle.addEventListener('click', () => document.body.classList.contains('mobile-nav-open') ? closeMobileNav() : openMobileNav());
   const mobileSearchToggle = document.getElementById('mobileSearchToggle');
   if (mobileSearchToggle) mobileSearchToggle.addEventListener('click', toggleMobileSearch);
   document.getElementById('mobileNavClose')?.addEventListener('click', closeMobileNav);
@@ -2726,15 +2746,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.key === 'Escape') {
       if (document.body.classList.contains('mobile-nav-open')) closeMobileNav();
       if (document.getElementById('mobileSearchBar')?.classList.contains('visible')) toggleMobileSearch();
+      if (document.getElementById('helpInfoModal')?.classList.contains('show')) closeHelpInfoModal();
     }
   });
   initSidebarResize();
   syncSignatureDockPlacement();
   loadData();
-});
-
-document.getElementById('overlay').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('overlay')) closeModal();
 });
 
 document.getElementById('categoryModal').addEventListener('click', (e) => {

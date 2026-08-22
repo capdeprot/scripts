@@ -13,12 +13,28 @@ if (!Array.isArray(template.scripts) || !template.scripts.length) errors.push('S
 const categorySet = new Set(template.categories || []);
 const parents = template.categoryParents || {};
 const expectedParents = {
-  'Mensagens externas': 'Aprova Digital',
-  'Guias AD': 'Aprova Digital',
-  'Alvará de Reforma': 'Cotas do SEI',
+  'Instruções de escrita no campo “Observações” das guias do AD': 'Guias AD',
+  'Alvará de Edificação Nova': 'Guias AD',
+  'Alvará de Reforma': 'Guias AD',
+  'Projeto Modificativo de Edificação Nova': 'Guias AD',
+  'Projeto Modificativo de Reforma': 'Guias AD',
+  'Alvará de Desmembramento': 'Guias AD',
+  'Alvará de Autorização para Avanço de Grua': 'Guias AD',
+  'Alvará de Autorização para Estande de Vendas': 'Guias AD',
+  'Alvará de Funcionamento para Local de Reunião': 'Guias AD',
+  'Certificado de Segurança': 'Guias AD',
+  'Certificado de Acessibilidade': 'Guias AD',
+  'Cadastro de Sistema Especial de Segurança': 'Guias AD',
+  'Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro': 'Guias AD',
   'Projeto Modificativo': 'Cotas do SEI',
   'Restituição de Guia': 'Cotas do SEI'
 };
+['Mensagens externas AD', 'Guias AD', 'Cotas do SEI'].forEach(category => {
+  if (!categorySet.has(category)) errors.push(`Categoria principal obrigatória ausente: ${category}.`);
+});
+if (parents['Mensagens externas AD']) errors.push('Mensagens externas AD deve ser categoria principal.');
+if (parents['Guias AD']) errors.push('Guias AD deve ser categoria principal.');
+if (categorySet.has('Aprova Digital') || categorySet.has('Mensagens externas')) errors.push('A antiga árvore de Aprova Digital não deve permanecer no template.');
 Object.entries(expectedParents).forEach(([child, parent]) => {
   if (parents[child] !== parent) errors.push(`Hierarquia inválida: ${child} deve pertencer a ${parent}.`);
   if (!categorySet.has(child) || !categorySet.has(parent)) errors.push(`Categoria obrigatória ausente: ${child} ou ${parent}.`);
@@ -40,13 +56,9 @@ const scriptsById = new Map();
   if (/<w:|<o:|\[if gte mso/i.test(script.html)) errors.push(`Marcação de editor não removida no script ${index + 1}.`);
 });
 
-const guideIds = [18, 19, 29];
-const messageIds = [11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 24, 25];
-guideIds.forEach(id => {
-  if (scriptsById.get(id)?.cat !== 'Guias AD') errors.push(`Script ${id} deveria estar em Guias AD.`);
-});
+const messageIds = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29];
 messageIds.forEach(id => {
-  if (scriptsById.get(id)?.cat !== 'Mensagens externas') errors.push(`Script ${id} deveria estar em Mensagens externas.`);
+  if (scriptsById.get(id)?.cat !== 'Mensagens externas AD') errors.push(`Script ${id} deveria estar em Mensagens externas AD.`);
 });
 
 if (errors.length) throw new Error(errors.join(' '));
@@ -58,6 +70,6 @@ console.log(JSON.stringify({
   categoryParents: parents,
   scripts: template.scripts.length,
   uniqueIds: ids.size === template.scripts.length,
-  aprovaDigital: { mensagensExternas: messageIds.length, guiasAD: guideIds.length },
-  cotasDoSei: ['Alvará de Reforma', 'Projeto Modificativo', 'Restituição de Guia']
+  aprovaDigital: { mensagensExternasAD: messageIds.length, guiasADSubcategories: Object.keys(expectedParents).filter(category => parents[category] === 'Guias AD').length },
+  cotasDoSei: ['Projeto Modificativo', 'Restituição de Guia']
 }, null, 2));

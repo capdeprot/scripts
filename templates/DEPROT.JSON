@@ -9,11 +9,22 @@
     "Alvará de Autorização Para Evento Temporário",
     "Encaminhamento",
     "Andamento de Processo",
-    "Aprova Digital",
-    "Mensagens externas",
+    "Mensagens externas AD",
     "Guias AD",
-    "Cotas do SEI",
+    "Instruções de escrita no campo “Observações” das guias do AD",
+    "Alvará de Edificação Nova",
     "Alvará de Reforma",
+    "Projeto Modificativo de Edificação Nova",
+    "Projeto Modificativo de Reforma",
+    "Alvará de Desmembramento",
+    "Alvará de Autorização para Avanço de Grua",
+    "Alvará de Autorização para Estande de Vendas",
+    "Alvará de Funcionamento para Local de Reunião",
+    "Certificado de Segurança",
+    "Certificado de Acessibilidade",
+    "Cadastro de Sistema Especial de Segurança",
+    "Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro",
+    "Cotas do SEI",
     "Projeto Modificativo",
     "Restituição de Guia",
     "Solicitando documentos e/ou ajustes"
@@ -24,9 +35,19 @@
     "Andamento de Processo": "E-mail",
     "Envio de Protocolo": "E-mail",
     "Emissão de guia": "E-mail",
-    "Mensagens externas": "Aprova Digital",
-    "Guias AD": "Aprova Digital",
-    "Alvará de Reforma": "Cotas do SEI",
+    "Instruções de escrita no campo “Observações” das guias do AD": "Guias AD",
+    "Alvará de Edificação Nova": "Guias AD",
+    "Alvará de Reforma": "Guias AD",
+    "Projeto Modificativo de Edificação Nova": "Guias AD",
+    "Projeto Modificativo de Reforma": "Guias AD",
+    "Alvará de Desmembramento": "Guias AD",
+    "Alvará de Autorização para Avanço de Grua": "Guias AD",
+    "Alvará de Autorização para Estande de Vendas": "Guias AD",
+    "Alvará de Funcionamento para Local de Reunião": "Guias AD",
+    "Certificado de Segurança": "Guias AD",
+    "Certificado de Acessibilidade": "Guias AD",
+    "Cadastro de Sistema Especial de Segurança": "Guias AD",
+    "Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro": "Guias AD",
     "Projeto Modificativo": "Cotas do SEI",
     "Restituição de Guia": "Cotas do SEI",
     "Solicitando documentos e/ou ajustes": "E-mail"
@@ -165,9 +186,9 @@
     },
     {
       "id": 11,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Declaração de Isenção de Taxas",
       "html": "<p>Para obter o parecer do benefício de isenção, após finalizar\na solicitação deste protocolo, a pessoa interessada deverá protocolar o pedido\nde 'Isenção de Taxas':</p>\n\n<p>1 - Acesse a aba Criar;</p>\n\n<p>2 - Escolha a opção 'Isenção de Taxas';</p>\n\n<p>3 - Preencha o formulário com todas as informações\nsolicitadas e finalize a solicitação;</p>\n\n<p>4 - Seu pedido de isenção será analisado e será emitido o\nDespacho de Indeferido ou Deferido. No caso de deferido, será disponibilizado\num documento de Parecer de Isenção de Taxas;</p>\n\n<p>5 - Após emitido o Despacho, acesse a sua caixa de entrada\n('Minha Caixa'), abra o protocolo de origem e edite o CARD (Declaração de\nIsenção de Taxas). Anexe o Parecer de Isenção de Taxas no campo 'Documento de\ncomprovação da Isenção' e informe o número do seu processo de Isenção de Taxas\nno campo 'Número do Processo de Isenção de Taxas';</p>\n\n<p>6 - No caso do Indeferimento, edite o CARD (Declaração de\nIsenção de Taxas) e apenas preencha o campo 'Número de Protocolo de Isenção de\nTaxas'. O seu processo seguirá o procedimento normal de uma solicitação sem a\nisenção. Caso não queira prosseguir dessa maneira, poderá desistir de sua\nsolicitação selecionando no cabeçalho a opção 'Desistir da Solicitação';</p>\n\n<p>7 - Por fim, selecione no cabeçalho do processo a opção\n'Enviar para Análise'.</p>",
@@ -178,9 +199,9 @@
     },
     {
       "id": 12,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Diferença de metragem entre o projeto e o CARD de áreas",
       "html": "<p>Verificamos que a área <i>[[especificar o tipo de área e\nquantidade]]</i> apontada no projeto em CARD <i>[[colocar o número e nome do CARD]]</i> está\ndivergente da área lançada de <i>[[informar a área]]</i> no CARD <i>[[colocar o número e\nnome do CARD]]</i>. </p>\n\n<p>Assim, pedimos que revise as áreas informadas e devolva o\nprotocolo após a correção.</p>",
@@ -191,9 +212,9 @@
     },
     {
       "id": 13,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Projeto com assunto diferente do pedido",
       "html": "<p>Verificamos que o projeto em CARD <i>[[colocar o número e nome\ndo CARD]]</i> está com o assunto divergente do solicitado no protocolo. </p>\n\n<p>Assim, pedimos que revise o assunto do projeto e devolva o\nprotocolo após a correção.</p>",
@@ -204,9 +225,9 @@
     },
     {
       "id": 14,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Projeto com Lei errada",
       "html": "<p>Verificamos que o projeto em CARD <i>[[colocar o número e nome\ndo CARD]]</i> está informando no assunto uma Legislação que não condiz com o pedido.\n</p>\n\n<p>Assim, pedimos que revise a Legislação informada e devolva o\nprotocolo após a correção.</p>",
@@ -217,9 +238,9 @@
     },
     {
       "id": 15,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Protocolo HIS com categoria de uso informada que não é HIS ou vice-versa",
       "html": "<p>Verificamos que o protocolo foi aberto com o assunto <i>[[nome\ndo assunto do protocolo]]</i>, porém, no CARD\n<i>[[colocar o número e nome do CARD - se houver mais de um CARD, exemplo: Uso e\náreas e projeto, especificar todos]]</i>, a categoria de uso informada é <i>[[informar a\ncategoria de uso]]</i>. </p>\n\n<p>Assim, pedimos que revise as categorias de uso informadas e\ndevolva o protocolo após a correção.</p>",
@@ -230,9 +251,9 @@
     },
     {
       "id": 16,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Aprovação somente com categoria de uso R1",
       "html": "<p>Verificamos que consta no CARD <i>[[colocar o número e nome do\nCARD - se houver mais de um CARD, exemplo: Uso e áreas e projeto, especificar\ntodos]]</i> a informação de que o pedido é referente à categoria de uso R1. Para essa\ncategoria de uso, a solicitação deverá ser realizada por meio do link <a href=\"http://slce.prefeitura.sp.gov.br\" target=\"_blank\" rel=\"noopener noreferrer\">http://slce.prefeitura.sp.gov.br</a>.</p>",
@@ -243,9 +264,9 @@
     },
     {
       "id": 17,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Devolução do protocolo a pedido",
       "html": "<p>Encaminhamos o protocolo para as alterações pertinentes,\nconforme contato <i>[[especificar o contato: telefônico, e-mail ou presencial]]</i>.\nApós realizar as alterações, salve a edição e devolvas o protocolo para\nprosseguimento.</p>",
@@ -256,9 +277,9 @@
     },
     {
       "id": 18,
-      "cat": "Guias AD",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Guias AD"
+        "Mensagens externas AD"
       ],
       "title": "Solicitação de reemissão de taxa não paga",
       "html": "<p>Guia emitida com nova data de vencimento, conforme\nsolicitado. Caso não seja possível efetuar o pagamento, pedimos que desista\ndeste protocolo e inicie um novo.</p>",
@@ -269,9 +290,9 @@
     },
     {
       "id": 19,
-      "cat": "Guias AD",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Guias AD"
+        "Mensagens externas AD"
       ],
       "title": "Solicitação de reemissão de taxa não paga (Colocar a mensagem na caixa interna) – Equipe do e-mail",
       "html": "<p>Segue protocolo para\nreemissão da guia, conforme solicitado via e-mail em <i>[[dia/mês/ano]]</i> às <i>[[horário]]</i>, por <i>[[endereço de e-mail do remetente]]</i>.</p><p>É importante que se atente à data de vencimento.</p>\n\n<p><i>[[Colar o título do e-mail da pessoa interessada aqui]]</i></p>",
@@ -282,9 +303,9 @@
     },
     {
       "id": 20,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "LTS fora do padrão",
       "html": "<p>Verificamos que o Laudo Técnico de Segurança no CARD <i>[[colocar o número e nome do CARD]]</i> está em desacordo com o padrão especificado\nna Portaria 148/2019/SEL.G. </p>\n\n<p>Pedimos que preencha, assine e anexe o modelo disponível no\nlink:\n<a href=\"https://drive.prefeitura.sp.gov.br/cidade/secretarias/upload/Formulario%20LTS%20editavel(1).pdf\" target=\"_blank\" rel=\"noopener noreferrer\">https://drive.prefeitura.sp.gov.br/cidade/secretarias/upload/Formulario%20LTS%20editavel(1).pdf </a></p>\n\n<p>Após realizar a alteração, devolva o protocolo para\nprosseguimento.</p>",
@@ -295,9 +316,9 @@
     },
     {
       "id": 21,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Projeto com a folha de rosto fora do padrão (Assuntos COE)",
       "html": "<p>Verificamos que a folha de rosto do projeto em CARD <i>[[colocar\no número e nome do CARD]]</i> está em desacordo com as especificações da Lei\n16.642/17 – Código de Obras e Edificações (COE). </p>\n\n<p>Acesse o link para consultar o modelo, disponível na página 152:\n<a href=\"https://gestaourbana.prefeitura.sp.gov.br/wp-content/uploads/2018/04/codigo_de_obras_ilustrado.pdf.\" target=\"_blank\" rel=\"noopener noreferrer\">https://gestaourbana.prefeitura.sp.gov.br/wp-content/uploads/2018/04/codigo_de_obras_ilustrado.pdf</a></p>\n\n<p>Solicitamos que realize as correções necessárias e\nque o protocolo seja devolvido para prosseguimento da análise.</p>",
@@ -308,9 +329,9 @@
     },
     {
       "id": 22,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Assunto Desmembramento com Informações no CARD 3 e 4 iguais",
       "html": "<p>Verificamos que, no CARD 3 – Tipo de Pedido, a\npergunta&nbsp;“O parcelamento proposto será em terreno atualmente\nvazio?”&nbsp;apresenta a mesma resposta da pergunta&nbsp;“Há edificação(ões)\nexistente(s) no terreno?”, localizada no CARD 4 – Dados do Terreno. Isso torna\nas informações incoerentes.</p>\n\n<p>Sendo assim, solicitamos que essas informações sejam\nrevistas e que o protocolo seja devolvido para prosseguimento da análise.</p>",
@@ -321,9 +342,9 @@
     },
     {
       "id": 23,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Projeto incompatível (erro ao abrir .dwf)",
       "html": "<p>Verificamos que o\nprojeto anexado no CARD <i>[[inserir número e nome do CARD]]</i> está apresentando falha\nao ser aberto.</p>\n\n<p>Sendo assim,\nsolicitamos que seja anexado um projeto compatível com o Autodesk 2013, que o\narquivo seja salvo e que o protocolo seja reenviado para prosseguimento da\nanálise.</p>",
@@ -334,9 +355,9 @@
     },
     {
       "id": 24,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Certidão de Diretrizes Urbanísticas",
       "html": "<i>[[Conforme acordo com o Yuri – Ex-Diretor, autuar o SEI e encaminhar para PARHIS se apresentar a informação de categoria de uso HIS/HMP em algum CARD ou no projeto]]<br><br></i><p><b>Caixa\nInterna:</b></p>\n\n<div>Sra. Diretora,</div><div>Encaminhamos para análise, sem cobrança efetuada, em face da informação de categoria de uso HIS/HMP.</div><div><br></div><br>",
@@ -347,9 +368,9 @@
     },
     {
       "id": 25,
-      "cat": "Mensagens externas",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Mensagens externas"
+        "Mensagens externas AD"
       ],
       "title": "Cadastro de Tanque de Armazenagem, Bomba, Filtro de Combustível e Equipamentos Afins",
       "html": "Verificamos a existência de divergência entre a quantidade de equipamentos descrita no Memorial (Card 11 – Declarações e Documentos) e a indicada no projeto (Card 15 – Total de Equipamentos a Serem Cadastrados). Por favor, realize o ajuste, salve as alterações e devolva o protocolo, para que possamos dar prosseguimento.",
@@ -400,9 +421,9 @@
     },
     {
       "id": 29,
-      "cat": "Guias AD",
+      "cat": "Mensagens externas AD",
       "cats": [
-        "Guias AD",
+        "Mensagens externas AD",
         "Emissão de guia"
       ],
       "title": "Pedido reemissão de guia no Aprova Digital",

@@ -90,13 +90,27 @@ try {
     const signatureDockInMain = signatureDock?.parentElement === document.querySelector('main');
     const signatureTypography = Boolean(signatureStyle)
       && signatureStyle.fontFamily.includes('Rajdhani')
-      && Number(signatureStyle.fontSize.replace('px', '')) >= 18
+      && Number(signatureStyle.fontSize.replace('px', '')) >= 17
       && signatureStyle.fontWeight === '700'
       && signatureStyle.fontStyle === 'italic'
-      && signatureStyle.textAlign === 'right'
-      && getComputedStyle(signatureInput, '::placeholder').textAlign === 'right'
-      && Number(signatureStyle.minHeight.replace('px', '')) >= 40;
+      && signatureStyle.textAlign === 'left'
+      && getComputedStyle(signatureInput, '::placeholder').textAlign === 'left'
+      && Number(signatureStyle.minHeight.replace('px', '')) >= 34;
     const signaturePlaceholder = signatureInput?.placeholder === 'Seu nome';
+    const signatureLabel = document.querySelector('label[for="userNameInput"]')?.textContent.trim() === 'Atenciosamente,';
+    const helpButton = document.getElementById('helpInfoBtn');
+    const helpButtonVisible = Boolean(helpButton && getComputedStyle(helpButton).display !== 'none');
+    const helpTooltipText = getComputedStyle(helpButton, '::after').content.includes('Informações, ajuda e feedback');
+    helpButton?.click();
+    const helpModalVisible = document.getElementById('helpInfoModal')?.classList.contains('show') === true;
+    const helpModalContent = document.getElementById('helpInfoModal')?.textContent.includes('Anderson Andrade')
+      && document.getElementById('helpInfoModal')?.textContent.includes('afandrade@prefeitura.sp.gov.br')
+      && document.getElementById('helpInfoModal')?.textContent.includes('uso interno em SMUL/CAP');
+    const helpBrandUsesLowercase = document.getElementById('helpInfoTitle')?.textContent.trim() === 'scriptz'
+      && Boolean(document.querySelector('.help-brand-envelope'));
+    const helpAuthorFitsDesktop = getComputedStyle(document.querySelector('.help-author-line')).whiteSpace === 'nowrap';
+    const helpModalBalancedWidth = Number.parseFloat(getComputedStyle(document.querySelector('.help-info-modal')).width) <= 560;
+    closeHelpInfoModal();
     categoryRegistry = ['Atendimento', 'Fiscalização', 'Geral', 'Protocolos', 'Prazos', 'Serviços', 'Solicitações'];
     categoryParents = { Protocolos: 'Atendimento', Prazos: 'Atendimento', Solicitações: 'Serviços' };
     customCategoryOrder = ['Atendimento', 'Fiscalização', 'Geral', 'Serviços', 'Protocolos', 'Prazos', 'Solicitações'];
@@ -139,7 +153,12 @@ try {
     closeCategoryModal();
     setCat('Protocolos');
     openModal();
-    const optionValues = [...document.getElementById('newCategorySecondary').options].map(option => option.value);
+    const optionValues = [...document.querySelectorAll('#newCategorySelects select[data-category-select]')[0].options].map(option => option.value);
+    document.getElementById('overlay').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const modalSurvivesOutsideClick = document.getElementById('overlay').classList.contains('show');
+    const newScriptGreetingStartsOff = document.getElementById('newGreeting').value === GREETING_MODES.off
+      && document.querySelector('#newGreeting option[value="off"]')?.textContent.trim() === 'Nenhuma';
+    const newScriptSignatureStartsOff = !document.getElementById('newSignature').checked;
     const contextualPrimaryHidden = document.getElementById('newCategoryPrimary').type === 'hidden';
     const contextualPrimary = document.getElementById('newCategoryPrimary').value === 'Protocolos';
     const contextualText = document.getElementById('newCategoryContext').textContent.includes('Atendimento › Protocolos');
@@ -161,17 +180,21 @@ try {
     }
     setCat('Protocolos');
     openModal();
-    document.getElementById('newTitle').value = 'Classificação dupla preservada';
-    document.getElementById('newText').innerHTML = '<p>Conteúdo com duas classificações.</p>';
-    document.getElementById('newCategorySecondary').value = 'Fiscalização';
+    document.getElementById('newTitle').value = 'Classificação múltipla preservada';
+    document.getElementById('newText').innerHTML = '<p>Conteúdo com múltiplas classificações.</p>';
+    document.getElementById('newCategoryAdditional0').value = 'Fiscalização';
+    onNewCategorySelectChange(0);
+    document.getElementById('newCategoryAdditional1').value = 'Geral';
     onNewCategorySelectChange(1);
     addScript();
-    const doubleCategoryScript = scripts.find(script => script.title === 'Classificação dupla preservada');
-    startEdit(doubleCategoryScript.id);
-    const editorLoadedOnDemand = Boolean(document.getElementById('ce' + doubleCategoryScript.id));
+    const multiCategoryScript = scripts.find(script => script.title === 'Classificação múltipla preservada');
+    startEdit(multiCategoryScript.id);
+    const editorLoadedOnDemand = Boolean(document.getElementById('ce' + multiCategoryScript.id));
+    const editCategoryOptions = [...document.querySelectorAll('#catSelectList' + multiCategoryScript.id + ' option')].map(option => option.value);
+    const editAllowsOnlyExistingCategories = !editCategoryOptions.includes('__new__') && !editCategoryOptions.includes('__new_sub__');
     const orderingBlockedDuringEdit = document.getElementById('sortSelect').disabled;
-    saveEdit(doubleCategoryScript.id);
-    const doubleCategoryPreserved = doubleCategoryScript.cats.length === 2 && doubleCategoryScript.cats.includes('Protocolos') && doubleCategoryScript.cats.includes('Fiscalização');
+    saveEdit(multiCategoryScript.id);
+    const unlimitedCategoryPreserved = multiCategoryScript.cats.length === 3 && ['Protocolos', 'Fiscalização', 'Geral'].every(category => multiCategoryScript.cats.includes(category));
     const disallowedSubcategory = registerCategory('Vistorias', 'Fiscalização');
     const directScriptBlocksSubcategory = !disallowedSubcategory && !getCategories().includes('Vistorias');
     const parentIsNotAssignable = !getAssignableCategories().includes('Atendimento');
@@ -281,6 +304,14 @@ try {
       signatureDockInMain,
       signatureTypography,
       signaturePlaceholder,
+      signatureLabel,
+      helpButtonVisible,
+      helpTooltipText,
+      helpModalVisible,
+      helpModalContent,
+      helpBrandUsesLowercase,
+      helpAuthorFitsDesktop,
+      helpModalBalancedWidth,
       initialLandingVisible,
       initialListControlsHidden,
       newScriptHiddenOnAll,
@@ -298,13 +329,17 @@ try {
       modalOnlyRoots,
       choiceGridColumns,
       optionHasSubcategory: optionValues.includes('Prazos') && !optionValues.includes('__new__') && !optionValues.includes('__new_sub__'),
+      modalSurvivesOutsideClick,
+      newScriptGreetingStartsOff,
+      newScriptSignatureStartsOff,
       rejectsUnclassifiedImport,
       persistedParents: persisted.categoryParents?.Documentos === 'Atendimento',
       persistedVersion: persisted.version,
       importedParents,
       editorLoadedOnDemand,
+      editAllowsOnlyExistingCategories,
       orderingBlockedDuringEdit,
-      doubleCategoryPreserved,
+      unlimitedCategoryPreserved,
       directScriptBlocksSubcategory,
       parentIsNotAssignable,
       rejectsContextMismatch,
@@ -345,7 +380,8 @@ try {
     const welcomeOrder = [...document.querySelectorAll('#welcomeMenu .welcome-units-grid button')].map(button => button.textContent.trim());
     const selectValues = [...document.querySelectorAll('#workspaceSelect optgroup option')].map(option => option.value);
     const selectLabels = [...document.querySelectorAll('#workspaceSelect optgroup option')].map(option => option.textContent.trim());
-    const baseOrder = [...document.querySelectorAll('#templateBaseModal .template-base-grid button')].map(button => button.textContent.replace('CAP · ', '').trim());
+    const baseLabels = [...document.querySelectorAll('#templateBaseModal .template-base-grid button')].map(button => button.textContent.trim());
+    const baseOrder = baseLabels.map(label => label === 'CAP · G' ? 'CAP-G' : label.replace('CAP · ', '').trim());
     return {
       templateValid: template.division === 'CAP-G' && Array.isArray(template.scripts) && template.scripts.length === 0 && Array.isArray(template.categories) && template.categories.length === 0,
       messageUpdated: document.querySelector('#welcomeMenu h1')?.textContent.trim() === 'Escolha sua unidade para acessar modelos padronizados',
@@ -353,6 +389,7 @@ try {
       selectValues,
       selectLabels,
       baseOrder,
+      baseLabels,
       desktopGridColumns: getComputedStyle(document.querySelector('.welcome-units-grid')).gridTemplateColumns.split(' ').length,
       expectedOrder,
       expectedSelectValues: expectedOrder.map(division => 'standard:' + division),
@@ -362,17 +399,21 @@ try {
   const deprot = await evaluate(`fetchStandardTemplate('DEPROT').then(template => {
     const parents = template.categoryParents || {};
     const scriptsById = new Map(template.scripts.map(script => [script.id, script]));
-    const expectedMessages = [11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 24, 25];
-    const expectedGuides = [18, 19, 29];
+    const expectedMessages = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29];
+    const guideChildren = ['Instruções de escrita no campo “Observações” das guias do AD', 'Alvará de Edificação Nova', 'Alvará de Reforma', 'Projeto Modificativo de Edificação Nova', 'Projeto Modificativo de Reforma', 'Alvará de Desmembramento', 'Alvará de Autorização para Avanço de Grua', 'Alvará de Autorização para Estande de Vendas', 'Alvará de Funcionamento para Local de Reunião', 'Certificado de Segurança', 'Certificado de Acessibilidade', 'Cadastro de Sistema Especial de Segurança', 'Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro'];
     const parentCategories = new Set(Object.values(parents));
+    const sidebarRootOrder = prioritizedStandardCategoryOrder(template.categories, parents, 'DEPROT')
+      .filter(category => !parents[category])
+      .slice(0, 4);
     return {
-      aprovaChildren: parents['Mensagens externas'] === 'Aprova Digital' && parents['Guias AD'] === 'Aprova Digital',
-      cotasChildren: parents['Alvará de Reforma'] === 'Cotas do SEI'
+      aprovaReorganized: !template.categories.includes('Aprova Digital') && !parents['Mensagens externas AD'] && !parents['Guias AD'] && guideChildren.every(category => parents[category] === 'Guias AD'),
+      cotasChildren: parents['Alvará de Reforma'] === 'Guias AD'
         && parents['Projeto Modificativo'] === 'Cotas do SEI'
         && parents['Restituição de Guia'] === 'Cotas do SEI',
       noScriptsAtParents: template.scripts.every(script => !parentCategories.has(script.cat)),
-      messagesClassified: expectedMessages.every(id => scriptsById.get(id)?.cat === 'Mensagens externas'),
-      guidesClassified: expectedGuides.every(id => scriptsById.get(id)?.cat === 'Guias AD')
+      messagesClassified: expectedMessages.every(id => scriptsById.get(id)?.cat === 'Mensagens externas AD'),
+      guidesClassified: template.scripts.every(script => script.cat !== 'Guias AD'),
+      sidebarRootOrder
     };
   })`);
   const resilience = await evaluate(`(async () => {
@@ -526,14 +567,14 @@ try {
     const dock = document.querySelector('.signature-dock');
     const style = dock ? getComputedStyle(dock) : null;
     const input = document.getElementById('userNameInput');
-    input.value = 'Scriptz';
+    input.value = 'Seu nome';
     syncSignatureInputWidth();
     const compactWidth = input.getBoundingClientRect().width;
     input.value = 'Maria de Oliveira Santos';
     syncSignatureInputWidth();
     const expandedWidth = input.getBoundingClientRect().width;
-    const expectedRight = 12;
-    const expectedBottom = Math.min(22, Math.max(12, window.innerHeight * .02));
+    const expectedRight = 18;
+    const expectedBottom = 20;
     const dockBounds = dock?.getBoundingClientRect();
     const mainBounds = document.querySelector('main')?.getBoundingClientRect();
     return {
@@ -587,11 +628,20 @@ try {
   await writeFile('/home/ubuntu/screenshots/scriptz-v53-initial-mobile.png', Buffer.from(initialMobileScreenshot.data, 'base64'));
   const savedMobile = await evaluate(`(() => {
     const aside = document.querySelector('aside');
+    const mobileNavOpenInitially = document.body.classList.contains('mobile-nav-open');
+    const persistentToggle = document.getElementById('mobilePersistentNavToggle');
+    const persistentToggleVisible = Boolean(persistentToggle && getComputedStyle(persistentToggle).display !== 'none');
+    closeMobileNav();
+    persistentToggle?.click();
+    const persistentToggleReopensSidebar = document.body.classList.contains('mobile-nav-open');
+    closeMobileNav();
     return {
-      mobileNavOpen: document.body.classList.contains('mobile-nav-open'),
+      mobileNavOpen: mobileNavOpenInitially,
       navigationVisible: Boolean(aside && aside.getBoundingClientRect().right > 0),
       navigationHasWorkspaceControl: document.getElementById('workspaceSelect') !== null,
-      initialEnvelopeVisible: document.querySelector('.scriptz-initial-landing img') !== null
+      initialEnvelopeVisible: document.querySelector('.scriptz-initial-landing img') !== null,
+      persistentToggleVisible,
+      persistentToggleReopensSidebar
     };
   })()`);
   await writeFile('/home/ubuntu/screenshots/scriptz-v58-saved-context-mobile.json', JSON.stringify(savedMobile, null, 2));
@@ -618,10 +668,15 @@ try {
     const mobileSignatureDock = document.querySelector('.sb-foot > .signature-dock');
     const mobileSignatureStyle = mobileSignatureDock ? getComputedStyle(mobileSignatureDock) : null;
     const mobileSignatureInput = document.getElementById('userNameInput');
+    const mobileSignatureLabel = mobileSignatureDock?.querySelector('label');
     const mobileSignatureUsable = Boolean(mobileSignatureDock && mobileSignatureInput)
       && mobileSignatureStyle?.position !== 'fixed'
       && mobileSignatureDock.getBoundingClientRect().width >= Math.min(300, window.innerWidth - 24)
       && mobileSignatureInput.getBoundingClientRect().width > 0;
+    const mobileSignatureAlignedLeft = mobileSignatureLabel?.textContent.trim() === 'Atenciosamente,'
+      && getComputedStyle(mobileSignatureLabel).textAlign === 'left'
+      && getComputedStyle(mobileSignatureInput).textAlign === 'left'
+      && getComputedStyle(mobileSignatureInput, '::placeholder').textAlign === 'left';
     standardCategories = [];
     standardCategoryParents = {};
     categoryRegistry = ['Atendimento', 'Protocolos', 'Prazos'];
@@ -697,6 +752,7 @@ try {
       mobileActionsMenuOpens,
       mobileSelectsHaveUnifiedIndicator,
       mobileSignatureUsable,
+      mobileSignatureAlignedLeft,
       mobileStandardSections,
       mobilePersonalControls,
       mobileUnitGridColumns
@@ -741,6 +797,14 @@ try {
     && desktop.signatureDockInMain
     && desktop.signatureTypography
     && desktop.signaturePlaceholder
+    && desktop.signatureLabel
+    && desktop.helpButtonVisible
+    && desktop.helpTooltipText
+    && desktop.helpModalVisible
+    && desktop.helpModalContent
+    && desktop.helpBrandUsesLowercase
+    && desktop.helpAuthorFitsDesktop
+    && desktop.helpModalBalancedWidth
     && signatureWide.visible
     && signatureWide.fixed
     && signatureWide.nearViewportRight
@@ -771,8 +835,12 @@ try {
     && desktop.persistedVersion === 5
     && desktop.importedParents
     && desktop.editorLoadedOnDemand
+    && desktop.editAllowsOnlyExistingCategories
     && desktop.orderingBlockedDuringEdit
-    && desktop.doubleCategoryPreserved
+    && desktop.unlimitedCategoryPreserved
+    && desktop.modalSurvivesOutsideClick
+    && desktop.newScriptGreetingStartsOff
+    && desktop.newScriptSignatureStartsOff
     && desktop.directScriptBlocksSubcategory
     && desktop.parentIsNotAssignable
     && desktop.rejectsContextMismatch
@@ -816,6 +884,7 @@ try {
     && mobile.mobileActionsMenuOpens
     && mobile.mobileSelectsHaveUnifiedIndicator
     && mobile.mobileSignatureUsable
+    && mobile.mobileSignatureAlignedLeft
     && mobile.mobileUnitGridColumns === 2
     && mobile.navigatorVisible
     && mobile.sidebarOnlyRoots
@@ -827,15 +896,19 @@ try {
     && JSON.stringify(capg.selectValues) === JSON.stringify(capg.expectedSelectValues)
     && JSON.stringify(capg.selectLabels) === JSON.stringify(capg.expectedSelectLabels)
     && JSON.stringify(capg.baseOrder) === JSON.stringify(capg.expectedOrder)
-    && deprot.aprovaChildren
+    && capg.baseLabels[3] === 'CAP · G'
+    && deprot.aprovaReorganized
     && deprot.cotasChildren
     && deprot.noScriptsAtParents
     && deprot.messagesClassified
     && deprot.guidesClassified
+    && JSON.stringify(deprot.sidebarRootOrder) === JSON.stringify(['E-mail', 'Mensagens externas AD', 'Guias AD', 'Cotas do SEI'])
     && savedMobile.mobileNavOpen
     && savedMobile.navigationVisible
     && savedMobile.navigationHasWorkspaceControl
     && savedMobile.initialEnvelopeVisible
+    && savedMobile.persistentToggleVisible
+    && savedMobile.persistentToggleReopensSidebar
     && newUserMobile.welcomeVisible
     && newUserMobile.unitSelectionVisible
     && newUserMobile.unitButtonCount === 6

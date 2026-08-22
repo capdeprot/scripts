@@ -358,3 +358,83 @@
 - [x] Criar a categoria-pai Cotas do SEI no template padrão DEPROT.
 - [x] Adicionar sob Cotas do SEI as subcategorias Alvará de Reforma, Projeto Modificativo e Restituição de Guia.
 - [x] Validar a nova árvore sem scripts diretos na categoria-pai e com carregamento correto no Scriptz Padrão.
+
+## Alternativas visuais para a assinatura
+
+- [x] Criar alternativas de composição para a janela Sua assinatura mantendo a identidade visual do Scriptz.
+- [x] Produzir capturas comparativas aplicadas à interface em desktop.
+- [x] Apresentar as opções para seleção antes de alterar a interface definitiva.
+
+## Assinatura selecionada — Opção 2
+
+- [x] Substituir o rótulo por “Atenciosamente,” sobre o campo de nome.
+- [x] Definir largura inicial compacta para acomodar o rótulo e “Seu nome”, com crescimento automático apenas quando necessário.
+- [x] Alinhar rótulo e nome à esquerda em desktop e smartphone.
+- [x] Validar posição, expansão do campo e comportamento responsivo antes da entrega.
+
+## Fidelidade visual da opção 2
+
+- [x] Reproduzir a proporção do cartão alinhado apresentado na segunda alternativa visual.
+- [x] Preservar borda superior de destaque, alinhamento à esquerda e expansão de nomes sem alterar a composição escolhida.
+- [x] Validar a comparação final antes de entregar a correção.
+
+## Correção da referência visual da assinatura
+
+- [x] Substituir o cartão com borda superior pelo dock com trilho vertical azul mostrado na imagem de referência.
+- [x] Preservar Atenciosamente, e a expansão do nome no novo dock.
+- [x] Validar a posição fixa e o alinhamento à esquerda em desktop e smartphone antes da entrega.
+
+## Seleção de categorias e Aprova Digital
+
+- [x] Exibir CAP · G na importação de script padrão pelo Modo Editor.
+- [x] Remover o limite de vinculações e disponibilizar novo dropdown a cada categoria selecionada.
+- [x] Mover os modelos de Guias AD para Mensagens externas AD.
+- [x] Criar Mensagens externas AD e Guias AD como categorias principais.
+- [x] Criar as subcategorias de Guias AD indicadas e validar a nova hierarquia DEPROT.
+- [x] Mover Alvará de Reforma de Cotas do SEI para Guias AD, mantendo a nomenclatura solicitada.
+
+## Proteção da criação e navegação mobile
+
+- [x] Impedir que o modal de novo script seja fechado por clique fora da caixa.
+- [x] Manter os botões Salvar e Cancelar como únicas saídas do formulário de criação.
+- [x] Manter um botão de três linhas disponível para reabrir a sidebar em qualquer estado mobile.
+- [x] Validar os fluxos desktop e mobile antes da entrega.
+
+## Saudação e ordem das categorias DEPROT
+
+- [x] Substituir o rótulo Desabilitar por Nenhuma no seletor de saudação.
+- [x] Definir Nenhuma e assinatura desabilitada como padrão para novos scripts.
+- [x] Ordenar as categorias principais DEPROT como E-mail, Mensagens externas AD, Guias AD e Cotas do SEI.
+- [x] Validar o formulário de criação e a navegação da sidebar antes da entrega.
+
+## Vínculo de novos scripts
+
+- [x] Impedir a criação de categorias e subcategorias pela tela de novo script.
+- [x] Permitir que o novo script seja associado somente a categorias ou subcategorias existentes.
+- [x] Validar o formulário de criação antes da entrega.
+
+## Vínculo na edição de scripts
+
+- [x] Impedir a criação de categorias e subcategorias pelos dropdowns da tela de edição.
+- [x] Permitir que scripts existentes sejam vinculados somente a categorias ou subcategorias já cadastradas.
+- [x] Validar a edição antes da entrega.
+
+## Ajuda, autoria e licença
+
+- [x] Inserir botão circular e discreto de ajuda no canto superior direito.
+- [x] Exibir a nota “Informações, ajuda e feedback” ao passar o mouse ou receber foco.
+- [x] Exibir autoria, e-mail de contato e licença de uso interno em SMUL/CAP ao clicar.
+- [x] Validar a interação em desktop e mobile antes da entrega.
+
+## Refinamento da janela de informações
+
+- [x] Ampliar a largura da janela para manter a frase de autoria em uma linha no desktop.
+- [x] Exibir o wordmark como “scriptz”, em minúsculas.
+- [x] Inserir o envelope antes do wordmark na mesma cor de destaque.
+- [x] Validar o cabeçalho e a responsividade antes da entrega.
+
+## Simetria da janela de informações
+
+- [x] Ajustar a largura para equilibrar o espaço livre após o e-mail com o preenchimento esquerdo.
+- [x] Preservar legibilidade em desktop e adaptação no mobile.
+- [x] Validar a composição antes da entrega.

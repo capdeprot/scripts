@@ -1062,6 +1062,9 @@ main.is-initial-landing .mobile-search-bar { display: none; }
     border-radius: 0;
     background: transparent;
   }
+  .sb-foot > .signature-dock label,
+  .sb-foot > .signature-dock input,
+  .sb-foot > .signature-dock input::placeholder { text-align: left; }
   .sb-foot > .signature-dock input { width: 100% !important; max-width: none; }
 }
 
@@ -2292,9 +2295,12 @@ html.scriptz-awaiting-onboarding .layout, html.scriptz-awaiting-daily-welcome .l
 .new-script-modal { width: min(680px, 95vw); max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .new-script-modal .modal-btns { position: sticky; bottom: -28px; z-index: 2; margin-inline: -2px; padding: 14px 2px 2px; background: linear-gradient(to bottom, color-mix(in srgb, var(--surface) 78%, transparent), var(--surface) 36%); }
 .field-limit { margin-left: 6px; color: var(--text-secondary); font-weight: 500; letter-spacing: 0; text-transform: none; }
-.category-select-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.category-select-stack { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
 .category-select-stack select { min-width: 0; }
+.category-select-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; width: 100%; }
+.category-select-list .category-select { min-width: 0; width: 100%; }
 .new-script-modal .category-select-stack { grid-template-columns: 1fr; }
+.new-script-modal .category-select-list { grid-template-columns: 1fr; }
 .new-script-modal #newCategoryPrimary { display: none; }
 .new-category-context { min-height: 38px; display: flex; align-items: center; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border)); border-radius: var(--radius-sm); background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 700; }
 .editor-meta .editor-category-stack { min-width: 150px; }
@@ -2311,8 +2317,95 @@ body.ordering-locked .sort-select { opacity: .58; cursor: not-allowed; }
   .new-script-modal { width: calc(100vw - 20px); max-height: calc(100vh - 20px); padding: 18px; overflow-y: auto; }
   .new-script-modal .modal-btns { bottom: -18px; }
   .category-select-stack { grid-template-columns: 1fr; }
+  .category-select-list { grid-template-columns: 1fr; }
   .new-editor-shell [contenteditable] { min-height: 245px; max-height: 38vh; padding: 14px; font-size: 15px; line-height: 1.65; }
   .editor-wrap.visible [contenteditable] { min-height: 205px; padding: 14px; font-size: 15px; line-height: 1.65; }
+}
+
+/* Na tela inicial mobile, o menu permanece disponível mesmo sem a barra contextual. */
+.mobile-persistent-nav-toggle { display: none; }
+@media (max-width: 820px) {
+  .layout:has(main.is-initial-landing) .mobile-persistent-nav-toggle {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top));
+    left: 12px;
+    z-index: 60;
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--bg) 45%, transparent);
+    font-size: 0;
+  }
+  .layout:has(main.is-initial-landing) .mobile-persistent-nav-toggle::before { content: '☰'; font-size: 19px; line-height: 1; }
+  body.mobile-nav-open .layout:has(main.is-initial-landing) .mobile-persistent-nav-toggle { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  body.mobile-nav-open .layout:has(main.is-initial-landing) .mobile-persistent-nav-toggle::before { content: '✕'; }
+}
+
+/* Ponto discreto de ajuda, disponível sem competir com os controles do workspace. */
+.scriptz-help-button {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 80;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--accent);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, .14);
+  font: 700 17px/1 'Rajdhani', sans-serif;
+  cursor: pointer;
+}
+.scriptz-help-button::after {
+  content: 'Informações, ajuda e feedback';
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 9px);
+  transform: translateY(-50%) translateX(4px);
+  width: max-content;
+  max-width: min(250px, calc(100vw - 68px));
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font: 600 12px/1.15 'Inter', sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s cubic-bezier(.23,1,.32,1), transform .16s cubic-bezier(.23,1,.32,1);
+}
+.scriptz-help-button:hover, .scriptz-help-button:focus-visible { border-color: var(--accent); background: var(--accent-light); outline: none; }
+.scriptz-help-button:hover::after, .scriptz-help-button:focus-visible::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+.help-info-modal { width: min(560px, calc(100vw - 28px)); padding: 32px 36px; position: relative; box-sizing: border-box; }
+.help-info-modal h3 { margin: 0 0 14px; font: 700 italic 34px/1 'Rajdhani', sans-serif; color: var(--accent); }
+.help-brand-line { display: flex; align-items: center; gap: 10px; }
+.help-brand-envelope { display: inline-block; width: 30px; height: 24px; flex: 0 0 auto; background: var(--accent); -webkit-mask: url('../assets/scriptz_icone_branco_transparente.png') center / contain no-repeat; mask: url('../assets/scriptz_icone_branco_transparente.png') center / contain no-repeat; }
+.help-info-modal p { margin: 0 0 12px; color: var(--text-secondary); font-size: 14px; line-height: 1.55; }
+.help-info-modal p strong { color: var(--text); }
+.help-author-line { white-space: nowrap; }
+.help-info-modal a { color: var(--accent); font-weight: 700; word-break: break-word; }
+.help-info-kicker { margin-right: 38px !important; color: var(--accent) !important; font: 700 11px/1 'Rajdhani', sans-serif !important; letter-spacing: .13em; }
+.help-info-close { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text-secondary); cursor: pointer; }
+.help-info-close:hover, .help-info-close:focus-visible { border-color: var(--accent); background: var(--accent-light); color: var(--accent); outline: none; }
+.help-license-note { margin-top: 18px; padding: 11px 12px; border-left: 3px solid var(--accent); background: var(--accent-light); color: var(--text); font-size: 13px; line-height: 1.45; }
+@media (max-width: 820px) {
+  .scriptz-help-button { top: calc(10px + env(safe-area-inset-top)); right: 10px; width: 30px; height: 30px; font-size: 16px; }
+  .scriptz-help-button::after { display: none; }
+  .help-info-modal { padding: 26px 22px 22px; }
+  .help-author-line { white-space: normal; }
 }
 
 /* Scriptz v46: ações contextuais agrupadas e escolha direta da unidade no primeiro acesso. */
@@ -2532,7 +2625,7 @@ select:not([multiple]):not([size]):open {
 
 /* No desktop, a assinatura é uma janela de trabalho sempre visível e independente do conteúdo do painel. */
 @media (min-width: 821px) {
-  :root { --signature-reserve: 250px; }
+  :root { --signature-reserve: 208px; }
   main {
     width: 100%;
     max-width: min(1000px, calc(100vw - var(--sidebar-width) - var(--signature-reserve)));
@@ -2540,23 +2633,40 @@ select:not([multiple]):not([size]):open {
   main > .signature-dock {
     position: fixed;
     z-index: 20;
-    right: 12px;
-    bottom: clamp(12px, 2vh, 22px);
+    right: 18px;
+    bottom: 20px;
     width: max-content;
-    max-width: calc(var(--signature-reserve) - 12px);
+    min-width: 164px;
+    max-width: calc(var(--signature-reserve) - 18px);
     margin: 0;
-    padding: 8px 9px 9px;
+    padding: 7px 9px 8px 12px;
     gap: 4px;
-    justify-items: end;
-    box-shadow: 0 14px 32px color-mix(in srgb, var(--bg) 55%, transparent);
+    justify-items: stretch;
+    border: 0;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 9px 9px 0;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 13%, transparent), transparent);
+    box-shadow: none;
   }
-  main > .signature-dock label { font-size: 10px; text-align: right; }
+  main > .signature-dock label {
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-align: left;
+    color: var(--accent);
+  }
   main > .signature-dock input {
-    width: 11ch;
-    min-width: 11ch;
-    max-width: calc(var(--signature-reserve) - 30px);
-    min-height: 40px;
-    padding: 7px 8px;
-    font-size: 18px;
+    width: 8ch;
+    min-width: 8ch;
+    max-width: calc(var(--signature-reserve) - 38px);
+    min-height: 34px;
+    padding: 5px 2px;
+    font-size: 17px;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
+  main > .signature-dock input::placeholder { text-align: left; }
 }

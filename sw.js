@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scriptz-shell-v68';
+const CACHE_NAME = 'scriptz-shell-v78';
 const APP_SHELL = [
   './',
   './index.html',
