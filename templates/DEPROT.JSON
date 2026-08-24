@@ -285,7 +285,7 @@
         "Mensagens externas AD"
       ],
       "title": "Devolução do protocolo a pedido",
-      "html": "<p>Encaminhamos o protocolo para as alterações pertinentes,\nconforme contato <i>[[especificar o contato: telefônico, e-mail ou presencial]]</i>.\nApós realizar as alterações, salve a edição e devolvas o protocolo para\nprosseguimento.</p>",
+      "html": "<p>Encaminhamos o protocolo para as alterações pertinentes,\nconforme contato <i>[[especificar o contato: telefônico, e-mail ou presencial]]</i>.\nApós alterar, salve a edição e devolva o protocolo para\nprosseguimento.</p>",
       "greetingMode": "off",
       "hasGreeting": false,
       "hasSignature": false,
