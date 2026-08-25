@@ -11,6 +11,7 @@ let customCategoryOrder = [];
 let customScriptOrderByCategory = {};
 let categoryRegistry = [];
 let categoryParents = {};
+let categoryLabels = {};
 let expandedCategories = new Set();
 let subcategoryCreatorOpen = false;
 let sidebarCategoryCreatorOpen = false;
@@ -26,13 +27,19 @@ let workspace = { mode: null, division: null };
 let standardCategories = [];
 let standardScripts = [];
 let standardCategoryParents = {};
+let standardCategoryLabels = {};
 let newScriptLinkRange = null;
 let themeTransitionTimer = null;
 let newScriptModalTrigger = null;
+let pendingSignatureCopyId = null;
+let noticeAction = null;
 const librarySectionOpen = { standard: true, personal: true };
+const PDF_GUIDE_CATEGORY = 'Instruções de escrita no campo “Observações” das guias do AD';
+const PDF_GUIDE_ASSET = 'assets/docs/padrao-escrita-observacoes.pdf';
 
 const SCRIPT_LIMITS = Object.freeze({ standard: 300, free: 500 });
 const CATEGORY_ACTION_VALUES = new Set(['__new__', '__new_sub__']);
+const CATEGORY_KEY_SEPARATOR = '::';
 const STANDARD_DIVISIONS = Object.freeze({
   DEPROT: 'templates/DEPROT.JSON',
   DPCI: 'templates/DPCI.JSON',
@@ -201,13 +208,26 @@ function getSignature() {
   return name || '------';
 }
 
+function getSignatureName() {
+  return document.getElementById('userNameInput')?.value.trim() || localStorage.getItem('user_signature')?.trim() || '';
+}
+
+function setSignatureName(name) {
+  const input = document.getElementById('userNameInput');
+  if (!input) return '';
+  const normalized = String(name || '').trim();
+  input.value = normalized;
+  localStorage.setItem('user_signature', normalized);
+  syncSignatureInputWidth();
+  return normalized;
+}
+
 function hasSignature(script) {
   return script.hasSignature !== false;
 }
 
 function updateSignature() {
-  syncSignatureInputWidth();
-  localStorage.setItem('user_signature', document.getElementById('userNameInput').value.trim());
+  setSignatureName(document.getElementById('userNameInput').value);
   render();
   showToast('✅', 'Assinatura atualizada!');
 }
@@ -332,6 +352,10 @@ function getLibraryCategoryParents(library = activeLibraryKey()) {
   return isStandardMode() && library === 'standard' ? standardCategoryParents : categoryParents;
 }
 
+function getLibraryCategoryLabels(library = activeLibraryKey()) {
+  return isStandardMode() && library === 'standard' ? standardCategoryLabels : categoryLabels;
+}
+
 function getLibraryCategoryOrder(library = activeLibraryKey()) {
   return isStandardMode() && library === 'standard' ? standardCategoryOrder : customCategoryOrder;
 }
@@ -390,6 +414,39 @@ function normalizeCategoryName(value) {
   return String(value || '').trim();
 }
 
+function normalizeCategoryLabels(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value)
+    .map(([key, label]) => [normalizeCategoryName(key), normalizeCategoryName(label)])
+    .filter(([key, label]) => key && label));
+}
+
+function fallbackCategoryLabel(category) {
+  const key = normalizeCategoryName(category);
+  const separatorIndex = key.lastIndexOf(CATEGORY_KEY_SEPARATOR);
+  return separatorIndex === -1 ? key : key.slice(separatorIndex + CATEGORY_KEY_SEPARATOR.length);
+}
+
+function categoryDisplayName(category, library = activeLibraryKey()) {
+  const key = normalizeCategoryName(category);
+  return normalizeCategoryName(getLibraryCategoryLabels(library)[key]) || fallbackCategoryLabel(key);
+}
+
+function categoryKeyFor(name, parent = '') {
+  const label = normalizeCategoryName(name);
+  const parentKey = normalizeCategoryName(parent);
+  return parentKey ? `${parentKey}${CATEGORY_KEY_SEPARATOR}${label}` : label;
+}
+
+function categoryNameExistsAtLevel(name, parent = '', library = activeLibraryKey(), except = '') {
+  const label = normalizeCategoryName(name);
+  const parentKey = normalizeCategoryName(parent);
+  return getCategories(library).some(category => category !== 'all'
+    && category !== except
+    && getCategoryParent(category, library) === parentKey
+    && categoryDisplayName(category, library) === label);
+}
+
 function normalizeCategoryParents(value) {
   const relationships = {};
   const pairs = Array.isArray(value)
@@ -409,6 +466,11 @@ function reconcileCategoryHierarchy() {
     .map(normalizeCategoryName)
     .filter(Boolean);
   categoryRegistry = [...new Set(known)];
+  const nextLabels = {};
+  categoryRegistry.forEach(category => {
+    nextLabels[category] = normalizeCategoryName(categoryLabels[category]) || fallbackCategoryLabel(category);
+  });
+  categoryLabels = nextLabels;
   const valid = {};
   Object.entries(categoryParents).forEach(([child, parent]) => {
     const childName = normalizeCategoryName(child);
@@ -472,11 +534,11 @@ function getCategoryDescendants(category, seen = new Set(), library = activeLibr
 }
 
 function getCategoryPath(category, library = activeLibraryKey()) {
-  const parts = [category];
-  const visited = new Set(parts);
+  const parts = [categoryDisplayName(category, library)];
+  const visited = new Set([category]);
   let parent = getCategoryParent(category, library);
   while (parent && !visited.has(parent)) {
-    parts.unshift(parent);
+    parts.unshift(categoryDisplayName(parent, library));
     visited.add(parent);
     parent = getCategoryParent(parent, library);
   }
@@ -498,8 +560,8 @@ function isCategoryAction(value) {
 }
 
 function registerCategory(name, parent = undefined) {
-  const category = normalizeCategoryName(name);
-  if (!category) return '';
+  const label = normalizeCategoryName(name);
+  if (!label) return '';
   let parentName = '';
   if (parent !== undefined) {
     parentName = normalizeCategoryName(parent);
@@ -512,7 +574,13 @@ function registerCategory(name, parent = undefined) {
       return '';
     }
   }
+  const category = categoryKeyFor(label, parentName);
+  if (categoryNameExistsAtLevel(label, parentName, 'personal')) {
+    showToast('⚠️', parentName ? 'Já existe uma subcategoria com este nome nesta categoria principal.' : 'Este nome já está em uso.');
+    return '';
+  }
   if (!categoryRegistry.includes(category)) categoryRegistry.push(category);
+  categoryLabels[category] = label;
   if (!customCategoryOrder.includes(category)) customCategoryOrder.push(category);
   if (parent !== undefined && !parentName) delete categoryParents[category];
   if (parentName && parentName !== category && !getCategoryDescendants(category).has(parentName)) categoryParents[category] = parentName;
@@ -554,6 +622,7 @@ function normalizeWorkspaceState(savedState) {
   scripts = savedScripts.map(script => normalizeScript(script, script.source || source));
   categoryRegistry = Array.isArray(state.categories) ? state.categories : [];
   categoryParents = normalizeCategoryParents(state.categoryParents);
+  categoryLabels = normalizeCategoryLabels(state.categoryLabels);
   expandedCategories = new Set(Array.isArray(state.expandedCategories) ? state.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
   customCategoryOrder = Array.isArray(state.categoryOrder) ? state.categoryOrder : [];
   customScriptOrderByCategory = state.scriptOrders || {};
@@ -565,7 +634,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=55`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=81`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template' || !Array.isArray(data.scripts)) throw new Error('Template inválido');
@@ -607,12 +676,14 @@ async function loadWorkspace(showFeedback = true) {
   standardScripts = [];
   standardCategories = [];
   standardCategoryParents = {};
+  standardCategoryLabels = {};
   try {
     const local = localStorage.getItem(workspaceKey());
     if (isStandardMode()) {
       const template = await fetchStandardTemplate(workspace.division);
       standardCategories = Array.isArray(template.categories) ? template.categories.map(String) : [];
       standardCategoryParents = normalizeCategoryParents(template.categoryParents);
+      standardCategoryLabels = normalizeCategoryLabels(template.categoryLabels);
       standardScripts = template.scripts.map(script => normalizeScript({ ...script, isStandard: true }, 'standard'));
       const saved = local ? JSON.parse(local) : null;
       normalizeWorkspaceState(saved);
@@ -775,10 +846,18 @@ async function loadData() {
 // ============================================================
 function resetLocalData() {
   if (!isStandardMode()) return;
-  if (!confirm('⚠️ Isso apagará somente scripts, categorias e ordenações criados localmente ou importados neste contexto. Continuar?')) return;
-  localStorage.removeItem(workspaceKey());
-  loadWorkspace(false);
-  showToast('↩️', 'Alterações locais revertidas.');
+  openNoticeModal({
+    title: 'Reverter alterações locais',
+    message: 'Isso apagará somente scripts, categorias e ordenações criados localmente ou importados neste contexto.',
+    note: 'Os modelos padronizados desta divisão permanecerão disponíveis.',
+    confirmLabel: 'Reverter alterações',
+    danger: true,
+    onConfirm: () => {
+      localStorage.removeItem(workspaceKey());
+      loadWorkspace(false);
+      showToast('↩️', 'Alterações locais revertidas.');
+    }
+  });
 }
 
 function saveToLocal() {
@@ -788,12 +867,13 @@ function saveToLocal() {
   const persistedParents = { ...categoryParents };
   localStorage.setItem(workspaceKey(), JSON.stringify({
     schema: isStandardMode() ? 'scriptz-standard-changes' : 'scriptz-free-project',
-    version: 5,
+    version: 6,
     mode: workspace.mode,
     division: workspace.division,
     scripts: userScripts,
     categories: userCategories,
     categoryParents: persistedParents,
+    categoryLabels: { ...categoryLabels },
     categoryOrder: customCategoryOrder,
     scriptOrders: customScriptOrderByCategory,
     standardCategoryOrder: isStandardMode() ? standardCategoryOrder : undefined,
@@ -978,7 +1058,7 @@ function createCategoryFromSidebar() {
     input?.focus();
     return;
   }
-  if (getCategories('personal').includes(name) || (isStandardMode() && getCategories('standard').includes(name))) {
+  if (categoryNameExistsAtLevel(name, '', 'personal')) {
     showToast('⚠️', 'Este nome já está em uso.');
     input?.focus();
     return;
@@ -988,14 +1068,20 @@ function createCategoryFromSidebar() {
   saveToLocal();
   buildSidebar();
   setCat(name);
-  showToast('✨', `Categoria “${name}” criada!`);
+  showToast('✨', `Categoria “${categoryDisplayName(name)}” criada!`);
 }
 
 function renameCategoryFromSidebar(category) {
   if (isStandardLibrary() || isStandardCategory(category)) return;
-  const nextName = normalizeCategoryName(prompt(`Novo nome para a categoria “${category}”:`, category));
-  if (!nextName || nextName === category) return;
-  confirmRenameCategory(category, nextName);
+  openNoticeModal({
+    title: 'Renomear categoria',
+    message: `Defina o novo nome para “${categoryDisplayName(category)}”.`,
+    inputLabel: 'Nome da categoria',
+    inputValue: categoryDisplayName(category),
+    inputPlaceholder: 'Nome da categoria',
+    confirmLabel: 'Salvar nome',
+    onConfirm: value => confirmRenameCategory(category, value)
+  });
 }
 
 function buildSidebar() {
@@ -1008,9 +1094,10 @@ function buildSidebar() {
   const categoryButton = (category, library, editable = false) => {
     const isActive = activeLibraryKey() === library && getCategoryDescendants(category, new Set(), library).has(activeCat);
     const count = categoryScriptCount(category, true, library);
-    const actions = editable ? `<span class="sidebar-category-actions"><button type="button" onclick="renameCategoryFromSidebar('${safeJs(category)}')" aria-label="Renomear ${escapeHtml(category)}">✏️</button><button type="button" onclick="deleteCategory('${safeJs(category)}')" aria-label="Excluir ${escapeHtml(category)}">🗑️</button></span>` : '';
+    const label = categoryDisplayName(category, library);
+    const actions = editable ? `<span class="sidebar-category-actions"><button type="button" onclick="renameCategoryFromSidebar('${safeJs(category)}')" aria-label="Renomear ${escapeHtml(label)}">✏️</button><button type="button" onclick="deleteCategory('${safeJs(category)}')" aria-label="Excluir ${escapeHtml(label)}">🗑️</button></span>` : '';
     const arrow = editable ? '' : '<span class="category-root-arrow" aria-hidden="true">›</span>';
-    return `<li class="category-nav-item category-root ${editable ? 'is-editable' : ''}" data-category="${escapeHtml(category)}"><button type="button" class="cat-btn category-root-btn ${isActive ? 'active' : ''}" onclick="setCat('${safeJs(category)}')" title="${escapeHtml(category)}"><span class="category-root-symbol" aria-hidden="true">▰</span><span class="cat-btn-label">${escapeHtml(category)}</span><span class="nav-count">${count}</span>${arrow}</button>${actions}</li>`;
+    return `<li class="category-nav-item category-root ${editable ? 'is-editable' : ''}" data-category="${escapeHtml(category)}"><button type="button" class="cat-btn category-root-btn ${isActive ? 'active' : ''}" onclick="setCat('${safeJs(category)}')" title="${escapeHtml(label)}"><span class="category-root-symbol" aria-hidden="true">▰</span><span class="cat-btn-label">${escapeHtml(label)}</span><span class="nav-count">${count}</span>${arrow}</button>${actions}</li>`;
   };
   const rootCategoryList = (library, editable) => {
     const roots = getOrderedCategories(getRootCategories(library), library);
@@ -1053,6 +1140,13 @@ function setCat(cat) {
   document.getElementById('pageTitle').textContent = cat === 'all' ? (isStandardMode() ? (isStandardLibrary() ? 'Modelos Padronizados' : 'Meus Scriptz') : 'Todos os scriptz') : cat === 'favorites' ? 'Favoritos' : getCategoryPath(cat);
   buildSidebar();
   render();
+  openPdfGuideCardWhenRelevant();
+}
+
+function openPdfGuideCardWhenRelevant() {
+  if (categoryDisplayName(activeCat) !== PDF_GUIDE_CATEGORY) return;
+  const featured = getFilteredScripts().find(script => String(script.html || '').includes(PDF_GUIDE_ASSET));
+  document.getElementById('c' + featured?.id)?.classList.add('open');
 }
 
 function setLibrary(library) {
@@ -1147,14 +1241,22 @@ function syncNewScriptButton() {
 }
 
 function createCategoryFromPrompt() {
-  const value = prompt('Digite o nome da nova categoria:');
-  if (!value || !value.trim()) return '';
-  const category = normalizeCategoryName(value);
-  if (getCategories().includes(category)) {
-    showToast('⚠️', 'Já existe uma categoria ou subcategoria com este nome.');
-    return '';
-  }
-  return registerCategory(category);
+  openNoticeModal({
+    title: 'Nova categoria',
+    message: 'Informe o nome da categoria principal que deseja criar.',
+    inputLabel: 'Nome da categoria',
+    inputPlaceholder: 'Nome da categoria',
+    confirmLabel: 'Criar categoria',
+    onConfirm: value => {
+      const category = registerCategory(value);
+      if (!category) return;
+      saveToLocal();
+      buildSidebar();
+      renderCategoryList();
+      showToast('✨', `Categoria “${categoryDisplayName(category)}” criada!`);
+    }
+  });
+  return '';
 }
 
 function getNewScriptCategories() {
@@ -1247,21 +1349,22 @@ function renderCategoryList() {
     
     const safeJs = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     const row = (cat, level = 'root') => {
+        const label = categoryDisplayName(cat);
         const locked = isStandardCategory(cat);
         const lockLabel = locked ? '<span class="category-standard-lock" title="Categoria padrão protegida">🔒</span>' : '';
         const lockAttrs = locked ? 'disabled aria-disabled="true" title="Categoria padrão protegida"' : '';
         const dragHandle = level === 'root' ? '<span class="category-drag-handle" title="Arrastar para reordenar" aria-label="Arrastar categoria">⠿</span>' : '<span class="category-drag-spacer" aria-hidden="true"></span>';
-        const levelLabel = level === 'root' ? 'Categoria principal' : `Subcategoria de ${getCategoryParent(cat)}`;
+        const levelLabel = level === 'root' ? 'Categoria principal' : `Subcategoria de ${categoryDisplayName(getCategoryParent(cat))}`;
         return `<div class="category-item category-${level} ${locked ? 'standard-category' : ''}" data-category="${escapeHtml(cat)}">
             ${dragHandle}
             <div class="category-item-details">
-                <span class="category-name" ${locked ? '' : `onclick="startRenameCategory('${safeJs(cat)}')"`}>${escapeHtml(cat)}</span>${lockLabel}
+                <span class="category-name" ${locked ? '' : `onclick="startRenameCategory('${safeJs(cat)}')"`}>${escapeHtml(label)}</span>${lockLabel}
                 <span class="category-level">${escapeHtml(levelLabel)}</span>
             </div>
             <span class="category-count">${categoryScriptCount(cat, level === 'root' && getChildCategories(cat).length > 0) === 1 ? '1 script' : `${categoryScriptCount(cat, level === 'root' && getChildCategories(cat).length > 0)} scriptz`}</span>
             <div class="category-actions">
-                <button type="button" class="btn-rename" onclick="startRenameCategory('${safeJs(cat)}')" ${lockAttrs} aria-label="Renomear ${escapeHtml(cat)}">✏️</button>
-                <button type="button" class="btn-delete" onclick="deleteCategory('${safeJs(cat)}')" ${lockAttrs} aria-label="Excluir ${escapeHtml(cat)}">🗑️</button>
+                <button type="button" class="btn-rename" onclick="startRenameCategory('${safeJs(cat)}')" ${lockAttrs} aria-label="Renomear ${escapeHtml(label)}">✏️</button>
+                <button type="button" class="btn-delete" onclick="deleteCategory('${safeJs(cat)}')" ${lockAttrs} aria-label="Excluir ${escapeHtml(label)}">🗑️</button>
             </div>
         </div>`;
     };
@@ -1381,7 +1484,7 @@ function startRenameCategory(cat) {
     
     items.forEach(item => {
         const nameSpan = item.querySelector('.category-name');
-        if (nameSpan.textContent.trim() === cat) {
+        if (item.dataset.category === cat) {
             targetItem = item;
             targetNameSpan = nameSpan;
         }
@@ -1420,15 +1523,7 @@ function startRenameCategory(cat) {
 
 function cancelRenameCategory() {
     renamingCategory = null;
-    document.querySelectorAll('.category-name.editing').forEach(el => {
-        el.classList.remove('editing');
-        const input = el.querySelector('input');
-        if (input) {
-            const name = input.value;
-            el.textContent = name;
-            el.onclick = function() { startRenameCategory(name); };
-        }
-    });
+    renderCategoryList();
 }
 
 function confirmRenameCategory(oldName, newName) {
@@ -1442,35 +1537,38 @@ function confirmRenameCategory(oldName, newName) {
         return;
     }
     
-    const exists = getCategories().some(category => category === newName && category !== oldName);
-    if (exists) {
-        showToast('⚠️', 'Já existe uma categoria com este nome!');
+    const parent = getCategoryParent(oldName);
+    if (categoryNameExistsAtLevel(newName, parent, 'personal', oldName)) {
+        showToast('⚠️', parent ? 'Já existe uma subcategoria com este nome nesta categoria principal.' : 'Já existe uma categoria com este nome!');
         cancelRenameCategory();
         return;
     }
+    const newKey = parent ? categoryKeyFor(newName, parent) : newName;
     
     scripts.forEach(script => {
         if (scriptHasCategory(script, oldName)) {
-            setScriptCategories(script, getScriptCategories(script).map(category => category === oldName ? newName : category));
+            setScriptCategories(script, getScriptCategories(script).map(category => category === oldName ? newKey : category));
         }
     });
     
     const registryIndex = categoryRegistry.indexOf(oldName);
-    if (registryIndex !== -1) categoryRegistry[registryIndex] = newName;
+    if (registryIndex !== -1) categoryRegistry[registryIndex] = newKey;
     if (categoryParents[oldName]) {
-        categoryParents[newName] = categoryParents[oldName];
+        categoryParents[newKey] = categoryParents[oldName];
         delete categoryParents[oldName];
     }
     Object.entries(categoryParents).forEach(([child, parent]) => {
-        if (parent === oldName) categoryParents[child] = newName;
+        if (parent === oldName) categoryParents[child] = newKey;
     });
+    categoryLabels[newKey] = newName;
+    delete categoryLabels[oldName];
     if (customScriptOrderByCategory[oldName]) {
-        customScriptOrderByCategory[newName] = customScriptOrderByCategory[oldName];
+        customScriptOrderByCategory[newKey] = customScriptOrderByCategory[oldName];
         delete customScriptOrderByCategory[oldName];
     }
-    customCategoryOrder = customCategoryOrder.map(category => category === oldName ? newName : category);
-    expandedCategories = new Set([...expandedCategories].map(category => category === oldName ? newName : category));
-    if (activeCat === oldName) activeCat = newName;
+    customCategoryOrder = customCategoryOrder.map(category => category === oldName ? newKey : category);
+    expandedCategories = new Set([...expandedCategories].map(category => category === oldName ? newKey : category));
+    if (activeCat === oldName) activeCat = newKey;
     reconcileCategoryHierarchy();
     
     cancelRenameCategory();
@@ -1493,23 +1591,42 @@ function deleteCategory(cat) {
     const count = scripts.filter(script => scriptHasCategory(script, cat)).length;
     const children = getChildCategories(cat);
     
+    const label = categoryDisplayName(cat);
     if (count === 0) {
-        if (!confirm(`Deseja excluir a categoria "${cat}"?`)) return;
+        openNoticeModal({
+            title: 'Excluir categoria',
+            message: `Deseja excluir a categoria “${label}”?`,
+            note: 'Esta ação remove a categoria atual. Nenhum script será apagado.',
+            confirmLabel: 'Excluir categoria',
+            danger: true,
+            onConfirm: () => performDeleteCategory(cat, parentBeforeDelete, children)
+        });
+        return;
     } else {
         const childNotice = children.length ? `\n\nAs ${children.length} subcategoria(s) vinculada(s) passarão a ser categorias principais.` : '';
-        const confirmMsg = `A categoria "${cat}" possui ${count} scriptz.\n\nExcluí-la fará com que esses scriptz fiquem sem categoria (categoria "Geral").${childNotice}\n\nDeseja continuar?`;
-        if (!confirm(confirmMsg)) return;
-        
-        scripts.forEach(script => {
-            if (scriptHasCategory(script, cat)) {
-                const remaining = getScriptCategories(script).filter(category => category !== cat);
-                setScriptCategories(script, remaining.length ? remaining : ['Geral']);
-            }
+        const notice = `A categoria “${label}” possui ${count} scriptz. Ao excluí-la, os scriptz vinculados ficarão na categoria “Geral”.${childNotice.replace(/\n\n/g, ' ')}`;
+        openNoticeModal({
+            title: 'Excluir categoria',
+            message: notice,
+            note: 'Esta operação não pode ser desfeita sem uma cópia exportada dos seus scriptz.',
+            confirmLabel: 'Excluir categoria',
+            danger: true,
+            onConfirm: () => performDeleteCategory(cat, parentBeforeDelete, children)
         });
+        return;
     }
-    
+}
+
+function performDeleteCategory(cat, parentBeforeDelete, children = getChildCategories(cat)) {
+    scripts.forEach(script => {
+        if (scriptHasCategory(script, cat)) {
+            const remaining = getScriptCategories(script).filter(category => category !== cat);
+            setScriptCategories(script, remaining.length ? remaining : ['Geral']);
+        }
+    });
     customCategoryOrder = customCategoryOrder.filter(c => c !== cat);
     categoryRegistry = categoryRegistry.filter(c => c !== cat);
+    delete categoryLabels[cat];
     delete customScriptOrderByCategory[cat];
     delete categoryParents[cat];
     children.forEach(child => delete categoryParents[child]);
@@ -1535,7 +1652,7 @@ function createCategoryFromModal() {
         return;
     }
     
-    const exists = getCategories().includes(name);
+    const exists = categoryNameExistsAtLevel(name, '', 'personal');
     if (exists) {
         showToast('⚠️', 'Esta categoria já existe!');
         input.value = '';
@@ -1550,7 +1667,7 @@ function createCategoryFromModal() {
     input.focus();
     buildSidebar();
     renderCategoryList();
-    showToast('✨', `Categoria principal "${name}" criada!`);
+    showToast('✨', `Categoria principal "${categoryDisplayName(name)}" criada!`);
 }
 
 // ============================================================
@@ -1731,8 +1848,8 @@ function createSubcategoryFromMain() {
     input?.focus();
     return;
   }
-  if (getCategories().includes(name)) {
-    showToast('⚠️', 'Já existe uma categoria ou subcategoria com este nome.');
+  if (categoryNameExistsAtLevel(name, parent, 'personal')) {
+    showToast('⚠️', 'Já existe uma subcategoria com este nome nesta categoria principal.');
     input?.focus();
     return;
   }
@@ -1756,9 +1873,15 @@ function showSubcategoryCreator() {
 }
 
 function renameSubcategoryFromMain(category) {
-  const nextName = normalizeCategoryName(prompt(`Novo nome para a subcategoria “${category}”:`, category));
-  if (!nextName || nextName === category) return;
-  confirmRenameCategory(category, nextName);
+  openNoticeModal({
+    title: 'Renomear subcategoria',
+    message: `Defina o novo nome para “${categoryDisplayName(category)}”.`,
+    inputLabel: 'Nome da subcategoria',
+    inputValue: categoryDisplayName(category),
+    inputPlaceholder: 'Nome da subcategoria',
+    confirmLabel: 'Salvar nome',
+    onConfirm: value => confirmRenameCategory(category, value)
+  });
 }
 
 function deleteSubcategoryFromMain(category) {
@@ -1831,7 +1954,7 @@ function buildSubcategoryNavigator() {
   const readOnly = isStandardLibrary();
   const parent = getCategoryParent(activeCat);
   if (parent) {
-    const returnControl = `<section class="subcategory-return" aria-label="Navegação de categoria"><button type="button" onclick="setCat('${String(parent).replace(/'/g, "\\'")}' )"><span aria-hidden="true">‹</span> Voltar para ${escapeHtml(parent)}</button></section>`;
+    const returnControl = `<section class="subcategory-return" aria-label="Navegação de categoria"><button type="button" onclick="setCat('${String(parent).replace(/'/g, "\\'")}' )"><span aria-hidden="true">‹</span> Voltar para ${escapeHtml(categoryDisplayName(parent))}</button></section>`;
     const emptySubcategoryChoice = !readOnly && categoryScriptCount(activeCat) === 0 ? buildEmptyCategoryChoice({ allowSubcategory: false }) : '';
     return returnControl + emptySubcategoryChoice;
   }
@@ -1844,19 +1967,20 @@ function buildSubcategoryNavigator() {
   const safeJs = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   const cards = children.map(category => {
     const count = categoryScriptCount(category, true);
+    const label = categoryDisplayName(category);
     return `<article class="subcategory-choice" data-subcategory="${escapeHtml(category)}">
-      <button type="button" class="subcategory-choice-open" onclick="setCat('${safeJs(category)}')" aria-label="Abrir subcategoria ${escapeHtml(category)}">
-        <span class="subcategory-choice-name">${escapeHtml(category)}</span>
+      <button type="button" class="subcategory-choice-open" onclick="setCat('${safeJs(category)}')" aria-label="Abrir subcategoria ${escapeHtml(label)}">
+        <span class="subcategory-choice-name">${escapeHtml(label)}</span>
         <span class="subcategory-choice-count">${count === 1 ? '1 script' : `${count} scriptz`}</span>
         <span class="subcategory-choice-arrow" aria-hidden="true">›</span>
       </button>
-      ${readOnly ? '' : `<div class="subcategory-choice-actions" aria-label="Ações da subcategoria ${escapeHtml(category)}">
-        <button type="button" onclick="renameSubcategoryFromMain('${safeJs(category)}')" aria-label="Renomear ${escapeHtml(category)}">✏️</button>
-        <button type="button" onclick="deleteSubcategoryFromMain('${safeJs(category)}')" aria-label="Excluir ${escapeHtml(category)}">🗑️</button>
+      ${readOnly ? '' : `<div class="subcategory-choice-actions" aria-label="Ações da subcategoria ${escapeHtml(label)}">
+        <button type="button" onclick="renameSubcategoryFromMain('${safeJs(category)}')" aria-label="Renomear ${escapeHtml(label)}">✏️</button>
+        <button type="button" onclick="deleteSubcategoryFromMain('${safeJs(category)}')" aria-label="Excluir ${escapeHtml(label)}">🗑️</button>
       </div>`}
     </article>`;
   }).join('');
-  return `<section class="subcategory-navigator" aria-label="Subcategorias de ${escapeHtml(activeCat)}">
+  return `<section class="subcategory-navigator" aria-label="Subcategorias de ${escapeHtml(categoryDisplayName(activeCat))}">
     <div class="subcategory-navigator-heading"><span class="subcategory-navigator-kicker">Subcategorias</span><span>${children.length === 1 ? '1 opção' : `${children.length} opções`}</span></div>
     ${children.length ? `<div class="subcategory-choice-list" id="subcategoryManagementList">${cards}</div>` : '<p class="subcategory-empty-state">Crie a primeira subcategoria para organizar os scriptz deste grupo.</p>'}
     ${readOnly ? '' : '<div class="subcategory-create-row"><input type="text" id="newSubcategoryName" placeholder="Nome da nova subcategoria" onkeydown="if(event.key===\'Enter\') createSubcategoryFromMain()"><button type="button" class="btn-primary" onclick="createSubcategoryFromMain()">➕ Adicionar subcategoria</button></div>'}
@@ -1909,7 +2033,7 @@ function getCategoryOptions(selected = '', { placeholder = '', exclude = [], inc
   const hierarchy = getOrderedCategories(getAssignableCategories()).map(category => ({ category, depth: getCategoryParent(category) ? 1 : 0 }));
   let html = placeholder ? `<option value="">${escapeHtml(placeholder)}</option>` : '';
   hierarchy.filter(({ category }) => !exclude.includes(category)).forEach(({ category, depth }) => {
-    const label = depth ? `${getCategoryParent(category)} › ${category}` : category;
+    const label = depth ? `${categoryDisplayName(getCategoryParent(category))} › ${categoryDisplayName(category)}` : categoryDisplayName(category);
     html += `<option value="${escapeHtml(category)}" ${category === selected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
   });
   if (includeCreateAction) html += `<option value="__new__">➕ Nova categoria...</option>`;
@@ -2193,12 +2317,20 @@ function deleteScript(id) {
     showToast('🔒', 'Scripts padrão não podem ser excluídos.');
     return;
   }
-  if (!confirm('Excluir este script permanentemente?')) return;
-  scripts = scripts.filter(x => x.id !== id);
-  saveToLocal();
-  buildSidebar();
-  render();
-  showToast('🗑️', 'Script excluído');
+  openNoticeModal({
+    title: 'Excluir script',
+    message: `Deseja excluir permanentemente o script “${script?.title || 'Sem título'}”?`,
+    note: 'Esta ação não pode ser desfeita sem uma cópia exportada dos seus scriptz.',
+    confirmLabel: 'Excluir script',
+    danger: true,
+    onConfirm: () => {
+      scripts = scripts.filter(x => x.id !== id);
+      saveToLocal();
+      buildSidebar();
+      render();
+      showToast('🗑️', 'Script excluído');
+    }
+  });
 }
 
 // ============================================================
@@ -2207,6 +2339,11 @@ function deleteScript(id) {
 async function copyScript(id) {
   const s = scripts.find(x => x.id === id);
   if (!s) return;
+
+  if (hasSignature(s) && !getSignatureName()) {
+    openCopySignatureModal(id);
+    return;
+  }
 
   // Copiar nunca deve fechar o script: reforça o estado aberto antes e depois da operação.
   const card = document.getElementById('c' + id);
@@ -2244,6 +2381,39 @@ async function copyScript(id) {
     if (card) card.classList.add('open');
     showToast('📋', 'Copiado (somente texto)');
   }
+}
+
+function openCopySignatureModal(scriptId) {
+  pendingSignatureCopyId = scriptId;
+  const modal = document.getElementById('copySignatureModal');
+  const input = document.getElementById('copySignatureName');
+  const error = document.getElementById('copySignatureError');
+  if (!modal || !input) return;
+  input.value = getSignatureName();
+  if (error) error.textContent = '';
+  modal.classList.add('show');
+  setTimeout(() => input.focus(), 0);
+}
+
+function closeCopySignatureModal() {
+  document.getElementById('copySignatureModal')?.classList.remove('show');
+  pendingSignatureCopyId = null;
+}
+
+function confirmCopySignature() {
+  const input = document.getElementById('copySignatureName');
+  const error = document.getElementById('copySignatureError');
+  const name = input?.value.trim() || '';
+  if (!name) {
+    if (error) error.textContent = 'Informe seu nome e sobrenome para continuar.';
+    input?.focus();
+    return;
+  }
+  const scriptId = pendingSignatureCopyId;
+  setSignatureName(name);
+  closeCopySignatureModal();
+  render();
+  if (scriptId !== null) copyScript(scriptId);
 }
 
 // ============================================================
@@ -2339,7 +2509,7 @@ function addScript() {
     closeModal();
     activeCat = scriptCategories[0];
     searchQ = '';
-    document.getElementById('pageTitle').innerHTML = activeCat;
+    document.getElementById('pageTitle').textContent = getCategoryPath(activeCat);
     saveToLocal();
     buildSidebar();
     render();
@@ -2357,12 +2527,13 @@ function exportJSON() {
   const standard = isStandardMode();
   const payload = {
     schema: standard ? 'scriptz-standard-changes' : 'scriptz-free-project',
-    version: 5,
+    version: 6,
     mode: workspace.mode,
     division: workspace.division,
     scripts: standard ? scripts.filter(script => !script.isStandard) : scripts,
     categories: categoryRegistry,
     categoryParents: categoryParents,
+    categoryLabels: { ...categoryLabels },
     categoryOrder: customCategoryOrder,
     scriptOrders: customScriptOrderByCategory,
     expandedCategories: [...expandedCategories]
@@ -2433,10 +2604,11 @@ function buildStandardTemplatePayload(division) {
   if (parentScripts.length) throw new Error('Categorias com subcategorias não podem ter scripts diretos. Mova esses scripts antes de exportar.');
   return {
     schema: 'scriptz-standard-template',
-    version: 1,
+    version: 2,
     division,
     categories,
     categoryParents: templateParents,
+    categoryLabels: Object.fromEntries(categories.map(category => [category, categoryDisplayName(category, 'personal')])),
     scripts: orderedTemplateScripts(categories).map(script => ({
       id: Number(script.id),
       cat: script.cat,
@@ -2503,6 +2675,7 @@ function importProjectData(imported) {
     }
     const importedCategories = Array.isArray(data.categories) ? data.categories.map(String) : [];
     const importedParents = normalizeCategoryParents(data.categoryParents);
+    const importedLabels = normalizeCategoryLabels(data.categoryLabels);
     const userScripts = data.scripts.map(script => {
       const normalized = normalizeScript({ ...script, isStandard: false }, 'user');
       return normalized;
@@ -2510,6 +2683,7 @@ function importProjectData(imported) {
     scripts = [...standardScripts, ...userScripts];
     categoryRegistry = [...new Set([...importedCategories, ...allScriptCategories(userScripts)])];
     categoryParents = importedParents;
+    categoryLabels = importedLabels;
     customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : categoryRegistry;
     customScriptOrderByCategory = data.scriptOrders || {};
     expandedCategories = new Set(Array.isArray(data.expandedCategories) ? data.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
@@ -2519,6 +2693,7 @@ function importProjectData(imported) {
     scripts = data.scripts.map(script => normalizeScript({ ...script, isStandard: false }, 'user'));
     categoryRegistry = Array.isArray(data.categories) ? data.categories : [];
     categoryParents = normalizeCategoryParents(data.categoryParents);
+    categoryLabels = normalizeCategoryLabels(data.categoryLabels);
     customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : [];
     customScriptOrderByCategory = data.scriptOrders || {};
     expandedCategories = new Set(Array.isArray(data.expandedCategories) ? data.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
@@ -2594,6 +2769,7 @@ async function loadStandardBaseIntoFree(division) {
     scripts = [...scripts, ...incoming];
     categoryRegistry = [...new Set([...categoryRegistry, ...(template.categories || []), ...allScriptCategories(incoming)])];
     categoryParents = { ...categoryParents, ...normalizeCategoryParents(template.categoryParents) };
+    categoryLabels = { ...categoryLabels, ...normalizeCategoryLabels(template.categoryLabels) };
     reconcileCategoryHierarchy();
     customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
     nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
@@ -2608,11 +2784,22 @@ async function loadStandardBaseIntoFree(division) {
 
 function discardFreeTemplates() {
   if (isStandardMode()) return;
-  if (!confirm('Isso apagará todos os seus scriptz deste Modo Editor e o reiniciará em branco. Continuar?')) return;
+  openNoticeModal({
+    title: 'Limpar Modo Editor',
+    message: 'Isso apagará todos os seus scriptz deste Modo Editor e o reiniciará em branco.',
+    note: 'Exporte seus scriptz antes de continuar, se desejar manter uma cópia.',
+    confirmLabel: 'Limpar Modo Editor',
+    danger: true,
+    onConfirm: performDiscardFreeTemplates
+  });
+}
+
+function performDiscardFreeTemplates() {
   localStorage.removeItem(workspaceKey());
   scripts = [];
   categoryRegistry = [];
   categoryParents = {};
+  categoryLabels = {};
   expandedCategories = new Set();
   customCategoryOrder = [];
   customScriptOrderByCategory = {};
@@ -2626,6 +2813,65 @@ function discardFreeTemplates() {
 // ============================================================
 //  TOAST
 // ============================================================
+function openNoticeModal({
+  title,
+  message,
+  note = '',
+  inputLabel = '',
+  inputValue = '',
+  inputPlaceholder = '',
+  confirmLabel = 'Continuar',
+  danger = false,
+  onConfirm = null
+} = {}) {
+  const modal = document.getElementById('noticeModal');
+  if (!modal) return;
+  const titleNode = document.getElementById('noticeTitle');
+  const messageNode = document.getElementById('noticeMessage');
+  const noteNode = document.getElementById('noticeNote');
+  const inputLabelNode = document.getElementById('noticeInputLabel');
+  const input = document.getElementById('noticeInput');
+  const error = document.getElementById('noticeError');
+  const confirmButton = document.getElementById('noticeConfirmBtn');
+  const cancelButton = document.getElementById('noticeCancelBtn');
+  titleNode.textContent = title || 'Aviso';
+  messageNode.textContent = message || '';
+  noteNode.textContent = note;
+  noteNode.hidden = !note;
+  inputLabelNode.textContent = inputLabel;
+  inputLabelNode.hidden = !inputLabel;
+  input.hidden = !inputLabel;
+  input.value = inputValue;
+  input.placeholder = inputPlaceholder;
+  error.textContent = '';
+  confirmButton.textContent = confirmLabel;
+  cancelButton.hidden = false;
+  modal.querySelector('.notice-modal')?.classList.toggle('is-danger', Boolean(danger));
+  noticeAction = { onConfirm, requiresInput: Boolean(inputLabel) };
+  modal.classList.add('show');
+  window.setTimeout(() => (inputLabel ? input : confirmButton)?.focus(), 30);
+}
+
+function closeNoticeModal() {
+  document.getElementById('noticeModal')?.classList.remove('show');
+  noticeAction = null;
+}
+
+function confirmNoticeModal() {
+  if (!noticeAction) return;
+  const input = document.getElementById('noticeInput');
+  const error = document.getElementById('noticeError');
+  const value = normalizeCategoryName(input?.value);
+  if (noticeAction.requiresInput && !value) {
+    error.textContent = 'Preencha este campo para prosseguir.';
+    input?.focus();
+    return;
+  }
+  const action = noticeAction.onConfirm;
+  closeNoticeModal();
+  action?.(value);
+}
+
 function showToast(icon, msg) {
   const t = document.getElementById('toast');
   t.querySelector('.icon').textContent = icon;

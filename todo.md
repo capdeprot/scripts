@@ -438,3 +438,42 @@
 - [x] Ajustar a largura para equilibrar o espaço livre após o e-mail com o preenchimento esquerdo.
 - [x] Preservar legibilidade em desktop e adaptação no mobile.
 - [x] Validar a composição antes da entrega.
+
+## Assinatura obrigatória e acesso ao PDF
+
+- [x] Solicitar nome e sobrenome antes de copiar um script que utiliza assinatura quando não houver assinatura salva.
+- [x] Oferecer no aviso um atalho de preenchimento que sincronize a assinatura padrão.
+- [x] Ajustar a largura do campo de assinatura para sempre mostrar o nome completo salvo.
+- [x] Abrir automaticamente o card com link PDF ao acessar a subcategoria correspondente.
+- [x] Validar os fluxos e gerar o pacote atualizado.
+
+## Autoria, avisos e subcategorias homônimas
+
+- [x] Atualizar a frase de autoria da janela de informações e o e-mail de contato.
+- [x] Aplicar aos avisos existentes o padrão visual do novo aviso de assinatura.
+- [x] Permitir subcategorias com o mesmo nome quando vinculadas a categorias-pai diferentes.
+- [x] Validar os fluxos de aviso e a hierarquia antes da entrega.
+
+## Refinamento da janela de informações v82
+
+- [x] Remover o controle de fechamento em “X”, mantendo somente o botão “Fechar”.
+- [x] Ampliar a janela e equilibrar o espaço horizontal à esquerda e à direita.
+- [x] Manter a frase de autoria em uma linha no desktop e preservar quebra natural no mobile.
+- [x] Confirmar visualmente a janela aberta na prévia de desktop.
+
+## Ajuste da mensagem de contato v83
+
+- [x] Atualizar a mensagem de contato com menção a sugestões.
+- [x] Fixar “envie uma mensagem para” como a segunda linha e o e-mail como a linha abaixo.
+- [x] Confirmar visualmente a quebra em três linhas e a preservação da composição simétrica.
+
+## Simplificação da mensagem de contato v84
+
+- [x] Remover a quebra de linha forçada e manter a nova mensagem em um único parágrafo.
+- [x] Confirmar visualmente a distribuição natural do texto na janela.
+
+## Simetria da janela de informações v85
+
+- [x] Reduzir a largura útil da janela para preservar 40px de margem interna nos dois lados.
+- [x] Manter o botão “Fechar” dentro da mesma coluna de conteúdo, alinhado à margem direita interna.
+- [x] Confirmar visualmente as margens internas simétricas e o botão reposicionado.

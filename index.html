@@ -246,14 +246,45 @@
         </div>
     </div>
 
+    <!-- MODAL: ASSINATURA NECESSÁRIA PARA CÓPIA -->
+    <div class="overlay" id="copySignatureModal" onclick="if(event.target===this) closeCopySignatureModal()">
+        <section class="modal copy-signature-modal" role="dialog" aria-modal="true" aria-labelledby="copySignatureTitle">
+            <h3 id="copySignatureTitle">Informe sua assinatura</h3>
+            <p>Este script inclui assinatura. Informe seu nome e sobrenome para prosseguir com a cópia.</p>
+            <p class="copy-signature-note">Você poderá ajustá-lo a qualquer momento na caixa de assinatura no canto inferior direito da tela.</p>
+            <label for="copySignatureName">Nome e sobrenome</label>
+            <input type="text" id="copySignatureName" autocomplete="name" placeholder="Seu nome" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmCopySignature();}">
+            <p class="copy-signature-error" id="copySignatureError" role="alert" aria-live="polite"></p>
+            <div class="modal-btns">
+                <button type="button" class="btn-sec" onclick="closeCopySignatureModal()">Cancelar</button>
+                <button type="button" class="btn-primary" onclick="confirmCopySignature()">Salvar e copiar</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL: AVISOS E CONFIRMAÇÕES DO SCRIPTZ -->
+    <div class="overlay" id="noticeModal" onclick="if(event.target===this) closeNoticeModal()">
+        <section class="modal notice-modal" role="dialog" aria-modal="true" aria-labelledby="noticeTitle" aria-describedby="noticeMessage">
+            <h3 id="noticeTitle"></h3>
+            <p id="noticeMessage"></p>
+            <p class="notice-note" id="noticeNote" hidden></p>
+            <label id="noticeInputLabel" for="noticeInput" hidden></label>
+            <input type="text" id="noticeInput" hidden autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNoticeModal();}">
+            <p class="notice-error" id="noticeError" role="alert" aria-live="polite"></p>
+            <div class="modal-btns">
+                <button type="button" class="btn-sec" id="noticeCancelBtn" onclick="closeNoticeModal()">Cancelar</button>
+                <button type="button" class="btn-primary" id="noticeConfirmBtn" onclick="confirmNoticeModal()">Continuar</button>
+            </div>
+        </section>
+    </div>
+
     <!-- MODAL: INFORMAÇÕES, AJUDA E FEEDBACK -->
     <div class="overlay" id="helpInfoModal" onclick="if(event.target===this) closeHelpInfoModal()">
         <section class="modal help-info-modal" role="dialog" aria-modal="true" aria-labelledby="helpInfoTitle">
-            <button type="button" class="help-info-close" aria-label="Fechar informações" onclick="closeHelpInfoModal()">✕</button>
             <p class="help-info-kicker">INFORMAÇÕES, AJUDA E FEEDBACK</p>
             <h3 id="helpInfoTitle" class="help-brand-line"><span class="help-brand-envelope" aria-hidden="true"></span><span>scriptz</span></h3>
-            <p class="help-author-line">O Scriptz é um projeto mantido e desenvolvido por <strong>Anderson Andrade</strong>.</p>
-            <p>Para informações, ajuda ou feedback, entre em contato pelo e-mail <a href="mailto:afandrade@prefeitura.sp.gov.br">afandrade@prefeitura.sp.gov.br</a>.</p>
+            <p class="help-author-line">Scriptz é um projeto idealizado, desenvolvido e mantido por <strong>Anderson Andrade</strong>.</p>
+            <p>Para informações, ajuda, feedback ou sugestões, envie uma mensagem para <a href="mailto:anderson-andrade@outlook.com">anderson-andrade@outlook.com</a>.</p>
             <div class="help-license-note"><strong>Licença de uso:</strong> uso interno em SMUL/CAP.</div>
             <div class="modal-btns"><button type="button" class="btn-sec" onclick="closeHelpInfoModal()">Fechar</button></div>
         </section>
@@ -297,6 +328,6 @@
     <!-- TOAST -->
     <div class="toast" id="toast"><span class="icon"></span><span class="msg"></span></div>
 
-    <script src="js/app.js?v=52"></script>
+    <script src="js/app.js?v=85"></script>
 </body>
 </html>

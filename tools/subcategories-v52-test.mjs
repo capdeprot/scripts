@@ -98,25 +98,30 @@ try {
       && Number(signatureStyle.minHeight.replace('px', '')) >= 34;
     const signaturePlaceholder = signatureInput?.placeholder === 'Seu nome';
     const signatureLabel = document.querySelector('label[for="userNameInput"]')?.textContent.trim() === 'Atenciosamente,';
+    const savedLongSignature = 'Anderson Andrade de Oliveira';
+    signatureInput.value = savedLongSignature;
+    syncSignatureInputWidth();
+    const savedSignatureFits = signatureInput.scrollWidth <= signatureInput.clientWidth;
     const helpButton = document.getElementById('helpInfoBtn');
     const helpButtonVisible = Boolean(helpButton && getComputedStyle(helpButton).display !== 'none');
     const helpTooltipText = getComputedStyle(helpButton, '::after').content.includes('Informações, ajuda e feedback');
     helpButton?.click();
     const helpModalVisible = document.getElementById('helpInfoModal')?.classList.contains('show') === true;
     const helpModalContent = document.getElementById('helpInfoModal')?.textContent.includes('Anderson Andrade')
-      && document.getElementById('helpInfoModal')?.textContent.includes('afandrade@prefeitura.sp.gov.br')
+      && document.getElementById('helpInfoModal')?.textContent.includes('anderson-andrade@outlook.com')
+      && document.getElementById('helpInfoModal')?.textContent.includes('envie uma mensagem para')
       && document.getElementById('helpInfoModal')?.textContent.includes('uso interno em SMUL/CAP');
     const helpBrandUsesLowercase = document.getElementById('helpInfoTitle')?.textContent.trim() === 'scriptz'
       && Boolean(document.querySelector('.help-brand-envelope'));
     const helpAuthorFitsDesktop = getComputedStyle(document.querySelector('.help-author-line')).whiteSpace === 'nowrap';
-    const helpModalBalancedWidth = Number.parseFloat(getComputedStyle(document.querySelector('.help-info-modal')).width) <= 560;
+    const helpModalBalancedWidth = Number.parseFloat(getComputedStyle(document.querySelector('.help-info-modal')).width) <= 600;
     closeHelpInfoModal();
     categoryRegistry = ['Atendimento', 'Fiscalização', 'Geral', 'Protocolos', 'Prazos', 'Serviços', 'Solicitações'];
     categoryParents = { Protocolos: 'Atendimento', Prazos: 'Atendimento', Solicitações: 'Serviços' };
     customCategoryOrder = ['Atendimento', 'Fiscalização', 'Geral', 'Serviços', 'Protocolos', 'Prazos', 'Solicitações'];
     expandedCategories = new Set();
     scripts = [
-      normalizeScript({ id: 1, cat: 'Protocolos', cats: ['Protocolos'], title: 'Protocolo recebido', html: '<p>Teste 1</p>' }),
+      normalizeScript({ id: 1, cat: 'Protocolos', cats: ['Protocolos'], title: 'Protocolo recebido', html: '<p>Teste 1</p>', hasSignature: true }),
       normalizeScript({ id: 2, cat: 'Prazos', cats: ['Prazos'], title: 'Prazo de atendimento', html: '<p>Teste 2</p>' }),
       normalizeScript({ id: 3, cat: 'Fiscalização', cats: ['Fiscalização'], title: 'Vistoria agendada', html: '<p>Teste 3</p>' }),
       normalizeScript({ id: 4, cat: 'Solicitações', cats: ['Solicitações'], title: 'Solicitação recebida', html: '<p>Teste 4</p>' })
@@ -137,10 +142,21 @@ try {
     const newScriptHiddenOnParent = !isNewScriptButtonVisible();
     document.getElementById('newSubcategoryName').value = 'Documentos';
     createSubcategoryFromMain();
-    const createdSubcategory = categoryParents.Documentos === 'Atendimento' && getChildCategories('Atendimento').includes('Documentos');
+    const documentosKey = getChildCategories('Atendimento').find(category => categoryDisplayName(category) === 'Documentos');
+    const createdSubcategory = categoryParents[documentosKey] === 'Atendimento' && Boolean(documentosKey);
     const choiceGridColumns = getComputedStyle(document.querySelector('.subcategory-choice-list')).gridTemplateColumns.split(' ').length;
     setCat('Protocolos');
     const childTitles = getFilteredScripts().map(script => script.title);
+    document.getElementById('userNameInput').value = '';
+    localStorage.removeItem('user_signature');
+    copyScript(1);
+    const signaturePromptBlocksCopy = document.getElementById('copySignatureModal')?.classList.contains('show') === true;
+    const signaturePromptHasShortcut = Boolean(document.getElementById('copySignatureName'))
+      && document.getElementById('copySignatureModal')?.textContent.includes('canto inferior direito');
+    document.getElementById('copySignatureName').value = 'Nome Completo';
+    confirmCopySignature();
+    const signatureShortcutSyncs = document.getElementById('userNameInput').value === 'Nome Completo'
+      && localStorage.getItem('user_signature') === 'Nome Completo';
     const newScriptVisibleOnLeaf = isNewScriptButtonVisible();
     const backButton = document.querySelector('.subcategory-return button');
     const hasBackButton = Boolean(backButton);
@@ -171,7 +187,7 @@ try {
     closeModal();
     const persisted = JSON.parse(localStorage.getItem('scriptz_workspace_free'));
     importProjectData(persisted);
-    const importedParents = categoryParents.Documentos === 'Atendimento' && categoryParents.Protocolos === 'Atendimento';
+    const importedParents = categoryParents[documentosKey] === 'Atendimento' && categoryParents.Protocolos === 'Atendimento';
     let rejectsUnclassifiedImport = false;
     try {
       importProjectData({ schema: 'scriptz-free-project', scripts: [{ id: 777, title: 'Sem categoria', html: '<p>Teste</p>' }], categories: [] });
@@ -214,24 +230,33 @@ try {
     showSubcategoryCreator();
     document.getElementById('newSubcategoryName').value = 'Ofícios';
     createSubcategoryFromMain();
-    const subcategoryPathCreated = getCategoryParent('Ofícios') === 'Arquivamento' && !getAssignableCategories().includes('Arquivamento');
-    setCat('Ofícios');
+    const oficiosKey = getChildCategories('Arquivamento').find(category => categoryDisplayName(category) === 'Ofícios');
+    const subcategoryPathCreated = getCategoryParent(oficiosKey) === 'Arquivamento' && !getAssignableCategories().includes('Arquivamento');
+    setCat(oficiosKey);
     const newScriptHiddenOnEmptySubcategory = !isNewScriptButtonVisible();
     const emptySubcategoryPrimaryAction = Boolean(document.querySelector('.category-empty-primary')) && !document.querySelector('.category-empty-secondary');
     const emptySubcategoryHasReturn = Boolean(document.querySelector('.subcategory-return button'));
     document.querySelector('.category-empty-primary')?.click();
-    const emptySubcategoryPreselected = document.getElementById('newCategoryPrimary')?.value === 'Ofícios';
+    const emptySubcategoryPreselected = document.getElementById('newCategoryPrimary')?.value === oficiosKey;
     closeModal();
     registerCategory('Externo');
-    registerCategory('Retornos', 'Externo');
+    const retornosExternoKey = registerCategory('Retornos', 'Externo');
     const externalScript = normalizeScript({ id: 9900, cat: 'Externo', cats: ['Externo'], title: 'Contato externo', html: '<p>Teste 5</p>' });
     scripts.push(externalScript);
-    const originalConfirm = window.confirm;
-    window.confirm = () => true;
-    deleteCategory('Externo');
-    window.confirm = originalConfirm;
-    const deleteReparentsChildren = !categoryParents.Retornos && getRootCategories().includes('Retornos');
+    performDeleteCategory('Externo');
+    const deleteReparentsChildren = !categoryParents[retornosExternoKey] && getRootCategories().includes(retornosExternoKey);
     const deleteMovesDirectScripts = scripts.find(script => script.id === 9900)?.cat === 'Geral';
+    const duplicateAtendimentoKey = registerCategory('Mesmo nome', 'Atendimento');
+    const duplicateArquivamentoKey = registerCategory('Mesmo nome', 'Arquivamento');
+    const duplicateSameParentKey = registerCategory('Mesmo nome', 'Atendimento');
+    const allowsSameNamedSubcategoriesUnderDifferentParents = Boolean(duplicateAtendimentoKey)
+      && Boolean(duplicateArquivamentoKey)
+      && duplicateAtendimentoKey !== duplicateArquivamentoKey
+      && categoryDisplayName(duplicateAtendimentoKey) === 'Mesmo nome'
+      && categoryDisplayName(duplicateArquivamentoKey) === 'Mesmo nome'
+      && categoryParents[duplicateAtendimentoKey] === 'Atendimento'
+      && categoryParents[duplicateArquivamentoKey] === 'Arquivamento'
+      && !duplicateSameParentKey;
     const started = performance.now();
     for (let index = 0; index < 495; index += 1) {
       const category = index % 2 ? 'Protocolos' : 'Fiscalização';
@@ -299,12 +324,23 @@ try {
     const personalCategoryCreated = getCategories('personal').includes('Pessoal nova') && !getCategories('standard').includes('Pessoal nova');
     setLibrary('standard');
     const standardContentStillIsolated = getFilteredScripts().length === 1 && getFilteredScripts()[0].title === 'Modelo institucional';
+    activeLibrary = 'personal';
+    categoryRegistry = [PDF_GUIDE_CATEGORY];
+    categoryParents = {};
+    customCategoryOrder = [PDF_GUIDE_CATEGORY];
+    scripts = [normalizeScript({ id: 9001, cat: PDF_GUIDE_CATEGORY, cats: [PDF_GUIDE_CATEGORY], title: 'Guia PDF', html: '<a href="assets/docs/padrao-escrita-observacoes.pdf">Abrir PDF</a>', hasSignature: false })];
+    activeCat = PDF_GUIDE_CATEGORY;
+    isInitialLanding = false;
+    render();
+    openPdfGuideCardWhenRelevant();
+    const pdfGuideStartsOpen = document.getElementById('c9001')?.classList.contains('open') === true;
     return {
       sidebarOnlyRoots,
       signatureDockInMain,
       signatureTypography,
       signaturePlaceholder,
       signatureLabel,
+      savedSignatureFits,
       helpButtonVisible,
       helpTooltipText,
       helpModalVisible,
@@ -323,6 +359,9 @@ try {
       mainShowsChildChoices,
       parentTitles,
       childTitles,
+      signaturePromptBlocksCopy,
+      signaturePromptHasShortcut,
+      signatureShortcutSyncs,
       createdSubcategory,
       hasBackButton,
       backReturnsToRoot,
@@ -333,7 +372,7 @@ try {
       newScriptGreetingStartsOff,
       newScriptSignatureStartsOff,
       rejectsUnclassifiedImport,
-      persistedParents: persisted.categoryParents?.Documentos === 'Atendimento',
+      persistedParents: persisted.categoryParents?.[documentosKey] === 'Atendimento' && persisted.categoryLabels?.[documentosKey] === 'Documentos',
       persistedVersion: persisted.version,
       importedParents,
       editorLoadedOnDemand,
@@ -356,6 +395,7 @@ try {
       emptySubcategoryPreselected,
       deleteReparentsChildren,
       deleteMovesDirectScripts,
+      allowsSameNamedSubcategoriesUnderDifferentParents,
       standardSectionVisible,
       standardNoPersonalCategory,
       libraryIndicatorInitiallyOpen,
@@ -370,6 +410,7 @@ try {
       personalNewScriptVisible,
       personalCategoryCreated,
       standardContentStillIsolated,
+      pdfGuideStartsOpen,
       renderMilliseconds,
       sidebarCategoryCount: editorSidebarCategoryCount,
       noNavigationError: editorNavigationHealthy
@@ -798,6 +839,7 @@ try {
     && desktop.signatureTypography
     && desktop.signaturePlaceholder
     && desktop.signatureLabel
+    && desktop.savedSignatureFits
     && desktop.helpButtonVisible
     && desktop.helpTooltipText
     && desktop.helpModalVisible
@@ -824,6 +866,9 @@ try {
     && desktop.mainShowsChildChoices
     && JSON.stringify(desktop.parentTitles) === JSON.stringify([])
     && JSON.stringify(desktop.childTitles) === JSON.stringify(['Protocolo recebido'])
+    && desktop.signaturePromptBlocksCopy
+    && desktop.signaturePromptHasShortcut
+    && desktop.signatureShortcutSyncs
     && desktop.createdSubcategory
     && desktop.hasBackButton
     && desktop.backReturnsToRoot
@@ -832,7 +877,7 @@ try {
     && desktop.optionHasSubcategory
     && desktop.rejectsUnclassifiedImport
     && desktop.persistedParents
-    && desktop.persistedVersion === 5
+    && desktop.persistedVersion === 6
     && desktop.importedParents
     && desktop.editorLoadedOnDemand
     && desktop.editAllowsOnlyExistingCategories
@@ -857,6 +902,7 @@ try {
     && desktop.emptySubcategoryPreselected
     && desktop.deleteReparentsChildren
     && desktop.deleteMovesDirectScripts
+    && desktop.allowsSameNamedSubcategoriesUnderDifferentParents
     && desktop.standardSectionVisible
     && desktop.standardNoPersonalCategory
     && desktop.libraryIndicatorInitiallyOpen
@@ -871,6 +917,7 @@ try {
     && desktop.personalNewScriptVisible
     && desktop.personalCategoryCreated
     && desktop.standardContentStillIsolated
+    && desktop.pdfGuideStartsOpen
     && desktop.renderMilliseconds < 600
     && desktop.sidebarCategoryCount >= 4
     && desktop.noNavigationError

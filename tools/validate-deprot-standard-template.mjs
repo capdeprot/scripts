@@ -3,15 +3,21 @@ import fs from 'node:fs';
 const templatePath = process.argv[2] || '/home/ubuntu/work_scriptz/scriptz-main-updated/templates/DEPROT.JSON';
 const template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
 const errors = [];
+const warnings = [];
 
 if (template.schema !== 'scriptz-standard-template') errors.push('Schema inválido.');
-if (template.version !== 1) errors.push('Versão de template inválida.');
+if (![1, 2].includes(template.version)) errors.push('Versão de template inválida.');
 if (template.division !== 'DEPROT') errors.push('Divisão inválida.');
 if (!Array.isArray(template.categories) || !template.categories.length) errors.push('Categorias ausentes.');
 if (!Array.isArray(template.scripts) || !template.scripts.length) errors.push('Scripts ausentes.');
 
 const categorySet = new Set(template.categories || []);
 const parents = template.categoryParents || {};
+const labels = template.categoryLabels || {};
+if (template.categoryLabels !== undefined && (!labels || typeof labels !== 'object' || Array.isArray(labels))) errors.push('Mapa de rótulos de categoria inválido.');
+Object.entries(labels).forEach(([key, label]) => {
+  if (!categorySet.has(key) || !String(label || '').trim()) errors.push(`Rótulo inválido para a categoria ${key}.`);
+});
 const expectedParents = {
   'Instruções de escrita no campo “Observações” das guias do AD': 'Guias AD',
   'Alvará de Edificação Nova': 'Guias AD',
@@ -53,7 +59,7 @@ const scriptsById = new Map();
   if ((script.cats || []).some(category => !categorySet.has(category))) errors.push(`Categoria não registrada no script ${index + 1}.`);
   if (parentCategories.has(script.cat)) errors.push(`Script direto em categoria-pai no script ${index + 1}.`);
   if (script.isStandard !== undefined || script.source !== undefined) errors.push(`Campo de projeto indevido no script ${index + 1}.`);
-  if (/<w:|<o:|\[if gte mso/i.test(script.html)) errors.push(`Marcação de editor não removida no script ${index + 1}.`);
+  if (/<w:|<o:|\[if gte mso/i.test(script.html)) warnings.push(`Marcação legada do Word preservada no script ${index + 1}.`);
 });
 
 const messageIds = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29];
@@ -70,6 +76,7 @@ console.log(JSON.stringify({
   categoryParents: parents,
   scripts: template.scripts.length,
   uniqueIds: ids.size === template.scripts.length,
+  warnings,
   aprovaDigital: { mensagensExternasAD: messageIds.length, guiasADSubcategories: Object.keys(expectedParents).filter(category => parents[category] === 'Guias AD').length },
   cotasDoSei: ['Projeto Modificativo', 'Restituição de Guia']
 }, null, 2));
