@@ -350,7 +350,7 @@
         "Mensagens externas AD"
       ],
       "title": "Assunto Desmembramento com Informações no CARD 3 e 4 iguais",
-      "html": "<p>Verificamos que, no CARD 3 – Tipo de Pedido, a\npergunta&nbsp;“O parcelamento proposto será em terreno atualmente\nvazio?”&nbsp;apresenta a mesma resposta da pergunta&nbsp;“Há edificação(ões)\nexistente(s) no terreno?”, localizada no CARD 4 – Dados do Terreno. Isso torna\nas informações incoerentes.</p>\n\n<p>Sendo assim, solicitamos que essas informações sejam\nrevistas e que o protocolo seja devolvido para prosseguimento da análise.</p>",
+      "html": "<p>Verificamos que, no CARD 3 – Tipo de Pedido, a\npergunta&nbsp;“O parcelamento proposto será em terreno atualmente vazio?”&nbsp;apresenta a mesma resposta da pergunta&nbsp;“Há edificação(ões)\nexistente(s) no terreno?”, localizada no CARD 4 – Dados do Terreno. Isso torna\nas informações incoerentes.</p>\n\n<p>Sendo assim, solicitamos que essas informações sejam\nrevistas e que o protocolo seja devolvido para prosseguimento da análise.</p>",
       "greetingMode": "off",
       "hasGreeting": false,
       "hasSignature": false,
@@ -363,7 +363,7 @@
         "Mensagens externas AD"
       ],
       "title": "Projeto incompatível (erro ao abrir .dwf)",
-      "html": "<p>Verificamos que o\nprojeto anexado no CARD <i>[[inserir número e nome do CARD]]</i> está apresentando falha\nao ser aberto.</p>\n\n<p>Sendo assim,\nsolicitamos que seja anexado um projeto compatível com o Autodesk 2013, que o\narquivo seja salvo e que o protocolo seja reenviado para prosseguimento da\nanálise.</p>",
+      "html": "<p>Verificamos que o\nprojeto anexado no CARD <i>[[inserir número e nome do CARD]]</i> está apresentando falha\nao ser aberto.</p>\n\n<p>Sendo assim,solicitamos que seja anexado um projeto compatível com o Autodesk 2013, que o arquivo seja salvo e que o protocolo seja reenviado para prosseguimento da análise.</p>",
       "greetingMode": "off",
       "hasGreeting": false,
       "hasSignature": false,
