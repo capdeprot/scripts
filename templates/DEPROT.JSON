@@ -363,7 +363,7 @@
         "Mensagens externas AD"
       ],
       "title": "Projeto incompatível (erro ao abrir .dwf)",
-      "html": "<p>Verificamos que o\nprojeto anexado no CARD <i>[[inserir número e nome do CARD]]</i> está apresentando falha\nao ser aberto.</p>\n\n<p>Sendo assim,solicitamos que seja anexado um projeto compatível com o Autodesk 2013, que o arquivo seja salvo e que o protocolo seja reenviado para prosseguimento da análise.</p>",
+      "html": "<p>Verificamos que o\nprojeto anexado no CARD <i>[[inserir número e nome do CARD]]</i> está apresentando falha\nao ser aberto.</p>\n\n<p>Sendo assim, solicitamos que seja anexado um projeto compatível com o Autodesk 2013, que o arquivo seja salvo e que o protocolo seja reenviado para prosseguimento da análise.</p>",
       "greetingMode": "off",
       "hasGreeting": false,
       "hasSignature": false,
