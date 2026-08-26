@@ -1,6 +1,6 @@
 {
   "schema": "scriptz-standard-template",
-  "version": 1,
+  "version": 2,
   "division": "DEPROT",
   "categories": [
     "E-mail",
@@ -53,6 +53,34 @@
     "Restituição de Guia": "Cotas do SEI",
     "Solicitando documentos e/ou ajustes": "E-mail",
     "Rádio-Base (ERB)": "Guias AD"
+  },
+  "categoryLabels": {
+    "E-mail": "E-mail",
+    "Emissão de guia": "Emissão de guia",
+    "Envio de Protocolo": "Envio de Protocolo",
+    "Alvará de Autorização Para Evento Temporário": "Alvará de Autorização Para Evento Temporário",
+    "Encaminhamento": "Encaminhamento",
+    "Andamento de Processo": "Andamento de Processo",
+    "Mensagens externas AD": "Mensagens externas AD",
+    "Guias AD": "Guias AD",
+    "Instruções de escrita no campo “Observações” das guias do AD": "Instruções de escrita no campo “Observações” das guias do AD",
+    "Alvará de Edificação Nova": "Alvará de Edificação Nova",
+    "Alvará de Reforma": "Alvará de Reforma",
+    "Projeto Modificativo de Edificação Nova": "Projeto Modificativo de Edificação Nova",
+    "Projeto Modificativo de Reforma": "Projeto Modificativo de Reforma",
+    "Alvará de Desmembramento": "Alvará de Desmembramento",
+    "Alvará de Autorização para Avanço de Grua": "Alvará de Autorização para Avanço de Grua",
+    "Alvará de Autorização para Estande de Vendas": "Alvará de Autorização para Estande de Vendas",
+    "Alvará de Funcionamento para Local de Reunião": "Alvará de Funcionamento para Local de Reunião",
+    "Certificado de Segurança": "Certificado de Segurança",
+    "Certificado de Acessibilidade": "Certificado de Acessibilidade",
+    "Cadastro de Sistema Especial de Segurança": "Cadastro de Sistema Especial de Segurança",
+    "Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro": "Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro",
+    "Cotas do SEI": "Cotas do SEI",
+    "Projeto Modificativo": "Projeto Modificativo",
+    "Restituição de Guia": "Restituição de Guia",
+    "Solicitando documentos e/ou ajustes": "Solicitando documentos e/ou ajustes",
+    "Rádio-Base (ERB)": "Rádio-Base (ERB)"
   },
   "scripts": [
     {
@@ -762,6 +790,19 @@
       ],
       "title": "Comprovante de pagamento incompleto",
       "html": "<p>Verificamos que o comprovante de pagamento encaminhado não segue os padrões estabelecidos.</p><p>É necessário encaminhar o comprovante de pagamento completo, com código de barras e código verificador / autenticador.</p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 56,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Vistas de Processo",
+      "html": "<!--StartFragment--><div>Para protocolar um Pedido de Vistas, é necessário apresentar:</div><ul><li><div>Requerimento solicitando vistas do processo, devidamente preenchido e assinado (formulário em anexo);</div></li><li><div>Documento oficial de identificação com foto (RG, CNH ou OAB)&nbsp;do requerente;</div></li><li>CPF, caso não conste no documento de identificação;</li><li>Procuração, quando o pedido for realizado por representante legal, acompanhada do documento de identidade do procurador;</li><li><div>Documento que comprove a representação da empresa, quando o interessado for pessoa jurídica (Contrato Social, Estatuto, Ata de Eleição ou Cartão CNPJ, conforme o caso).</div></li></ul><!--EndFragment-->",
       "greetingMode": "auto",
       "hasGreeting": true,
       "hasSignature": true,
