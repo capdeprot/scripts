@@ -477,3 +477,47 @@
 - [x] Reduzir a largura útil da janela para preservar 40px de margem interna nos dois lados.
 - [x] Manter o botão “Fechar” dentro da mesma coluna de conteúdo, alinhado à margem direita interna.
 - [x] Confirmar visualmente as margens internas simétricas e o botão reposicionado.
+
+## Hardening técnico inicial
+
+- [x] Sanitizar HTML de scripts preservando apenas a formatação necessária e links seguros.
+- [x] Validar rigorosamente arquivos JSON importados, incluindo limites e chaves perigosas.
+- [x] Bloquear protocolos de URL inseguros em links editados, importados e renderizados.
+- [x] Limitar o cache PWA aos recursos públicos e estáticos explicitamente aprovados.
+- [x] Criar regressões de segurança e validar os fluxos existentes antes da entrega.
+
+## Correção de quebras de linha v87
+
+- [x] Restaurar a base v86 sem estrutura institucional e incorporar o JSON enviado como template DEPROT.
+- [x] Substituir a leitura visual por conversão estrutural de HTML para texto simples.
+- [x] Normalizar quebras internas e preservar parágrafos, linhas explícitas e listas.
+- [x] Preservar a cópia HTML para e-mails e editores ricos.
+- [x] Validar sintaxe, template DEPROT e regressão desktop/mobile.
+- [x] Confirmar no navegador a conversão do modelo de metragem sem quebras internas indevidas.
+
+## Gestão e busca de Meus Scripts
+
+- [x] Mapear por que a edição de scripts pessoais não fica disponível.
+- [x] Exibir “Criar categoria” quando Meus Scripts estiver vazio.
+- [x] Atualizar imediatamente a categoria ou subcategoria aberta depois de criar ou salvar um item.
+- [x] Adicionar busca contextual ao lado da ordenação na área principal.
+- [x] Transformar a pesquisa da sidebar em busca geral do contexto.
+- [x] Validar os novos fluxos em desktop e mobile antes de gerar o pacote.
+
+### Reprodução inicial
+
+- [x] Carregar um script pessoal na biblioteca Meus Scripts para testar edição e estado vazio separadamente.
+- [x] Confirmar que um script pessoal não é padrão e que o editor é habilitado quando a biblioteca pessoal fica ativa.
+
+## Criação inicial orientada por categoria
+
+- [x] Disponibilizar Criar script no estado inicial de Meus Scriptz quando houver categoria ou subcategoria pessoal existente.
+- [x] Exigir a escolha de categoria ou subcategoria existente nesse fluxo de criação inicial.
+- [x] Aplicar o mesmo fluxo de criação inicial ao Modo Editor.
+- [x] Exibir Criar categoria quando o Modo Editor estiver vazio.
+- [x] Validar desktop, mobile, persistência e vínculo obrigatório antes de gerar o pacote revisado.
+
+## Correção de visibilidade do seletor inicial
+
+- [x] Corrigir a exibição do dropdown obrigatório de categoria ou subcategoria no formulário aberto pela tela inicial.
+- [x] Validar a visibilidade e a seleção nos contextos Meus Scriptz e Modo Editor, em desktop e mobile.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scriptz-shell-v85';
+const CACHE_NAME = 'scriptz-shell-v90';
 const APP_SHELL = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const APP_SHELL = [
   './templates/CAP-G.JSON',
   './templates/SMUL-CAP.JSON',
   './templates/SALA-ARTHUR-SABOYA.JSON',
+  './assets/docs/padrao-escrita-observacoes.pdf',
   './assets/favicon.svg',
   './assets/favicon.png',
   './assets/pwa-icon-192.png',
@@ -18,27 +19,48 @@ const APP_SHELL = [
   './assets/scriptz_icone_branco_transparente.png'
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+const PUBLIC_PATHS = new Set(APP_SHELL.map(resource => new URL(resource, self.registration.scope).pathname));
+const shellRequest = resource => new Request(new URL(resource, self.registration.scope).href);
+const cacheKeyFor = request => new Request(new URL(request.url).origin + new URL(request.url).pathname);
+
+function isApprovedPublicRequest(request) {
+  if (request.method !== 'GET') return false;
+  const url = new URL(request.url);
+  return url.origin === self.location.origin && PUBLIC_PATHS.has(url.pathname);
+}
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(shellRequest))));
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+    caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+self.addEventListener('fetch', event => {
+  if (event.request.mode === 'navigate' && new URL(event.request.url).origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(shellRequest('./index.html')))
+    );
+    return;
+  }
+
+  if (!isApprovedPublicRequest(event.request)) return;
+
+  const cacheKey = cacheKeyFor(event.request);
   event.respondWith(
     fetch(event.request)
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      .then(response => {
+        if (response.ok && response.type === 'basic') {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(cacheKey, copy));
+        }
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+      .catch(() => caches.match(cacheKey))
   );
 });

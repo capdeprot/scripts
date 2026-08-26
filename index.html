@@ -29,7 +29,7 @@
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=3" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=3" />
     <link rel="shortcut icon" href="assets/favicon.png?v=3" />
-    <link rel="manifest" href="manifest.webmanifest?v=52" />
+    <link rel="manifest" href="manifest.webmanifest?v=90" />
     <meta name="theme-color" content="#101a43" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,7 +75,7 @@
                 </div>
             </div>
             <div class="sb-search">
-                <input type="text" id="searchInput" placeholder="🔍 Buscar pelo título do script…" oninput="onSearch(this.value)">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar em todo o contexto…" oninput="onGlobalSearch(this.value)">
             </div>
             <div id="sidebarNav"></div>
             <div class="sb-foot">
@@ -113,6 +113,7 @@
                 </div>
                 <button class="mobile-search-toggle" id="mobileSearchToggle" type="button" aria-controls="mobileSearchBar" aria-expanded="false" aria-label="Pesquisar scripts">⌕</button>
                 <div class="top-actions">
+                    <label class="context-search" for="contextSearchInput"><span class="sr-only">Buscar nesta categoria</span><input type="search" id="contextSearchInput" placeholder="Buscar nesta categoria…" oninput="onContextSearch(this.value)"></label>
                     <select class="sort-select" id="sortSelect" onchange="applySort()">
                         <option value="custom" data-desktop-label="Ordem personalizada" data-mobile-label="Manual">Ordem personalizada</option>
                         <option value="title" data-desktop-label="Ordem alfabética" data-mobile-label="A–Z">Ordem alfabética</option>
@@ -122,7 +123,7 @@
             </div>
             <div class="mobile-search-bar" id="mobileSearchBar" aria-hidden="true">
                 <span class="mobile-search-glyph" aria-hidden="true">⌕</span>
-                <input type="search" id="mobileSearchInput" placeholder="Buscar pelo título do script…" aria-label="Buscar pelo título do script" oninput="onSearch(this.value)">
+                <input type="search" id="mobileSearchInput" placeholder="Buscar nesta categoria…" aria-label="Buscar nesta categoria" oninput="onContextSearch(this.value)">
                 <button type="button" onclick="toggleMobileSearch()" aria-label="Fechar pesquisa">✕</button>
             </div>
             <div id="cards"><div class="loading">⏳ Carregando scriptz…</div></div>
@@ -150,7 +151,7 @@
             <div class="field">
                 <label>Vinculação <span class="field-required">obrigatória</span></label>
                 <div class="category-select-stack dynamic-category-select-stack">
-                    <input type="hidden" id="newCategoryPrimary">
+                    <select id="newCategoryPrimary" class="category-select" aria-label="Categoria ou subcategoria principal" onchange="onNewPrimaryCategoryChange()" hidden></select>
                     <div id="newCategoryContext" class="new-category-context" aria-live="polite"></div>
                     <div id="newCategorySelects" class="category-select-list" aria-label="Categorias ou subcategorias adicionais"></div>
                 </div>
@@ -328,6 +329,6 @@
     <!-- TOAST -->
     <div class="toast" id="toast"><span class="icon"></span><span class="msg"></span></div>
 
-    <script src="js/app.js?v=85"></script>
+    <script src="js/app.js?v=90"></script>
 </body>
 </html>

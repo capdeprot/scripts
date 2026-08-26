@@ -3,7 +3,7 @@ import { stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, normalize, resolve } from 'node:path';
 
-const root = '/home/ubuntu/work_scriptz/scriptz-main-updated';
+const root = '/home/ubuntu/work_scriptz/scriptz-v86-clipboard';
 const port = Number(process.env.PORT || 4187);
 const mime = {
   '.css': 'text/css; charset=utf-8',

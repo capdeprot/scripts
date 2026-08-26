@@ -5,6 +5,8 @@ let scripts = [];
 let nextId = 100;
 let activeCat = 'all';
 let searchQ = '';
+let globalSearchQ = '';
+let lastGlobalSearchCategory = 'all';
 let originalScripts = [];
 let sortBy = 'custom';
 let customCategoryOrder = [];
@@ -38,6 +40,17 @@ const PDF_GUIDE_CATEGORY = 'Instruções de escrita no campo “Observações”
 const PDF_GUIDE_ASSET = 'assets/docs/padrao-escrita-observacoes.pdf';
 
 const SCRIPT_LIMITS = Object.freeze({ standard: 300, free: 500 });
+const SECURITY_LIMITS = Object.freeze({
+  maxImportBytes: 2 * 1024 * 1024,
+  maxHtmlChars: 60000,
+  maxTitleChars: 180,
+  maxCategoryChars: 180,
+  maxCategories: 2000,
+  maxLinkChars: 2048,
+  maxJsonKeys: 80
+});
+const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
+const DANGEROUS_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 const CATEGORY_ACTION_VALUES = new Set(['__new__', '__new_sub__']);
 const CATEGORY_KEY_SEPARATOR = '::';
 const STANDARD_DIVISIONS = Object.freeze({
@@ -324,7 +337,7 @@ function isStandardMode() {
 }
 
 function isStandardScript(script) {
-  return isStandardMode() && script.isStandard === true;
+  return isStandardMode() && script.isStandard === true && script.source !== 'user';
 }
 
 function isStandardCategory(category) {
@@ -341,7 +354,9 @@ function activeLibraryKey() {
 
 function getLibraryScripts(library = activeLibraryKey()) {
   if (!isStandardMode()) return scripts;
-  return library === 'standard' ? scripts.filter(script => script.isStandard) : scripts.filter(script => !script.isStandard);
+  return library === 'standard'
+    ? scripts.filter(script => isStandardScript(script))
+    : scripts.filter(script => !isStandardScript(script));
 }
 
 function getLibraryCategoryRegistry(library = activeLibraryKey()) {
@@ -411,7 +426,38 @@ function allScriptCategories(collection = getLibraryScripts()) {
 }
 
 function normalizeCategoryName(value) {
-  return String(value || '').trim();
+  return String(value || '').trim().slice(0, SECURITY_LIMITS.maxCategoryChars);
+}
+
+function isSafeRecord(value, label = 'Objeto') {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} inválido.`);
+  const keys = Object.keys(value);
+  if (keys.length > SECURITY_LIMITS.maxJsonKeys) throw new Error(`${label} excede a quantidade permitida de campos.`);
+  if (keys.some(key => DANGEROUS_OBJECT_KEYS.has(key))) throw new Error(`${label} contém uma chave não permitida.`);
+  return value;
+}
+
+function sanitizeLinkUrl(rawUrl, { allowRelativeAsset = true } = {}) {
+  const value = String(rawUrl || '').trim();
+  if (!value || value.length > SECURITY_LIMITS.maxLinkChars || /[\u0000-\u001F\u007F]/.test(value)) return '';
+  if (allowRelativeAsset && /^(?:\.\/)?assets\/[-a-zA-Z0-9_./]+(?:\?[a-zA-Z0-9_=&.-]+)?$/.test(value)) return value;
+  if (/^mailto:/i.test(value)) {
+    const address = value.slice(7);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) ? `mailto:${address}` : '';
+  }
+  try {
+    const parsed = new URL(value);
+    if (!SAFE_LINK_PROTOCOLS.has(parsed.protocol) || parsed.username || parsed.password) return '';
+    return parsed.href;
+  } catch (_) {
+    return '';
+  }
+}
+
+function prepareUserLink(rawUrl) {
+  const value = String(rawUrl || '').trim();
+  const candidate = /^(?:https?:|mailto:)/i.test(value) ? value : `https://${value}`;
+  return sanitizeLinkUrl(candidate, { allowRelativeAsset: false });
 }
 
 function normalizeCategoryLabels(value) {
@@ -461,7 +507,7 @@ function normalizeCategoryParents(value) {
 }
 
 function reconcileCategoryHierarchy() {
-  const userScripts = isStandardMode() ? scripts.filter(script => !script.isStandard) : scripts;
+  const userScripts = isStandardMode() ? scripts.filter(script => !isStandardScript(script)) : scripts;
   const known = [...categoryRegistry, ...allScriptCategories(userScripts), ...Object.keys(categoryParents), ...Object.values(categoryParents)]
     .map(normalizeCategoryName)
     .filter(Boolean);
@@ -602,13 +648,13 @@ function normalizeScript(script, source = 'user') {
   const normalized = {
     id: Number(script.id) || nextId++,
     cat: String(script.cat || 'Geral'),
-    title: String(script.title || 'Sem título'),
-    html: String(script.html || ''),
+    title: String(script.title || 'Sem título').slice(0, SECURITY_LIMITS.maxTitleChars),
+    html: cleanEditorHtml(String(script.html || '').slice(0, SECURITY_LIMITS.maxHtmlChars)),
     greetingMode,
     hasGreeting: greetingMode !== GREETING_MODES.off,
     hasSignature: script.hasSignature !== false,
     isFavorite: script.isFavorite === true,
-    isStandard: source === 'standard' || script.isStandard === true,
+    isStandard: source === 'standard',
     source
   };
   setScriptCategories(normalized, script.cats ?? script.cat);
@@ -637,7 +683,8 @@ async function fetchStandardTemplate(division) {
   const response = await fetch(`${source}?v=81`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
-  if (!data || data.schema !== 'scriptz-standard-template' || !Array.isArray(data.scripts)) throw new Error('Template inválido');
+  if (!data || data.schema !== 'scriptz-standard-template') throw new Error('Template inválido');
+  validateProjectPayload(data, { allowTemplate: true });
   return data;
 }
 
@@ -687,7 +734,7 @@ async function loadWorkspace(showFeedback = true) {
       standardScripts = template.scripts.map(script => normalizeScript({ ...script, isStandard: true }, 'standard'));
       const saved = local ? JSON.parse(local) : null;
       normalizeWorkspaceState(saved);
-      scripts = [...standardScripts, ...scripts.filter(script => !script.isStandard)];
+      scripts = [...standardScripts, ...scripts.filter(script => !isStandardScript(script))];
       reconcileCategoryHierarchy();
       const templateCategoryOrder = prioritizedStandardCategoryOrder(standardCategories, standardCategoryParents, workspace.division);
       standardCategoryOrder = workspace.division === 'DEPROT'
@@ -862,7 +909,7 @@ function resetLocalData() {
 
 function saveToLocal() {
   if (!workspace.mode) return;
-  const userScripts = isStandardMode() ? scripts.filter(script => !script.isStandard) : scripts;
+  const userScripts = isStandardMode() ? scripts.filter(script => !isStandardScript(script)) : scripts;
   const userCategories = categoryRegistry;
   const persistedParents = { ...categoryParents };
   localStorage.setItem(workspaceKey(), JSON.stringify({
@@ -888,7 +935,11 @@ function saveToLocal() {
 function getFilteredScripts() {
   const library = activeLibraryKey();
   let filtered;
-  if (activeCat === 'all') {
+  if (globalSearchQ) {
+    const q = globalSearchQ.toLowerCase();
+    filtered = getLibraryScripts(library).filter(script => script.title.toLowerCase().includes(q)
+      || getScriptCategories(script).some(category => categoryDisplayName(category, library).toLowerCase().includes(q)));
+  } else if (activeCat === 'all') {
     filtered = getLibraryScripts(library);
   } else if (activeCat === 'favorites') {
     filtered = getLibraryScripts(library).filter(s => isFavorite(s));
@@ -897,7 +948,7 @@ function getFilteredScripts() {
     filtered = getLibraryScripts(library).filter(s => hasSubcategories ? scriptHasCategory(s, activeCat) : scriptMatchesActiveCategory(s, activeCat, library));
   }
 
-  if (searchQ) {
+  if (searchQ && !globalSearchQ) {
     const q = searchQ.toLowerCase();
     filtered = filtered.filter(s => s.title.toLowerCase().includes(q));
   }
@@ -1135,8 +1186,11 @@ function setCat(cat) {
   isInitialLanding = false;
   subcategoryCreatorOpen = false;
   searchQ = '';
+  globalSearchQ = '';
   if (window.matchMedia('(max-width: 820px)').matches) closeMobileNav();
   document.getElementById('searchInput').value = '';
+  document.getElementById('contextSearchInput').value = '';
+  document.getElementById('mobileSearchInput').value = '';
   document.getElementById('pageTitle').textContent = cat === 'all' ? (isStandardMode() ? (isStandardLibrary() ? 'Modelos Padronizados' : 'Meus Scriptz') : 'Todos os scriptz') : cat === 'favorites' ? 'Favoritos' : getCategoryPath(cat);
   buildSidebar();
   render();
@@ -1163,7 +1217,9 @@ function setLibrary(library) {
   isInitialLanding = false;
   subcategoryCreatorOpen = false;
   searchQ = '';
+  globalSearchQ = '';
   document.getElementById('searchInput').value = '';
+  document.getElementById('contextSearchInput').value = '';
   document.getElementById('mobileSearchInput').value = '';
   document.getElementById('pageTitle').textContent = next === 'standard' ? 'Modelos Padronizados' : 'Meus Scriptz';
   buildSidebar();
@@ -1198,13 +1254,32 @@ function syncActionsMenuIndicator() {
   if (chevron) chevron.textContent = open ? '▲' : '▼';
 }
 
-function onSearch(val) {
+function onContextSearch(val) {
   searchQ = val;
   if (val) isInitialLanding = false;
-  const desktopInput = document.getElementById('searchInput');
+  const desktopInput = document.getElementById('contextSearchInput');
   const mobileInput = document.getElementById('mobileSearchInput');
   if (desktopInput && desktopInput.value !== val) desktopInput.value = val;
   if (mobileInput && mobileInput.value !== val) mobileInput.value = val;
+  render();
+}
+
+function onGlobalSearch(val) {
+  const value = String(val || '');
+  if (value && !globalSearchQ) lastGlobalSearchCategory = activeCat;
+  globalSearchQ = value;
+  if (value) {
+    isInitialLanding = false;
+    activeCat = 'all';
+    searchQ = '';
+    document.getElementById('contextSearchInput').value = '';
+    document.getElementById('mobileSearchInput').value = '';
+    document.getElementById('pageTitle').textContent = 'Busca geral';
+  } else {
+    activeCat = lastGlobalSearchCategory || 'all';
+    document.getElementById('pageTitle').textContent = activeCat === 'all' ? (isStandardMode() ? (isStandardLibrary() ? 'Modelos Padronizados' : 'Meus Scriptz') : 'Todos os scriptz') : getCategoryPath(activeCat);
+  }
+  buildSidebar();
   render();
 }
 
@@ -1232,12 +1307,21 @@ function canCreateScriptInContext() {
   return Boolean(contextualCategory) && categoryScriptCount(contextualCategory) > 0;
 }
 
+function canChooseExistingCategoryForNewScript() {
+  return !isStandardLibrary()
+    && activeCat === 'all'
+    && getAssignableCategories().length > 0;
+}
+
 function syncNewScriptButton() {
   const button = document.getElementById('newScriptBtn');
   if (!button) return;
-  const available = canCreateScriptInContext();
+  const available = canCreateScriptInContext() || canChooseExistingCategoryForNewScript();
   button.hidden = !available;
-  button.title = available ? `Criar script em ${getCategoryPath(getContextualPrimaryCategory())}` : '';
+  const contextualCategory = getContextualPrimaryCategory();
+  button.title = contextualCategory
+    ? `Criar script em ${getCategoryPath(contextualCategory)}`
+    : available ? 'Escolher categoria ou subcategoria para criar um script' : '';
 }
 
 function createCategoryFromPrompt() {
@@ -1286,9 +1370,24 @@ function populateNewCategorySelects(categories = []) {
   const context = document.getElementById('newCategoryContext');
   const selectList = document.getElementById('newCategorySelects');
   if (!primary || !selectList || !context) return;
-  const primaryCategory = getContextualPrimaryCategory() || selected[0] || '';
+  const contextualCategory = getContextualPrimaryCategory();
+  const choosingInitialCategory = !contextualCategory && canChooseExistingCategoryForNewScript();
+  const primaryCategory = contextualCategory || selected[0] || '';
+  primary.hidden = !choosingInitialCategory;
+  primary.innerHTML = choosingInitialCategory
+    ? getCategoryOptions(primaryCategory, {
+      placeholder: 'Selecione a categoria ou subcategoria',
+      includeCreateAction: false
+    })
+    : primaryCategory
+      ? `<option value="${escapeHtml(primaryCategory)}">${escapeHtml(getCategoryPath(primaryCategory))}</option>`
+      : '';
   primary.value = primaryCategory;
-  context.textContent = primaryCategory ? `Será vinculado a: ${getCategoryPath(primaryCategory)}` : 'Abra uma categoria ou subcategoria para criar um script.';
+  context.textContent = primaryCategory
+    ? `Será vinculado a: ${getCategoryPath(primaryCategory)}`
+    : choosingInitialCategory
+      ? 'Escolha a categoria ou subcategoria à qual este script será vinculado.'
+      : 'Abra uma categoria ou subcategoria para criar um script.';
   renderNewCategorySelects([primaryCategory, ...selected.filter(category => category !== primaryCategory)]);
 }
 
@@ -1299,7 +1398,7 @@ function renderNewCategorySelects(categories = []) {
   const primaryCategory = primary.value;
   const selected = selectedCategoryList(categories).filter(category => category !== primaryCategory);
   const used = [primaryCategory];
-  const values = [...selected, ''];
+  const values = primaryCategory ? [...selected, ''] : [];
   selectList.innerHTML = values.map((category, index) => {
     const options = getCategoryOptions(category, {
       placeholder: 'Adicionar categoria ou subcategoria',
@@ -1309,6 +1408,17 @@ function renderNewCategorySelects(categories = []) {
     if (category) used.push(category);
     return `<select class="category-select" id="newCategoryAdditional${index}" data-category-select aria-label="Categoria ou subcategoria adicional ${index + 1}" onchange="onNewCategorySelectChange(${index})">${options}</select>`;
   }).join('');
+}
+
+function onNewPrimaryCategoryChange() {
+  const primary = document.getElementById('newCategoryPrimary');
+  const context = document.getElementById('newCategoryContext');
+  if (!primary || !context) return;
+  const category = normalizeCategoryName(primary.value);
+  context.textContent = category
+    ? `Será vinculado a: ${getCategoryPath(category)}`
+    : 'Escolha a categoria ou subcategoria à qual este script será vinculado.';
+  renderNewCategorySelects(category ? [category] : []);
 }
 
 function onNewCategorySelectChange(index) {
@@ -1689,9 +1799,10 @@ function applyLink(id) {
         return;
     }
     
-    let finalUrl = url;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        finalUrl = 'https://' + url;
+    const finalUrl = prepareUserLink(url);
+    if (!finalUrl) {
+        showToast('⚠️', 'Use apenas links HTTP, HTTPS ou e-mail válidos.');
+        return;
     }
     
     const editor = document.getElementById('ce' + id);
@@ -1730,9 +1841,13 @@ function applyLink(id) {
 
 function cleanEditorHtml(html) {
   const template = document.createElement('template');
-  template.innerHTML = String(html || '');
+  template.innerHTML = String(html || '').slice(0, SECURITY_LIMITS.maxHtmlChars);
   const allowedTags = new Set(['P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'A', 'UL', 'OL', 'LI', 'DIV', 'SPAN']);
-  const removeTags = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'META', 'LINK', 'FORM', 'INPUT', 'BUTTON', 'SVG', 'MATH']);
+  const removeTags = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'META', 'LINK', 'FORM', 'INPUT', 'BUTTON', 'SVG', 'MATH', 'BASE', 'FRAME', 'AUDIO', 'VIDEO', 'IMG', 'PICTURE', 'SOURCE']);
+  const comments = [];
+  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_COMMENT);
+  while (walker.nextNode()) comments.push(walker.currentNode);
+  comments.forEach(comment => comment.remove());
   [...template.content.querySelectorAll('*')].forEach(element => {
     const tag = element.tagName;
     if (removeTags.has(tag)) {
@@ -1752,8 +1867,9 @@ function cleanEditorHtml(html) {
     if (/text-decoration(?:-line)?\s*:[^;]*(underline)/i.test(originalStyle)) safeStyle.push('text-decoration:underline');
     if (safeStyle.length) element.setAttribute('style', safeStyle.join(';'));
     if (tag === 'A') {
-      if (/^(https?:\/\/|mailto:)/i.test(String(href || '').trim())) {
-        element.setAttribute('href', href.trim());
+      const safeUrl = sanitizeLinkUrl(href);
+      if (safeUrl) {
+        element.setAttribute('href', safeUrl);
         element.setAttribute('target', '_blank');
         element.setAttribute('rel', 'noopener noreferrer');
       } else {
@@ -1762,6 +1878,36 @@ function cleanEditorHtml(html) {
     }
   });
   return template.innerHTML.replace(/<p>\s*<\/p>/gi, '').replace(/<div>\s*<\/div>/gi, '').trim();
+}
+
+function htmlToStructuredPlainText(html) {
+  const template = document.createElement('template');
+  template.innerHTML = String(html || '');
+
+  const readNode = (node, parentTag = '') => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.nodeValue.replace(/\u00a0/g, ' ').replace(/[\t\r\n\f ]+/g, ' ');
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const tag = node.tagName;
+    if (tag === 'BR') return '\n';
+
+    const content = [...node.childNodes].map(child => readNode(child, tag)).join('');
+    if (tag === 'LI') return `• ${content.trim()}\n`;
+    if (tag === 'P' || (tag === 'DIV' && parentTag !== 'LI')) return `${content.trim()}\n\n`;
+    if (tag === 'UL' || tag === 'OL') return `${content}\n`;
+    return content;
+  };
+
+  return [...template.content.childNodes]
+    .map(node => readNode(node))
+    .join('')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function formatNewScript(command) {
@@ -1804,7 +1950,11 @@ function applyNewScriptLink() {
     showToast('⚠️', 'Selecione o texto que deseja transformar em link');
     return;
   }
-  const finalUrl = /^(https?:\/\/|mailto:)/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+  const finalUrl = prepareUserLink(rawUrl);
+  if (!finalUrl) {
+    showToast('⚠️', 'Use apenas links HTTP, HTTPS ou e-mail válidos.');
+    return;
+  }
   const selection = window.getSelection();
   selection.removeAllRanges();
   selection.addRange(newScriptLinkRange);
@@ -1860,6 +2010,38 @@ function createSubcategoryFromMain() {
   buildSidebar();
   render();
   showToast('✨', `Subcategoria “${name}” criada!`);
+}
+
+function createPersonalCategoryFromMain() {
+  if (isStandardLibrary()) {
+    setLibrary('personal');
+    setTimeout(createPersonalCategoryFromMain, 0);
+    return;
+  }
+  openNoticeModal({
+    title: 'Criar categoria',
+    message: 'Crie a primeira categoria para organizar seus scripts.',
+    inputLabel: 'Nome da categoria',
+    inputPlaceholder: 'Ex.: Processos internos',
+    confirmLabel: 'Criar categoria',
+    onConfirm: value => {
+      const name = normalizeCategoryName(value);
+      if (categoryNameExistsAtLevel(name, '', 'personal')) {
+        showToast('⚠️', 'Este nome já está em uso.');
+        return;
+      }
+      if (!registerCategory(name)) return;
+      activeCat = name;
+      isInitialLanding = false;
+      searchQ = '';
+      globalSearchQ = '';
+      document.getElementById('pageTitle').textContent = getCategoryPath(name);
+      saveToLocal();
+      buildSidebar();
+      render();
+      showToast('✨', `Categoria “${categoryDisplayName(name)}” criada!`);
+    }
+  });
 }
 
 function showSubcategoryCreator() {
@@ -1959,13 +2141,20 @@ function buildSubcategoryNavigator() {
     return returnControl + emptySubcategoryChoice;
   }
   const children = getOrderedCategories(getChildCategories(activeCat));
+  const contextualChildren = searchQ
+    ? children.filter(category => {
+      const q = searchQ.toLowerCase();
+      return categoryDisplayName(category).toLowerCase().includes(q)
+        || getLibraryScripts().some(script => scriptMatchesActiveCategory(script, category) && script.title.toLowerCase().includes(q));
+    })
+    : children;
   if (readOnly && !children.length) return '';
   if (!readOnly && !canManageSubcategories(activeCat)) return '';
   if (!children.length) {
     return buildEmptyCategoryChoice();
   }
   const safeJs = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-  const cards = children.map(category => {
+  const cards = contextualChildren.map(category => {
     const count = categoryScriptCount(category, true);
     const label = categoryDisplayName(category);
     return `<article class="subcategory-choice" data-subcategory="${escapeHtml(category)}">
@@ -1981,8 +2170,8 @@ function buildSubcategoryNavigator() {
     </article>`;
   }).join('');
   return `<section class="subcategory-navigator" aria-label="Subcategorias de ${escapeHtml(categoryDisplayName(activeCat))}">
-    <div class="subcategory-navigator-heading"><span class="subcategory-navigator-kicker">Subcategorias</span><span>${children.length === 1 ? '1 opção' : `${children.length} opções`}</span></div>
-    ${children.length ? `<div class="subcategory-choice-list" id="subcategoryManagementList">${cards}</div>` : '<p class="subcategory-empty-state">Crie a primeira subcategoria para organizar os scriptz deste grupo.</p>'}
+    <div class="subcategory-navigator-heading"><span class="subcategory-navigator-kicker">Subcategorias</span><span>${contextualChildren.length === 1 ? '1 opção' : `${contextualChildren.length} opções`}</span></div>
+    ${contextualChildren.length ? `<div class="subcategory-choice-list" id="subcategoryManagementList">${cards}</div>` : '<p class="subcategory-empty-state">Nenhuma subcategoria corresponde à busca contextual.</p>'}
     ${readOnly ? '' : '<div class="subcategory-create-row"><input type="text" id="newSubcategoryName" placeholder="Nome da nova subcategoria" onkeydown="if(event.key===\'Enter\') createSubcategoryFromMain()"><button type="button" class="btn-primary" onclick="createSubcategoryFromMain()">➕ Adicionar subcategoria</button></div>'}
   </section>`;
 }
@@ -2007,11 +2196,17 @@ function render() {
 
   main?.classList.remove('is-initial-landing');
 
+  const initialPersonalArea = !isStandardLibrary() && activeCat === 'all' && !searchQ && !globalSearchQ && list.length === 0;
+  const hasExistingCategoryForInitialScript = initialPersonalArea && getAssignableCategories().length > 0;
+  const initialAreaName = isStandardMode() ? 'Meus Scriptz' : 'Modo Editor';
+
   badge.hidden = list.length === 0;
   badge.textContent = list.length === 0 ? '' : list.length === 1 ? '1 script' : `${list.length} scriptz`;
   if (list.length === 0) {
-    container.innerHTML = subcategoryNavigator;
-    empty.style.display = subcategoryNavigator ? 'none' : 'block';
+    container.innerHTML = initialPersonalArea
+      ? `<section class="category-empty-choice personal-library-empty" aria-label="${initialAreaName} vazio"><div class="category-empty-choice-copy"><span class="subcategory-navigator-kicker">${initialAreaName} vazio</span><p>${hasExistingCategoryForInitialScript ? 'Escolha uma categoria ou subcategoria existente para criar um novo script.' : 'Crie uma categoria para começar a organizar seus próprios scripts.'}</p></div><div class="category-empty-choice-actions${hasExistingCategoryForInitialScript ? '' : ' single-action'}">${hasExistingCategoryForInitialScript ? '<button type="button" class="category-empty-primary" onclick="openModal()"><span aria-hidden="true">✚</span><strong>Criar script</strong><small>Escolher categoria ou subcategoria existente</small></button>' : ''}<button type="button" class="category-empty-secondary" onclick="createPersonalCategoryFromMain()"><span aria-hidden="true">⌘</span><strong>Criar categoria</strong><small>Organizar um novo grupo de scripts</small></button></div></section>`
+      : subcategoryNavigator;
+    empty.style.display = (subcategoryNavigator || initialPersonalArea) ? 'none' : 'block';
     setTimeout(initSubcategoryDragDrop, 30);
     syncOrderingControls();
     return;
@@ -2041,12 +2236,12 @@ function getCategoryOptions(selected = '', { placeholder = '', exclude = [], inc
 }
 
 function buildFullText(script) {
-  let htmlContent = script.html;
+  let htmlContent = cleanEditorHtml(script?.html || '');
   
   htmlContent = greetingHTML(getGreetingMode(script)) + htmlContent;
   
   if (hasSignature(script)) {
-    const signature = getSignature();
+    const signature = escapeHtml(getSignature());
     htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
   }
   
@@ -2261,12 +2456,12 @@ function livePreview(id) {
   const greetingSelect = document.getElementById('greeting' + id);
   const chkSignature = document.getElementById('chkSignature' + id);
   
-  let htmlContent = ce.innerHTML;
+  let htmlContent = cleanEditorHtml(ce.innerHTML);
   
   htmlContent = greetingHTML(greetingSelect?.value || GREETING_MODES.auto) + htmlContent;
   
   if (chkSignature && chkSignature.checked) {
-    const signature = getSignature();
+    const signature = escapeHtml(getSignature());
     htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
   }
   
@@ -2304,10 +2499,19 @@ function saveEdit(id) {
   const fullHTML = buildFullText(scripts[idx]);
   document.getElementById('pv' + id).innerHTML = fullHTML;
 
-  cancelEdit(id);
+  activeEditId = null;
+  activeCat = newCategories[0];
+  isInitialLanding = false;
+  searchQ = '';
+  globalSearchQ = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('contextSearchInput').value = '';
+  document.getElementById('mobileSearchInput').value = '';
+  document.getElementById('pageTitle').textContent = getCategoryPath(activeCat);
   saveToLocal();
   buildSidebar();
   render();
+  setTimeout(() => document.getElementById('c' + id)?.classList.add('open'), 0);
   showToast('💾', 'Script salvo!');
 }
 
@@ -2349,19 +2553,17 @@ async function copyScript(id) {
   const card = document.getElementById('c' + id);
   if (card) card.classList.add('open');
 
-  let htmlContent = greetingHTML(getGreetingMode(s)) + s.html;
+  let htmlContent = greetingHTML(getGreetingMode(s)) + cleanEditorHtml(s.html);
   
   // Aplica assinatura se ativa (sem negrito)
   if (hasSignature(s)) {
-    const signature = getSignature();
+    const signature = escapeHtml(getSignature());
     htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
   }
   
   htmlContent = htmlContent.replace(/^\s+/, '');
 
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = htmlContent;
-  const plainText = tempDiv.innerText || tempDiv.textContent;
+  const plainText = htmlToStructuredPlainText(htmlContent).replace(/\n/g, '\r\n');
 
   try {
     const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -2426,13 +2628,14 @@ function openModal(preselectedCategory = '') {
       return;
     }
     const contextualCategory = getContextualPrimaryCategory();
-    if (!contextualCategory) {
-      showToast('⚠️', 'Abra uma categoria ou subcategoria para criar um script.');
+    const choosingInitialCategory = !contextualCategory && canChooseExistingCategoryForNewScript();
+    if (!contextualCategory && !choosingInitialCategory) {
+      showToast('⚠️', 'Crie ou abra uma categoria ou subcategoria antes de criar um script.');
       return;
     }
     newScriptModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.getElementById('newTitle').value = '';
-    populateNewCategorySelects([contextualCategory]);
+    populateNewCategorySelects(contextualCategory ? [contextualCategory] : []);
     const editor = document.getElementById('newText');
     editor.innerHTML = '';
     editor.dataset.hasContent = 'false';
@@ -2481,8 +2684,8 @@ function addScript() {
         showToast('⚠️', 'Preencha título e texto');
         return;
     }
-    if (!contextualCategory || categories[0] !== contextualCategory || !hasValidScriptClassification(categories)) {
-        showToast('⚠️', 'Abra uma categoria ou subcategoria válida antes de salvar o script.');
+    if (!hasValidScriptClassification(categories) || (contextualCategory && categories[0] !== contextualCategory)) {
+        showToast('⚠️', 'Escolha uma categoria ou subcategoria válida antes de salvar o script.');
         return;
     }
     if (scripts.length >= currentScriptLimit()) {
@@ -2530,7 +2733,7 @@ function exportJSON() {
     version: 6,
     mode: workspace.mode,
     division: workspace.division,
-    scripts: standard ? scripts.filter(script => !script.isStandard) : scripts,
+    scripts: standard ? scripts.filter(script => !isStandardScript(script)) : scripts,
     categories: categoryRegistry,
     categoryParents: categoryParents,
     categoryLabels: { ...categoryLabels },
@@ -2568,7 +2771,7 @@ function downloadJSON(payload, filename) {
 }
 
 function orderedTemplateScripts(templateCategories) {
-  const sourceScripts = scripts.filter(script => !script.isStandard);
+  const sourceScripts = scripts.filter(script => !isStandardScript(script));
   const emitted = new Set();
   const ordered = [];
   templateCategories.forEach(category => {
@@ -2600,7 +2803,7 @@ function buildStandardTemplatePayload(division) {
     .map(([child, parent]) => [normalizeCategoryName(child), normalizeCategoryName(parent)])
     .filter(([child, parent]) => child && parent && child !== parent && categorySet.has(child) && categorySet.has(parent)));
   const parentCategories = new Set(Object.values(templateParents));
-  const parentScripts = scripts.filter(script => !script.isStandard && parentCategories.has(script.cat));
+  const parentScripts = scripts.filter(script => !isStandardScript(script) && parentCategories.has(script.cat));
   if (parentScripts.length) throw new Error('Categorias com subcategorias não podem ter scripts diretos. Mova esses scripts antes de exportar.');
   return {
     schema: 'scriptz-standard-template',
@@ -2657,11 +2860,86 @@ function exportStandardTemplate(division) {
   }
 }
 
+function validateCategoryArray(value, label) {
+  if (value === undefined) return;
+  if (!Array.isArray(value) || value.length > SECURITY_LIMITS.maxCategories) throw new Error(`${label} inválida ou excessiva.`);
+  if (value.some(item => typeof item !== 'string' || !item.trim() || item.length > SECURITY_LIMITS.maxCategoryChars)) {
+    throw new Error(`${label} contém um nome inválido.`);
+  }
+}
+
+function validateCategoryMap(value, label) {
+  if (value === undefined) return;
+  const record = isSafeRecord(value, label);
+  const entries = Object.entries(record);
+  if (entries.length > SECURITY_LIMITS.maxCategories) throw new Error(`${label} excede o limite de categorias.`);
+  if (entries.some(([key, item]) => typeof key !== 'string' || typeof item !== 'string' || !key.trim() || !item.trim() || key.length > SECURITY_LIMITS.maxCategoryChars || item.length > SECURITY_LIMITS.maxCategoryChars)) {
+    throw new Error(`${label} contém uma categoria inválida.`);
+  }
+}
+
+function validateScriptOrders(value) {
+  if (value === undefined) return;
+  const record = isSafeRecord(value, 'Ordenações');
+  const entries = Object.entries(record);
+  if (entries.length > SECURITY_LIMITS.maxCategories) throw new Error('Ordenações excedem o limite de categorias.');
+  if (entries.some(([category, ids]) => typeof category !== 'string' || !Array.isArray(ids) || ids.length > SCRIPT_LIMITS.free || ids.some(id => !Number.isFinite(Number(id))))) {
+    throw new Error('Ordenação personalizada inválida.');
+  }
+}
+
+function validateScriptPayload(script, index, maxScripts) {
+  const record = isSafeRecord(script, `Script ${index + 1}`);
+  if (record.title !== undefined && (typeof record.title !== 'string' || record.title.length > SECURITY_LIMITS.maxTitleChars)) {
+    throw new Error(`Título inválido no script ${index + 1}.`);
+  }
+  if (typeof record.html !== 'string' || record.html.length > SECURITY_LIMITS.maxHtmlChars) {
+    throw new Error(`Texto inválido ou excessivo no script ${index + 1}.`);
+  }
+  if (record.cat !== undefined && (typeof record.cat !== 'string' || !record.cat.trim() || record.cat.length > SECURITY_LIMITS.maxCategoryChars)) {
+    throw new Error(`Categoria inválida no script ${index + 1}.`);
+  }
+  if (record.cats !== undefined) {
+    if (!Array.isArray(record.cats) || !record.cats.length || record.cats.length > SECURITY_LIMITS.maxCategories || record.cats.some(category => typeof category !== 'string' || !category.trim() || category.length > SECURITY_LIMITS.maxCategoryChars)) {
+      throw new Error(`Categorias inválidas no script ${index + 1}.`);
+    }
+  }
+  if (record.id !== undefined && !Number.isFinite(Number(record.id))) throw new Error(`Identificador inválido no script ${index + 1}.`);
+  ['hasSignature', 'hasGreeting', 'isFavorite', 'isStandard'].forEach(field => {
+    if (record[field] !== undefined && typeof record[field] !== 'boolean') throw new Error(`Campo ${field} inválido no script ${index + 1}.`);
+  });
+  if (record.greetingMode !== undefined && !Object.values(GREETING_MODES).includes(record.greetingMode)) {
+    throw new Error(`Saudação inválida no script ${index + 1}.`);
+  }
+  return record;
+}
+
+function validateProjectPayload(data, { allowTemplate = false } = {}) {
+  const record = isSafeRecord(data, 'Arquivo JSON');
+  const allowedSchemas = new Set(['scriptz-free-project', 'scriptz-standard-changes', 'legacy-scriptz']);
+  if (allowTemplate) allowedSchemas.add('scriptz-standard-template');
+  if (record.schema !== undefined && !allowedSchemas.has(record.schema)) throw new Error('Schema de importação não reconhecido.');
+  if (!Array.isArray(record.scripts)) throw new Error('O arquivo não contém uma lista de scriptz válida.');
+  const maxScripts = record.schema === 'scriptz-standard-template' ? SCRIPT_LIMITS.standard : SCRIPT_LIMITS.free;
+  if (record.scripts.length > maxScripts) throw new Error(`O arquivo excede o limite de ${maxScripts} scriptz.`);
+  record.scripts.forEach((script, index) => validateScriptPayload(script, index, maxScripts));
+  validateCategoryArray(record.categories, 'Lista de categorias');
+  validateCategoryMap(record.categoryParents, 'Hierarquia de categorias');
+  validateCategoryMap(record.categoryLabels, 'Rótulos de categorias');
+  validateCategoryArray(record.categoryOrder, 'Ordem de categorias');
+  validateCategoryArray(record.expandedCategories, 'Categorias expandidas');
+  validateCategoryArray(record.standardCategoryOrder, 'Ordem padrão de categorias');
+  validateScriptOrders(record.scriptOrders);
+  validateScriptOrders(record.standardScriptOrders);
+  if (record.division !== undefined && record.division !== null && (typeof record.division !== 'string' || record.division.length > 80)) throw new Error('Divisão inválida.');
+  return record;
+}
+
 function importProjectData(imported) {
   if (!workspace.mode) throw new Error('Selecione um modo antes de importar.');
   const legacy = Array.isArray(imported);
   const data = legacy ? { schema: 'legacy-scriptz', scripts: imported, categories: [] } : imported;
-  if (!data || !Array.isArray(data.scripts)) throw new Error('Formato inválido');
+  validateProjectPayload(data);
   if (data.scripts.length > currentScriptLimit()) throw new Error(`O arquivo excede o limite de ${currentScriptLimit()} scriptz.`);
   if (data.scripts.some(script => !scriptHasDeclaredClassification(script))) {
     throw new Error('Todo script precisa pertencer a uma categoria ou subcategoria existente.');
@@ -2708,6 +2986,14 @@ function importProjectData(imported) {
 
 function readImportFile(file) {
   if (!file) return;
+  if (!/\.json$/i.test(file.name || '')) {
+    showToast('⚠️', 'Selecione um arquivo JSON válido.');
+    return;
+  }
+  if (file.size > SECURITY_LIMITS.maxImportBytes) {
+    showToast('⚠️', 'O arquivo excede o limite de 2 MB para importação.');
+    return;
+  }
   const reader = new FileReader();
   reader.onload = event => {
     try {
@@ -2716,7 +3002,8 @@ function readImportFile(file) {
       showToast('❌', error.message || 'Arquivo inválido');
     }
   };
-  reader.readAsText(file);
+  reader.onerror = () => showToast('❌', 'Não foi possível ler o arquivo selecionado.');
+  reader.readAsText(file, 'utf-8');
 }
 
 function handleImport(event) {
@@ -2740,7 +3027,7 @@ if (dropZone) {
     e.preventDefault();
     dropZone.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith('.json')) {
+    if (file && /\.json$/i.test(file.name || '')) {
       readImportFile(file);
     } else {
       showToast('⚠️', 'Arraste um arquivo .json');

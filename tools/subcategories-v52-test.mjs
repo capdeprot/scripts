@@ -3,7 +3,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 
-const root = '/home/ubuntu/work_scriptz/scriptz-main-updated';
+const root = '/home/ubuntu/work_scriptz/scriptz-v86-clipboard';
 const outputPath = '/home/ubuntu/screenshots/subcategories-v52-results.json';
 const webPort = 4186;
 const debugPort = 9272;
@@ -35,7 +35,7 @@ const send = (method, params = {}) => new Promise((resolvePromise, reject) => {
 });
 const evaluate = async expression => {
   const response = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
-  if (response.exceptionDetails) throw new Error(response.exceptionDetails.text || 'Falha ao avaliar página');
+  if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text || 'Falha ao avaliar página');
   return response.result?.value;
 };
 
@@ -116,6 +116,24 @@ try {
     const helpAuthorFitsDesktop = getComputedStyle(document.querySelector('.help-author-line')).whiteSpace === 'nowrap';
     const helpModalBalancedWidth = Number.parseFloat(getComputedStyle(document.querySelector('.help-info-modal')).width) <= 600;
     closeHelpInfoModal();
+    const sanitizedHtml = cleanEditorHtml('<p onclick="alert(1)"><strong>Texto seguro</strong><script>alert(1)</script><img src=x onerror="alert(2)"><a href="javascript:alert(3)">Perigoso</a><a href="https://exemplo.com">Link seguro</a><a href="assets/docs/padrao-escrita-observacoes.pdf">PDF local</a></p>');
+    const sanitizesUnsafeHtml = !/<script|<img|onclick|javascript:/i.test(sanitizedHtml)
+      && sanitizedHtml.includes('<strong>Texto seguro</strong>')
+      && sanitizedHtml.includes('https://exemplo.com/')
+      && sanitizedHtml.includes('assets/docs/padrao-escrita-observacoes.pdf');
+    const blocksUnsafeLinks = !prepareUserLink('javascript:alert(1)')
+      && !prepareUserLink('data:text/html,teste')
+      && prepareUserLink('exemplo.com') === 'https://exemplo.com/'
+      && sanitizeLinkUrl('mailto:contato@exemplo.com') === 'mailto:contato@exemplo.com';
+    const normalizesImportedHtml = !/<script|onerror|javascript:/i.test(normalizeScript({ id: 9090, cat: 'Geral', cats: ['Geral'], html: '<p>Seguro</p><img src=x onerror=alert(1)><a href="javascript:alert(1)">x</a>' }).html);
+    const metricPlainText = htmlToStructuredPlainText('<p>Verificamos que a área <i>[[especificar o tipo de área e\\nquantidade]]</i> apontada no projeto.</p><p>Assim, pedimos a correção.</p>');
+    const structuredPlainTextRemovesInlineBreaks = metricPlainText === 'Verificamos que a área [[especificar o tipo de área e quantidade]] apontada no projeto.\\n\\nAssim, pedimos a correção.';
+    const structuredPlainTextPreservesListItems = htmlToStructuredPlainText('<div>Documentos necessários:</div><ul><li>Requerimento\\npreenchido</li><li>Documento de identificação</li></ul>') === 'Documentos necessários:\\n\\n• Requerimento preenchido\\n• Documento de identificação';
+    const clipboardPlainTextUsesCrLf = metricPlainText.replace(/\\n/g, '\\r\\n').includes('\\r\\n\\r\\n');
+    let rejectsDangerousJson = false;
+    let rejectsExcessiveJson = false;
+    try { validateProjectPayload(JSON.parse('{"scripts":[],"__proto__":{"polluted":true}}')); } catch (_) { rejectsDangerousJson = true; }
+    try { validateProjectPayload({ scripts: [], categories: Array(SECURITY_LIMITS.maxCategories + 1).fill('Categoria') }); } catch (_) { rejectsExcessiveJson = true; }
     categoryRegistry = ['Atendimento', 'Fiscalização', 'Geral', 'Protocolos', 'Prazos', 'Serviços', 'Solicitações'];
     categoryParents = { Protocolos: 'Atendimento', Prazos: 'Atendimento', Solicitações: 'Serviços' };
     customCategoryOrder = ['Atendimento', 'Fiscalização', 'Geral', 'Serviços', 'Protocolos', 'Prazos', 'Solicitações'];
@@ -134,11 +152,15 @@ try {
     render();
     const initialLandingVisible = Boolean(document.querySelector('.scriptz-initial-landing img[src="assets/scriptz_icone_branco_transparente.png"]')) && document.querySelectorAll('#cards .card').length === 0;
     const initialListControlsHidden = getComputedStyle(document.querySelector('main .top-bar')).display === 'none';
-    const newScriptHiddenOnAll = !isNewScriptButtonVisible();
+    const newScriptAvailableOnAllWithCategories = isNewScriptButtonVisible();
     const sidebarOnlyRoots = !document.getElementById('sidebarNav').textContent.includes('Protocolos') && !document.getElementById('sidebarNav').textContent.includes('Prazos');
     setCat('Atendimento');
     const parentTitles = getFilteredScripts().map(script => script.title).sort();
     const mainShowsChildChoices = document.querySelector('.subcategory-navigator')?.textContent.includes('Protocolos') && document.querySelector('.subcategory-navigator')?.textContent.includes('Prazos');
+    onContextSearch('prazo');
+    const contextualSearchFindsSubcategory = document.querySelector('.subcategory-navigator')?.textContent.includes('Prazos')
+      && !document.querySelector('.subcategory-navigator')?.textContent.includes('Protocolos');
+    onContextSearch('');
     const newScriptHiddenOnParent = !isNewScriptButtonVisible();
     document.getElementById('newSubcategoryName').value = 'Documentos';
     createSubcategoryFromMain();
@@ -175,7 +197,7 @@ try {
     const newScriptGreetingStartsOff = document.getElementById('newGreeting').value === GREETING_MODES.off
       && document.querySelector('#newGreeting option[value="off"]')?.textContent.trim() === 'Nenhuma';
     const newScriptSignatureStartsOff = !document.getElementById('newSignature').checked;
-    const contextualPrimaryHidden = document.getElementById('newCategoryPrimary').type === 'hidden';
+    const contextualPrimaryHidden = document.getElementById('newCategoryPrimary').hidden === true;
     const contextualPrimary = document.getElementById('newCategoryPrimary').value === 'Protocolos';
     const contextualText = document.getElementById('newCategoryContext').textContent.includes('Atendimento › Protocolos');
     document.getElementById('newTitle').value = 'Classificação fora do contexto';
@@ -320,10 +342,75 @@ try {
     setCat('Pessoal');
     const personalOnlyContent = getFilteredScripts().length === 1 && getFilteredScripts()[0].title === 'Script pessoal' && document.getElementById('sidebarNav').textContent.includes('Pessoal');
     const personalNewScriptVisible = isNewScriptButtonVisible();
+    startEdit(8002);
+    const personalScriptEditable = activeEditId === 8002 && !document.getElementById('tt8002')?.disabled && document.getElementById('ew8002')?.classList.contains('visible');
+    cancelEdit(8002);
+    onContextSearch('pessoal');
+    const contextualSearchFindsScript = getFilteredScripts().length === 1 && getFilteredScripts()[0].title === 'Script pessoal';
+    onContextSearch('');
+    document.getElementById('searchInput').value = 'pessoal';
+    onGlobalSearch('pessoal');
+    const globalSearchFindsContext = activeCat === 'all' && getFilteredScripts().length === 1 && getFilteredScripts()[0].title === 'Script pessoal';
+    onGlobalSearch('');
     registerCategory('Pessoal nova');
     const personalCategoryCreated = getCategories('personal').includes('Pessoal nova') && !getCategories('standard').includes('Pessoal nova');
     setLibrary('standard');
     const standardContentStillIsolated = getFilteredScripts().length === 1 && getFilteredScripts()[0].title === 'Modelo institucional';
+    activeLibrary = 'personal';
+    activeCat = 'all';
+    scripts = scripts.filter(script => isStandardScript(script));
+    categoryRegistry = [];
+    categoryParents = {};
+    categoryLabels = {};
+    customCategoryOrder = [];
+    isInitialLanding = false;
+    render();
+    const personalEmptyShowsCreateCategory = document.querySelector('.personal-library-empty .category-empty-secondary strong')?.textContent === 'Criar categoria';
+    createPersonalCategoryFromMain();
+    document.getElementById('noticeInput').value = 'Primeira categoria';
+    confirmNoticeModal();
+    const personalCategoryAppearsImmediately = activeCat === 'Primeira categoria'
+      && getCategories('personal').includes('Primeira categoria')
+      && document.getElementById('sidebarNav').textContent.includes('Primeira categoria')
+      && document.getElementById('cards').textContent.includes('Categoria vazia');
+    setCat('all');
+    const initialPersonalShowsCreateScript = isNewScriptButtonVisible()
+      && document.querySelector('.personal-library-empty .category-empty-primary strong')?.textContent === 'Criar script';
+    openModal();
+    const initialPrimaryCategorySelect = document.getElementById('newCategoryPrimary');
+    const initialScriptShowsExistingCategoryChoice = !initialPrimaryCategorySelect.hidden
+      && getComputedStyle(initialPrimaryCategorySelect).display !== 'none'
+      && initialPrimaryCategorySelect.getBoundingClientRect().height > 0
+      && initialPrimaryCategorySelect.value === ''
+      && initialPrimaryCategorySelect.textContent.includes('Primeira categoria');
+    document.getElementById('newCategoryPrimary').value = 'Primeira categoria';
+    onNewPrimaryCategoryChange();
+    document.getElementById('newTitle').value = 'Script criado da tela inicial';
+    document.getElementById('newText').innerHTML = '<p>Conteúdo de teste.</p>';
+    addScript();
+    const initialScriptSavesInChosenCategory = activeCat === 'Primeira categoria'
+      && getFilteredScripts().some(script => script.title === 'Script criado da tela inicial')
+      && document.getElementById('cards').textContent.includes('Script criado da tela inicial');
+    workspace = { mode: 'free', division: null };
+    activeLibrary = 'personal';
+    activeCat = 'all';
+    scripts = [];
+    categoryRegistry = ['Categoria do editor'];
+    categoryParents = {};
+    categoryLabels = { 'Categoria do editor': 'Categoria do editor' };
+    customCategoryOrder = ['Categoria do editor'];
+    isInitialLanding = false;
+    render();
+    const editorInitialShowsCreateScript = isNewScriptButtonVisible()
+      && document.querySelector('.personal-library-empty .category-empty-primary strong')?.textContent === 'Criar script';
+    categoryRegistry = [];
+    categoryParents = {};
+    categoryLabels = {};
+    customCategoryOrder = [];
+    isInitialLanding = false;
+    render();
+    const editorEmptyShowsCreateCategory = document.querySelector('.personal-library-empty .category-empty-secondary strong')?.textContent === 'Criar categoria'
+      && document.getElementById('cards').textContent.includes('Modo Editor vazio');
     activeLibrary = 'personal';
     categoryRegistry = [PDF_GUIDE_CATEGORY];
     categoryParents = {};
@@ -348,15 +435,24 @@ try {
       helpBrandUsesLowercase,
       helpAuthorFitsDesktop,
       helpModalBalancedWidth,
+      sanitizesUnsafeHtml,
+      blocksUnsafeLinks,
+      normalizesImportedHtml,
+      structuredPlainTextRemovesInlineBreaks,
+      structuredPlainTextPreservesListItems,
+      clipboardPlainTextUsesCrLf,
+      rejectsDangerousJson,
+      rejectsExcessiveJson,
       initialLandingVisible,
       initialListControlsHidden,
-      newScriptHiddenOnAll,
+      newScriptAvailableOnAllWithCategories,
       newScriptHiddenOnParent,
       newScriptVisibleOnLeaf,
       contextualPrimaryHidden,
       contextualPrimary,
       contextualText,
       mainShowsChildChoices,
+      contextualSearchFindsSubcategory,
       parentTitles,
       childTitles,
       signaturePromptBlocksCopy,
@@ -408,8 +504,18 @@ try {
       standardNewScriptHidden,
       personalOnlyContent,
       personalNewScriptVisible,
+      personalScriptEditable,
+      contextualSearchFindsScript,
+      globalSearchFindsContext,
       personalCategoryCreated,
       standardContentStillIsolated,
+      personalEmptyShowsCreateCategory,
+      personalCategoryAppearsImmediately,
+      initialPersonalShowsCreateScript,
+      initialScriptShowsExistingCategoryChoice,
+      initialScriptSavesInChosenCategory,
+      editorInitialShowsCreateScript,
+      editorEmptyShowsCreateCategory,
       pdfGuideStartsOpen,
       renderMilliseconds,
       sidebarCategoryCount: editorSidebarCategoryCount,
@@ -834,6 +940,14 @@ try {
   const newUserMobileScreenshot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true });
   await writeFile('/home/ubuntu/screenshots/scriptz-v58-new-user-mobile.png', Buffer.from(newUserMobileScreenshot.data, 'base64'));
 
+  const serviceWorkerSource = await readFile(resolve(root, 'sw.js'), 'utf8');
+  const pwaSecurity = {
+    usesPublicAllowlist: serviceWorkerSource.includes('PUBLIC_PATHS') && serviceWorkerSource.includes('isApprovedPublicRequest'),
+    ignoresUnapprovedRequests: serviceWorkerSource.includes('if (!isApprovedPublicRequest(event.request)) return;'),
+    cachesOnlySameOrigin: serviceWorkerSource.includes('url.origin === self.location.origin'),
+    avoidsGenericRequestCache: !serviceWorkerSource.includes('cache.put(event.request')
+  };
+
   const valid = desktop.sidebarOnlyRoots
     && desktop.signatureDockInMain
     && desktop.signatureTypography
@@ -847,6 +961,14 @@ try {
     && desktop.helpBrandUsesLowercase
     && desktop.helpAuthorFitsDesktop
     && desktop.helpModalBalancedWidth
+    && desktop.sanitizesUnsafeHtml
+    && desktop.blocksUnsafeLinks
+    && desktop.normalizesImportedHtml
+    && desktop.structuredPlainTextRemovesInlineBreaks
+    && desktop.structuredPlainTextPreservesListItems
+    && desktop.clipboardPlainTextUsesCrLf
+    && desktop.rejectsDangerousJson
+    && desktop.rejectsExcessiveJson
     && signatureWide.visible
     && signatureWide.fixed
     && signatureWide.nearViewportRight
@@ -857,13 +979,14 @@ try {
     && signatureDesktop
     && desktop.initialLandingVisible
     && desktop.initialListControlsHidden
-    && desktop.newScriptHiddenOnAll
+    && desktop.newScriptAvailableOnAllWithCategories
     && desktop.newScriptHiddenOnParent
     && desktop.newScriptVisibleOnLeaf
     && desktop.contextualPrimaryHidden
     && desktop.contextualPrimary
     && desktop.contextualText
     && desktop.mainShowsChildChoices
+    && desktop.contextualSearchFindsSubcategory
     && JSON.stringify(desktop.parentTitles) === JSON.stringify([])
     && JSON.stringify(desktop.childTitles) === JSON.stringify(['Protocolo recebido'])
     && desktop.signaturePromptBlocksCopy
@@ -915,8 +1038,18 @@ try {
     && desktop.standardNewScriptHidden
     && desktop.personalOnlyContent
     && desktop.personalNewScriptVisible
+    && desktop.personalScriptEditable
+    && desktop.contextualSearchFindsScript
+    && desktop.globalSearchFindsContext
     && desktop.personalCategoryCreated
     && desktop.standardContentStillIsolated
+    && desktop.personalEmptyShowsCreateCategory
+    && desktop.personalCategoryAppearsImmediately
+    && desktop.initialPersonalShowsCreateScript
+    && desktop.initialScriptShowsExistingCategoryChoice
+    && desktop.initialScriptSavesInChosenCategory
+    && desktop.editorInitialShowsCreateScript
+    && desktop.editorEmptyShowsCreateCategory
     && desktop.pdfGuideStartsOpen
     && desktop.renderMilliseconds < 600
     && desktop.sidebarCategoryCount >= 4
@@ -934,6 +1067,10 @@ try {
     && mobile.mobileSignatureAlignedLeft
     && mobile.mobileUnitGridColumns === 2
     && mobile.navigatorVisible
+    && pwaSecurity.usesPublicAllowlist
+    && pwaSecurity.ignoresUnapprovedRequests
+    && pwaSecurity.cachesOnlySameOrigin
+    && pwaSecurity.avoidsGenericRequestCache
     && mobile.sidebarOnlyRoots
     && mobile.noHorizontalOverflow
     && capg.templateValid
@@ -979,7 +1116,7 @@ try {
     && resilience.themeTransitionSettles
     && resilience.modalFocusesTitle
     && resilience.modalRestoresTrigger;
-  const result = { desktop, mobile, capg, deprot, resilience, savedMobile, newUserMobile, valid };
+  const result = { desktop, mobile, capg, deprot, resilience, savedMobile, newUserMobile, pwaSecurity, valid };
   if (!valid) throw new Error(`Validação de subcategorias inválida: ${JSON.stringify(result)}`);
   await writeFile(outputPath, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));
