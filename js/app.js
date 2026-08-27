@@ -701,7 +701,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=91`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=92`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template') throw new Error('Template inválido');

@@ -531,3 +531,9 @@
 - [x] Oferecer sobreposição ou mesclagem ao importar dados em contexto que já possui conteúdo.
 - [x] Mesclar apenas categorias, subcategorias e scriptz ainda inexistentes.
 - [x] Validar os fluxos de importação, bloqueio e edição em desktop e mobile antes da entrega.
+
+## Atualização do template DEPROT
+
+- [x] Incorporar o novo JSON enviado como template padrão de DEPROT.
+- [x] Atualizar o validador conforme a estrutura do novo template, se necessário.
+- [x] Validar o template e gerar pacote pronto para commit.
