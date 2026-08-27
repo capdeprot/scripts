@@ -153,6 +153,29 @@ try {
     const initialLandingVisible = Boolean(document.querySelector('.scriptz-initial-landing img[src="assets/scriptz_icone_branco_transparente.png"]')) && document.querySelectorAll('#cards .card').length === 0;
     const initialListControlsHidden = getComputedStyle(document.querySelector('main .top-bar')).display === 'none';
     const newScriptAvailableOnAllWithCategories = isNewScriptButtonVisible();
+    openNoticeModal({ title: 'Renomear categoria', message: 'Teste de persistência', inputLabel: 'Nome da categoria' });
+    const noticeModal = document.getElementById('noticeModal');
+    noticeModal.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const renameNoticeSurvivesOutsideClick = noticeModal.classList.contains('show');
+    closeNoticeModal();
+    const categoryBeforeReorder = activeCat;
+    toggleReorderMode();
+    setCat('Fiscalização');
+    openModal();
+    const reorderBlocksOtherActions = reorderMode
+      && document.body.classList.contains('sidebar-reorder-active')
+      && activeCat === categoryBeforeReorder
+      && !document.getElementById('overlay').classList.contains('show');
+    toggleReorderMode();
+    toggleSidebarCategoryCreator();
+    const categoryBeforeCreation = activeCat;
+    setCat('Fiscalização');
+    openModal();
+    const sidebarCreationBlocksOtherActions = sidebarCategoryCreatorOpen
+      && document.body.classList.contains('sidebar-category-creation-active')
+      && activeCat === categoryBeforeCreation
+      && !document.getElementById('overlay').classList.contains('show');
+    toggleSidebarCategoryCreator();
     const sidebarOnlyRoots = !document.getElementById('sidebarNav').textContent.includes('Protocolos') && !document.getElementById('sidebarNav').textContent.includes('Prazos');
     setCat('Atendimento');
     const parentTitles = getFilteredScripts().map(script => script.title).sort();
@@ -344,6 +367,17 @@ try {
     const personalNewScriptVisible = isNewScriptButtonVisible();
     startEdit(8002);
     const personalScriptEditable = activeEditId === 8002 && !document.getElementById('tt8002')?.disabled && document.getElementById('ew8002')?.classList.contains('visible');
+    const favoriteBeforeEditLock = scripts.find(script => script.id === 8002)?.isFavorite;
+    toggleFavorite(8002);
+    copyScript(8002);
+    deleteScript(8002);
+    openModal();
+    const editingBlocksOtherActions = activeEditId === 8002
+      && document.body.classList.contains('script-editing-active')
+      && document.querySelectorAll('.card-btns').length === 0
+      && scripts.find(script => script.id === 8002)?.isFavorite === favoriteBeforeEditLock
+      && !document.getElementById('overlay').classList.contains('show')
+      && !document.getElementById('noticeModal').classList.contains('show');
     cancelEdit(8002);
     onContextSearch('pessoal');
     const contextualSearchFindsScript = getFilteredScripts().length === 1 && getFilteredScripts()[0].title === 'Script pessoal';
@@ -446,6 +480,9 @@ try {
       initialLandingVisible,
       initialListControlsHidden,
       newScriptAvailableOnAllWithCategories,
+      renameNoticeSurvivesOutsideClick,
+      reorderBlocksOtherActions,
+      sidebarCreationBlocksOtherActions,
       newScriptHiddenOnParent,
       newScriptVisibleOnLeaf,
       contextualPrimaryHidden,
@@ -505,6 +542,7 @@ try {
       personalOnlyContent,
       personalNewScriptVisible,
       personalScriptEditable,
+      editingBlocksOtherActions,
       contextualSearchFindsScript,
       globalSearchFindsContext,
       personalCategoryCreated,
@@ -555,8 +593,10 @@ try {
     return {
       aprovaReorganized: !template.categories.includes('Aprova Digital') && !parents['Mensagens externas AD'] && !parents['Guias AD'] && guideChildren.every(category => parents[category] === 'Guias AD'),
       cotasChildren: parents['Alvará de Reforma'] === 'Guias AD'
-        && parents['Projeto Modificativo'] === 'Cotas do SEI'
-        && parents['Restituição de Guia'] === 'Cotas do SEI',
+        && parents['Restituição de Guia'] === 'Cotas do SEI'
+        && parents['Cotas do SEI::TCAEP'] === 'Cotas do SEI'
+        && parents['Cotas do SEI::Busca Física'] === 'Cotas do SEI'
+        && parents['Cotas do SEI::Verificação de valores HIS/HMP'] === 'Cotas do SEI',
       noScriptsAtParents: template.scripts.every(script => !parentCategories.has(script.cat)),
       messagesClassified: expectedMessages.every(id => scriptsById.get(id)?.cat === 'Mensagens externas AD'),
       guidesClassified: template.scripts.every(script => script.cat !== 'Guias AD'),
@@ -633,6 +673,34 @@ try {
     ];
     reconcileCategoryHierarchy();
     setCat('Respostas');
+    const incoming = {
+      schema: 'scriptz-free-project',
+      categories: ['Respostas', 'Importadas', 'Importadas::Filha'],
+      categoryParents: { 'Importadas::Filha': 'Importadas' },
+      categoryLabels: { Respostas: 'Respostas', Importadas: 'Importadas', 'Importadas::Filha': 'Filha' },
+      categoryOrder: ['Respostas', 'Importadas', 'Importadas::Filha'],
+      scripts: [
+        { id: 9901, cat: 'Respostas', cats: ['Respostas'], title: 'Primeiro modelo', html: '<p>Primeiro</p>', greetingMode: 'auto', hasSignature: true },
+        { id: 9901, cat: 'Importadas::Filha', cats: ['Importadas::Filha'], title: 'Modelo importado', html: '<p>Novo conteúdo</p>', greetingMode: 'off', hasSignature: false }
+      ]
+    };
+    requestImportResolution(incoming);
+    const importDecisionVisible = document.getElementById('noticeModal').classList.contains('show')
+      && document.getElementById('noticeConfirmBtn').textContent === 'Sobrepor existentes'
+      && document.getElementById('noticeSecondaryBtn').textContent === 'Mesclar sem duplicar'
+      && !document.getElementById('noticeSecondaryBtn').hidden;
+    confirmSecondaryNoticeModal();
+    const mergeAvoidsDuplicates = scripts.filter(script => script.title === 'Primeiro modelo').length === 1
+      && scripts.filter(script => script.title === 'Modelo importado').length === 1
+      && categoryRegistry.filter(category => category === 'Importadas').length === 1
+      && categoryRegistry.filter(category => category === 'Importadas::Filha').length === 1
+      && categoryParents['Importadas::Filha'] === 'Importadas';
+    requestImportResolution(incoming);
+    confirmNoticeModal();
+    const replaceOverwritesPersonalContent = scripts.length === 2
+      && scripts.some(script => script.title === 'Modelo importado')
+      && categoryRegistry.includes('Importadas::Filha')
+      && categoryParents['Importadas::Filha'] === 'Importadas';
     const oldTheme = getTheme();
     setTheme('purple');
     const themeTransitionStarts = document.documentElement.classList.contains('theme-transitioning')
@@ -665,6 +733,9 @@ try {
       templateScriptOrder: exportedTemplate.scripts.map(script => String(script.id)),
       templateProjectFieldsRemoved: exportedTemplate.scripts.every(script => script.isStandard === undefined && script.source === undefined),
       templateReimportsByStandardLoader,
+      importDecisionVisible,
+      mergeAvoidsDuplicates,
+      replaceOverwritesPersonalContent,
       themeTransitionStarts,
       themeTransitionSettles,
       modalFocusesTitle,
@@ -980,6 +1051,9 @@ try {
     && desktop.initialLandingVisible
     && desktop.initialListControlsHidden
     && desktop.newScriptAvailableOnAllWithCategories
+    && desktop.renameNoticeSurvivesOutsideClick
+    && desktop.reorderBlocksOtherActions
+    && desktop.sidebarCreationBlocksOtherActions
     && desktop.newScriptHiddenOnParent
     && desktop.newScriptVisibleOnLeaf
     && desktop.contextualPrimaryHidden
@@ -1039,6 +1113,7 @@ try {
     && desktop.personalOnlyContent
     && desktop.personalNewScriptVisible
     && desktop.personalScriptEditable
+    && desktop.editingBlocksOtherActions
     && desktop.contextualSearchFindsScript
     && desktop.globalSearchFindsContext
     && desktop.personalCategoryCreated
@@ -1112,6 +1187,9 @@ try {
     && JSON.stringify(resilience.templateScriptOrder) === JSON.stringify(['9901', '9902'])
     && resilience.templateProjectFieldsRemoved
     && resilience.templateReimportsByStandardLoader
+    && resilience.importDecisionVisible
+    && resilience.mergeAvoidsDuplicates
+    && resilience.replaceOverwritesPersonalContent
     && resilience.themeTransitionStarts
     && resilience.themeTransitionSettles
     && resilience.modalFocusesTitle

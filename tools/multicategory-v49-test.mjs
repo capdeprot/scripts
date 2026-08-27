@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { rm, writeFile } from 'node:fs/promises';
 
 const outputPath = '/home/ubuntu/screenshots/multicategory-v49-results.json';
-const url = 'http://localhost:4175/?test=multicategory-v49';
+const url = 'http://localhost:4187/?test=multicategory-v49';
 const port = 9270;
 const profile = '/tmp/scriptz-multicategory-v49';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -22,7 +22,7 @@ const send = (method, params = {}) => new Promise((resolve, reject) => {
 });
 const evaluate = async expression => {
   const response = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
-  if (response.exceptionDetails) throw new Error(response.exceptionDetails.text);
+  if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text);
   return response.result?.value;
 };
 
@@ -64,12 +64,13 @@ try {
     document.getElementById('newTitle').value = 'Resposta dupla';
     document.getElementById('newText').innerHTML = '<p>Conteúdo de teste.</p>';
     document.getElementById('newCategoryPrimary').value = 'Atendimento';
+    onNewPrimaryCategoryChange();
+    document.getElementById('newCategoryAdditional0').value = 'Fiscalização';
     onNewCategorySelectChange(0);
-    document.getElementById('newCategorySecondary').value = 'Fiscalização';
-    onNewCategorySelectChange(1);
     addScript();
     const created = scripts[0];
     const createdCats = [...created.cats];
+    setCat(created.cat);
     startEdit(created.id);
     const sort = document.getElementById('sortSelect');
     const lockedBefore = sort.disabled;
@@ -78,7 +79,7 @@ try {
     sort.value = 'title';
     applySort();
     const sortStayedCustom = sortBy === 'custom';
-    document.getElementById('catSecondary' + created.id).value = 'Geral';
+    document.getElementById('catCategory' + created.id + '_1').value = 'Geral';
     onEditCategoryChange(created.id, 1);
     saveEdit(created.id);
     const saved = scripts[0];

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const templatePath = process.argv[2] || '/home/ubuntu/work_scriptz/scriptz-main-updated/templates/DEPROT.JSON';
+const templatePath = process.argv[2] || '/home/ubuntu/work_scriptz/scriptz-v86-clipboard/templates/DEPROT.JSON';
 const template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
 const errors = [];
 const warnings = [];
@@ -32,8 +32,11 @@ const expectedParents = {
   'Certificado de Acessibilidade': 'Guias AD',
   'Cadastro de Sistema Especial de Segurança': 'Guias AD',
   'Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro': 'Guias AD',
-  'Projeto Modificativo': 'Cotas do SEI',
-  'Restituição de Guia': 'Cotas do SEI'
+  'Solicitando documentos e/ou ajustes': 'E-mail',
+  'Restituição de Guia': 'Cotas do SEI',
+  'Cotas do SEI::TCAEP': 'Cotas do SEI',
+  'Cotas do SEI::Busca Física': 'Cotas do SEI',
+  'Cotas do SEI::Verificação de valores HIS/HMP': 'Cotas do SEI'
 };
 ['Mensagens externas AD', 'Guias AD', 'Cotas do SEI'].forEach(category => {
   if (!categorySet.has(category)) errors.push(`Categoria principal obrigatória ausente: ${category}.`);
@@ -78,5 +81,5 @@ console.log(JSON.stringify({
   uniqueIds: ids.size === template.scripts.length,
   warnings,
   aprovaDigital: { mensagensExternasAD: messageIds.length, guiasADSubcategories: Object.keys(expectedParents).filter(category => parents[category] === 'Guias AD').length },
-  cotasDoSei: ['Projeto Modificativo', 'Restituição de Guia']
+  cotasDoSei: ['Restituição de Guia', 'Cotas do SEI::TCAEP', 'Cotas do SEI::Busca Física', 'Cotas do SEI::Verificação de valores HIS/HMP']
 }, null, 2));

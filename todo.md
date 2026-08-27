@@ -521,3 +521,13 @@
 
 - [x] Corrigir a exibição do dropdown obrigatório de categoria ou subcategoria no formulário aberto pela tela inicial.
 - [x] Validar a visibilidade e a seleção nos contextos Meus Scriptz e Modo Editor, em desktop e mobile.
+
+## Governança de edição e importação
+
+- [x] Validar e incorporar o JSON enviado como novo template padrão de DEPROT.
+- [x] Impedir o fechamento por clique externo dos avisos de renomeação de categoria e subcategoria.
+- [x] Bloquear ações concorrentes enquanto a reordenação ou a criação de categoria principal estiver em andamento.
+- [x] Bloquear ações concorrentes nos demais cards enquanto um script estiver em edição.
+- [x] Oferecer sobreposição ou mesclagem ao importar dados em contexto que já possui conteúdo.
+- [x] Mesclar apenas categorias, subcategorias e scriptz ainda inexistentes.
+- [x] Validar os fluxos de importação, bloqueio e edição em desktop e mobile antes da entrega.

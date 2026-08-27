@@ -2641,6 +2641,32 @@ select:not([multiple]):not([size]):open {
 /* O atalho superior de criação só existe em contextos pessoais que já possuem scriptz. */
 #newScriptBtn[hidden] { display: none !important; }
 
+/* Operações exclusivas: durante a criação ou reordenação pela sidebar, somente o respectivo controle permanece interativo. */
+body.sidebar-reorder-active main,
+body.sidebar-reorder-active .sb-head,
+body.sidebar-reorder-active .sb-search,
+body.sidebar-reorder-active .sb-foot,
+body.sidebar-category-creation-active main,
+body.sidebar-category-creation-active .sb-head,
+body.sidebar-category-creation-active .sb-search,
+body.sidebar-category-creation-active .sb-foot {
+  pointer-events: none;
+  user-select: none;
+  opacity: .58;
+}
+body.sidebar-reorder-active #sidebarNav .sidebar-library-overview,
+body.sidebar-reorder-active #sidebarNav .sidebar-category-actions,
+body.sidebar-reorder-active #sidebarNav .sidebar-library-section > summary,
+body.sidebar-category-creation-active #sidebarNav > :not(.sidebar-category-manager),
+body.sidebar-category-creation-active #sidebarNav .sidebar-library-section > :not(.sidebar-library-clip),
+body.sidebar-category-creation-active #sidebarNav .sidebar-library-clip > :not(.sidebar-category-manager) {
+  pointer-events: none;
+}
+body.sidebar-reorder-active #sidebarNav .category-root-btn { pointer-events: none; }
+body.sidebar-reorder-active #sidebarNav .category-root-list[data-editable-roots="true"] > li { cursor: grab; }
+body.sidebar-reorder-active #sidebarNav .sidebar-category-manager,
+body.sidebar-category-creation-active #sidebarNav .sidebar-category-manager { pointer-events: auto; opacity: 1; }
+
 /* No desktop, a assinatura é uma janela de trabalho sempre visível e independente do conteúdo do painel. */
 @media (min-width: 821px) {
   :root { --signature-reserve: 292px; }

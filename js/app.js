@@ -64,6 +64,26 @@ const STANDARD_DIVISIONS = Object.freeze({
 const DEPROT_ROOT_CATEGORY_ORDER = Object.freeze(['E-mail', 'Mensagens externas AD', 'Guias AD', 'Cotas do SEI']);
 const LEGACY_DIVISIONS = Object.freeze({ 'Coord.': 'Núcleo' });
 
+function getExclusiveActionMessage({ allowEdit = false, allowReorder = false, allowCategoryCreation = false } = {}) {
+  if (activeEditId !== null && !allowEdit) return 'Conclua ou cancele a edição do script antes de realizar outra ação.';
+  if (reorderMode && !allowReorder) return 'Finalize a reordenação de categorias antes de realizar outra ação.';
+  if (sidebarCategoryCreatorOpen && !allowCategoryCreation) return 'Conclua ou cancele a criação da categoria antes de realizar outra ação.';
+  return '';
+}
+
+function blockConflictingAction(options) {
+  const message = getExclusiveActionMessage(options);
+  if (!message) return false;
+  showToast('⚠️', message);
+  return true;
+}
+
+function syncExclusiveInteractionState() {
+  document.body.classList.toggle('sidebar-reorder-active', reorderMode);
+  document.body.classList.toggle('sidebar-category-creation-active', sidebarCategoryCreatorOpen);
+  document.body.classList.toggle('script-editing-active', activeEditId !== null);
+}
+
 // ============================================================
 //  TEMA (DARK MODE)
 // ============================================================
@@ -255,6 +275,7 @@ function loadUserName() {
 //  FAVORITOS
 // ============================================================
 function toggleFavorite(id) {
+  if (blockConflictingAction()) return;
   const idx = scripts.findIndex(s => s.id === id);
   if (idx === -1) return;
 
@@ -680,7 +701,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=81`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=91`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template') throw new Error('Template inválido');
@@ -975,7 +996,7 @@ function applySortFn(list) {
 }
 
 function applySort() {
-  if (activeEditId !== null) {
+  if (blockConflictingAction()) {
     const select = document.getElementById('sortSelect');
     if (select) select.value = sortBy;
     showToast('⚠️', 'Conclua ou cancele a edição antes de alterar a ordenação.');
@@ -1008,6 +1029,10 @@ function updateSortLabelsForViewport() {
 //  MODO DE REORDENAÇÃO
 // ============================================================
 function toggleReorderMode() {
+  if (sidebarCategoryCreatorOpen) {
+    showToast('⚠️', 'Conclua ou cancele a criação da categoria antes de reordenar.');
+    return;
+  }
   if (activeEditId !== null) {
     showToast('⚠️', 'Conclua ou cancele a edição antes de reordenar categorias.');
     return;
@@ -1024,6 +1049,7 @@ function toggleReorderMode() {
   } else {
     updateCustomOrderFromDOM();
   }
+  syncExclusiveInteractionState();
 }
 
 // ============================================================
@@ -1095,6 +1121,19 @@ function updateCustomOrderFromDOM() {
 // ============================================================
 function toggleSidebarCategoryCreator() {
   if (isStandardLibrary()) return;
+  if (sidebarCategoryCreatorOpen) {
+    sidebarCategoryCreatorOpen = false;
+    buildSidebar();
+    return;
+  }
+  if (reorderMode) {
+    showToast('⚠️', 'Finalize a reordenação antes de criar uma categoria.');
+    return;
+  }
+  if (activeEditId !== null) {
+    showToast('⚠️', 'Conclua ou cancele a edição antes de criar uma categoria.');
+    return;
+  }
   sidebarCategoryCreatorOpen = !sidebarCategoryCreatorOpen;
   buildSidebar();
   if (sidebarCategoryCreatorOpen) setTimeout(() => document.getElementById('sidebarNewCategoryName')?.focus(), 30);
@@ -1123,6 +1162,7 @@ function createCategoryFromSidebar() {
 }
 
 function renameCategoryFromSidebar(category) {
+  if (blockConflictingAction()) return;
   if (isStandardLibrary() || isStandardCategory(category)) return;
   openNoticeModal({
     title: 'Renomear categoria',
@@ -1178,10 +1218,12 @@ function buildSidebar() {
       el.classList.add('reorder-mode');
     });
   }
+  syncExclusiveInteractionState();
   setTimeout(initDragDrop, 50);
 }
 
 function setCat(cat) {
+  if (blockConflictingAction()) return;
   activeCat = cat;
   isInitialLanding = false;
   subcategoryCreatorOpen = false;
@@ -1205,11 +1247,8 @@ function openPdfGuideCardWhenRelevant() {
 
 function setLibrary(library) {
   if (!isStandardMode()) return;
+  if (blockConflictingAction()) return;
   const next = library === 'standard' ? 'standard' : 'personal';
-  if (activeEditId !== null) {
-    showToast('⚠️', 'Conclua ou cancele a edição antes de trocar de biblioteca.');
-    return;
-  }
   activeLibrary = next;
   librarySectionOpen[next] = true;
   reorderMode = false;
@@ -1228,6 +1267,7 @@ function setLibrary(library) {
 
 function toggleLibrarySection(library) {
   if (!isStandardMode()) return;
+  if (blockConflictingAction()) return;
   const next = library === 'standard' ? 'standard' : 'personal';
   if (activeLibraryKey() !== next) {
     librarySectionOpen[next] = true;
@@ -1431,6 +1471,7 @@ function onNewCategorySelectChange(index) {
 //  GERENCIAR CATEGORIAS - MODAL
 // ============================================================
 function openCategoryModal() {
+    if (blockConflictingAction()) return;
     if (activeEditId !== null) {
         showToast('⚠️', 'Conclua ou cancele a edição antes de reordenar categorias.');
         return;
@@ -1693,6 +1734,7 @@ function confirmRenameCategory(oldName, newName) {
 //  EXCLUIR CATEGORIA
 // ============================================================
 function deleteCategory(cat) {
+    if (blockConflictingAction()) return;
     if (isStandardCategory(cat)) {
         showToast('🔒', 'Categorias padrão não podem ser excluídas.');
         return;
@@ -1986,6 +2028,7 @@ function syncNewScriptEditorState() {
 //  RENDER
 // ============================================================
 function createSubcategoryFromMain() {
+  if (blockConflictingAction()) return;
   const parent = activeCat;
   const input = document.getElementById('newSubcategoryName');
   const name = normalizeCategoryName(input?.value);
@@ -2013,6 +2056,7 @@ function createSubcategoryFromMain() {
 }
 
 function createPersonalCategoryFromMain() {
+  if (blockConflictingAction()) return;
   if (isStandardLibrary()) {
     setLibrary('personal');
     setTimeout(createPersonalCategoryFromMain, 0);
@@ -2045,6 +2089,7 @@ function createPersonalCategoryFromMain() {
 }
 
 function showSubcategoryCreator() {
+  if (blockConflictingAction()) return;
   if (!canManageSubcategories(activeCat)) {
     showToast('⚠️', 'Esta categoria principal já possui scriptz e não pode receber subcategorias.');
     return;
@@ -2055,6 +2100,7 @@ function showSubcategoryCreator() {
 }
 
 function renameSubcategoryFromMain(category) {
+  if (blockConflictingAction()) return;
   openNoticeModal({
     title: 'Renomear subcategoria',
     message: `Defina o novo nome para “${categoryDisplayName(category)}”.`,
@@ -2067,6 +2113,7 @@ function renameSubcategoryFromMain(category) {
 }
 
 function deleteSubcategoryFromMain(category) {
+  if (blockConflictingAction()) return;
   if (getCategoryParent(category) !== activeCat) return;
   deleteCategory(category);
 }
@@ -2177,6 +2224,7 @@ function buildSubcategoryNavigator() {
 }
 
 function render() {
+  syncExclusiveInteractionState();
   const list = getFilteredScripts();
   const badge = document.getElementById('badge');
   const empty = document.getElementById('empty');
@@ -2308,12 +2356,12 @@ function cardHTML(s) {
         </div>
         <span class="card-tag">${escapeHtml(categoryLabel(s))}</span>
       </div>
-      <div class="card-btns" onclick="event.stopPropagation()">
+      ${activeEditId === null ? `<div class="card-btns" onclick="event.stopPropagation()">
         <button class="btn btn-copy" id="cb${s.id}" onclick="event.stopPropagation(); copyScript(${s.id})">📋 Copiar</button>
         <button class="btn btn-ghost" onclick="startEdit(${s.id})" ${lockAttrs}>✏️ Editar</button>
         <button class="btn btn-del" onclick="deleteScript(${s.id})" ${lockAttrs}>🗑️ Excluir</button>
         <button class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite(${s.id})">${isFav ? '⭐' : '☆'}</button>
-      </div>
+      </div>` : ''}
       ${sortBy === 'custom' && activeEditId === null ? `<span class="script-order-controls" onclick="event.stopPropagation()"><button type="button" onclick="moveScriptOrder(${s.id}, -1)" aria-label="Mover script para cima">↑</button><button type="button" onclick="moveScriptOrder(${s.id}, 1)" aria-label="Mover script para baixo">↓</button></span>` : ''}
       <svg class="chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
@@ -2329,6 +2377,10 @@ function cardHTML(s) {
 }
 
 function toggleCard(id) {
+  if (activeEditId !== null) {
+    showToast('⚠️', 'Conclua ou cancele a edição antes de abrir outro script.');
+    return;
+  }
   const card = document.getElementById('c' + id);
   card.classList.toggle('open');
 }
@@ -2417,6 +2469,7 @@ function onEditCategoryChange(id, slot) {
 //  EDIÇÃO
 // ============================================================
 function startEdit(id) {
+  if (blockConflictingAction({ allowEdit: true })) return;
   if (activeEditId !== null && activeEditId !== id) {
     showToast('⚠️', 'Conclua ou cancele a edição atual antes de abrir outro script.');
     return;
@@ -2516,6 +2569,7 @@ function saveEdit(id) {
 }
 
 function deleteScript(id) {
+  if (blockConflictingAction()) return;
   const script = scripts.find(item => item.id === id);
   if (isStandardScript(script)) {
     showToast('🔒', 'Scripts padrão não podem ser excluídos.');
@@ -2541,6 +2595,7 @@ function deleteScript(id) {
 //  COPIAR (preserva formatação - sem negrito)
 // ============================================================
 async function copyScript(id) {
+  if (blockConflictingAction()) return;
   const s = scripts.find(x => x.id === id);
   if (!s) return;
 
@@ -2622,6 +2677,7 @@ function confirmCopySignature() {
 //  ADICIONAR SCRIPT
 // ============================================================
 function openModal(preselectedCategory = '') {
+    if (blockConflictingAction()) return;
     if (isStandardLibrary()) {
       setLibrary('personal');
       setTimeout(() => openModal(preselectedCategory), 0);
@@ -2935,56 +2991,143 @@ function validateProjectPayload(data, { allowTemplate = false } = {}) {
   return record;
 }
 
-function importProjectData(imported) {
+function scriptContentFingerprint(script) {
+  const title = String(script?.title || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+  const html = cleanEditorHtml(String(script?.html || '')).replace(/>\s+</g, '><').trim();
+  const greeting = getGreetingMode(script);
+  const signature = script?.hasSignature !== false ? 'signature' : 'no-signature';
+  return `${title}\u0000${html}\u0000${greeting}\u0000${signature}`;
+}
+
+function hasSavedPersonalContent() {
+  const personalScripts = isStandardMode() ? getLibraryScripts('personal') : scripts;
+  return personalScripts.length > 0 || categoryRegistry.length > 0;
+}
+
+function normalizeIncomingScripts(incomingScripts, { source = 'user', reservedScripts = [] } = {}) {
+  const usedIds = new Set(reservedScripts.map(script => Number(script.id)).filter(Number.isFinite));
+  let idCursor = Math.max(99, ...[...usedIds], nextId - 1);
+  const fingerprints = new Set();
+  return incomingScripts.reduce((normalizedScripts, script) => {
+    const normalized = normalizeScript({ ...script, isStandard: false }, source);
+    const fingerprint = scriptContentFingerprint(normalized);
+    if (fingerprints.has(fingerprint)) return normalizedScripts;
+    fingerprints.add(fingerprint);
+    if (!Number.isInteger(normalized.id) || usedIds.has(normalized.id)) {
+      do { idCursor += 1; } while (usedIds.has(idCursor));
+      normalized.id = idCursor;
+    }
+    usedIds.add(normalized.id);
+    normalizedScripts.push(normalized);
+    return normalizedScripts;
+  }, []);
+}
+
+function collectImportedCategories(data, incomingScripts) {
+  const parents = normalizeCategoryParents(data.categoryParents);
+  return [...new Set([
+    ...(Array.isArray(data.categories) ? data.categories : []),
+    ...allScriptCategories(incomingScripts),
+    ...Object.keys(parents),
+    ...Object.values(parents)
+  ].map(normalizeCategoryName).filter(Boolean))];
+}
+
+function mergeImportMetadata(data, incomingScripts) {
+  const incomingCategories = collectImportedCategories(data, incomingScripts);
+  const incomingParents = normalizeCategoryParents(data.categoryParents);
+  const incomingLabels = normalizeCategoryLabels(data.categoryLabels);
+  const existing = new Set(categoryRegistry);
+  incomingCategories.forEach(category => {
+    if (!existing.has(category)) categoryRegistry.push(category);
+    if (!categoryLabels[category]) categoryLabels[category] = incomingLabels[category] || fallbackCategoryLabel(category);
+    if (!categoryParents[category] && incomingParents[category]) categoryParents[category] = incomingParents[category];
+  });
+  const importedOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder.map(normalizeCategoryName).filter(Boolean) : [];
+  customCategoryOrder = [...new Set([...customCategoryOrder, ...importedOrder, ...incomingCategories])];
+  const importedScriptOrders = isSafeRecord(data.scriptOrders || {}, 'Ordenações');
+  Object.entries(importedScriptOrders).forEach(([category, ids]) => {
+    const current = customScriptOrderByCategory[category] || [];
+    customScriptOrderByCategory[category] = [...new Set([...current, ...ids.map(String)])];
+  });
+  expandedCategories = new Set([...expandedCategories, ...(Array.isArray(data.expandedCategories) ? data.expandedCategories : []).map(normalizeCategoryName).filter(Boolean)]);
+}
+
+function replaceImportMetadata(data, incomingScripts) {
+  const importedParents = normalizeCategoryParents(data.categoryParents);
+  categoryRegistry = collectImportedCategories(data, incomingScripts);
+  categoryParents = importedParents;
+  categoryLabels = normalizeCategoryLabels(data.categoryLabels);
+  customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder.map(normalizeCategoryName).filter(Boolean) : [...categoryRegistry];
+  customScriptOrderByCategory = isSafeRecord(data.scriptOrders || {}, 'Ordenações');
+  expandedCategories = new Set(Array.isArray(data.expandedCategories) ? data.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
+}
+
+function importProjectData(imported, { strategy = 'replace', allowTemplate = false, source = 'user', successMessage = '' } = {}) {
   if (!workspace.mode) throw new Error('Selecione um modo antes de importar.');
   const legacy = Array.isArray(imported);
   const data = legacy ? { schema: 'legacy-scriptz', scripts: imported, categories: [] } : imported;
-  validateProjectPayload(data);
-  if (data.scripts.length > currentScriptLimit()) throw new Error(`O arquivo excede o limite de ${currentScriptLimit()} scriptz.`);
+  validateProjectPayload(data, { allowTemplate });
   if (data.scripts.some(script => !scriptHasDeclaredClassification(script))) {
     throw new Error('Todo script precisa pertencer a uma categoria ou subcategoria existente.');
   }
-
   if (isStandardMode()) {
     const isDivisionChanges = data.schema === 'scriptz-standard-changes' && data.division === workspace.division;
-    const isExternalProject = data.schema === 'scriptz-free-project' || data.schema === 'legacy-scriptz';
-    if (!isDivisionChanges && !isExternalProject) {
-      throw new Error('Este arquivo não pertence à divisão atual do Scriptz Padrão.');
-    }
-    const importedCategories = Array.isArray(data.categories) ? data.categories.map(String) : [];
-    const importedParents = normalizeCategoryParents(data.categoryParents);
-    const importedLabels = normalizeCategoryLabels(data.categoryLabels);
-    const userScripts = data.scripts.map(script => {
-      const normalized = normalizeScript({ ...script, isStandard: false }, 'user');
-      return normalized;
-    });
-    scripts = [...standardScripts, ...userScripts];
-    categoryRegistry = [...new Set([...importedCategories, ...allScriptCategories(userScripts)])];
-    categoryParents = importedParents;
-    categoryLabels = importedLabels;
-    customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : categoryRegistry;
-    customScriptOrderByCategory = data.scriptOrders || {};
-    expandedCategories = new Set(Array.isArray(data.expandedCategories) ? data.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
-    reconcileCategoryHierarchy();
-  } else {
-    if (data.schema === 'scriptz-standard-changes') throw new Error('Alterações do Scriptz Padrão devem ser importadas na divisão correspondente.');
-    scripts = data.scripts.map(script => normalizeScript({ ...script, isStandard: false }, 'user'));
-    categoryRegistry = Array.isArray(data.categories) ? data.categories : [];
-    categoryParents = normalizeCategoryParents(data.categoryParents);
-    categoryLabels = normalizeCategoryLabels(data.categoryLabels);
-    customCategoryOrder = Array.isArray(data.categoryOrder) ? data.categoryOrder : [];
-    customScriptOrderByCategory = data.scriptOrders || {};
-    expandedCategories = new Set(Array.isArray(data.expandedCategories) ? data.expandedCategories.map(normalizeCategoryName).filter(Boolean) : []);
-    categoryRegistry = [...new Set([...categoryRegistry, ...allScriptCategories()])];
-    reconcileCategoryHierarchy();
+    const isExternalProject = data.schema === 'scriptz-free-project' || data.schema === 'legacy-scriptz' || data.schema === 'scriptz-standard-template';
+    if (!isDivisionChanges && !isExternalProject) throw new Error('Este arquivo não pertence à divisão atual do Scriptz Padrão.');
+  } else if (data.schema === 'scriptz-standard-changes') {
+    throw new Error('Alterações do Scriptz Padrão devem ser importadas na divisão correspondente.');
   }
-  nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
+
+  const protectedScripts = isStandardMode() ? standardScripts : [];
+  const currentPersonalScripts = isStandardMode() ? getLibraryScripts('personal') : scripts;
+  const incomingScripts = normalizeIncomingScripts(data.scripts, { source, reservedScripts: [...protectedScripts, ...currentPersonalScripts] });
+  const existingFingerprints = new Set(currentPersonalScripts.map(scriptContentFingerprint));
+  const scriptsToAdd = incomingScripts.filter(script => !existingFingerprints.has(scriptContentFingerprint(script)));
+  const personalScripts = strategy === 'merge' ? [...currentPersonalScripts, ...scriptsToAdd] : incomingScripts;
+  if (protectedScripts.length + personalScripts.length > currentScriptLimit()) {
+    throw new Error(`A importação ultrapassa o limite de ${currentScriptLimit()} scriptz neste contexto.`);
+  }
+
+  scripts = isStandardMode() ? [...protectedScripts, ...personalScripts] : personalScripts;
+  if (strategy === 'merge') mergeImportMetadata(data, scriptsToAdd);
+  else replaceImportMetadata(data, incomingScripts);
+  reconcileCategoryHierarchy();
+  nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 99) + 1;
+  activeCat = 'all';
+  isInitialLanding = false;
+  if (isStandardMode()) activeLibrary = 'personal';
   saveToLocal();
   refreshWorkspaceUI();
-  showToast('📥', 'Importado com sucesso!');
+  const addedText = strategy === 'merge' ? `${scriptsToAdd.length} scriptz diferente(s) adicionado(s).` : 'Conteúdo existente substituído.';
+  showToast('📥', successMessage || `Importação concluída: ${addedText}`);
+}
+
+function requestImportResolution(data, options = {}) {
+  const execute = strategy => {
+    try {
+      importProjectData(data, { ...options, strategy });
+    } catch (error) {
+      showToast('❌', error.message || 'Não foi possível importar o arquivo.');
+    }
+  };
+  if (!hasSavedPersonalContent()) {
+    execute('replace');
+    return;
+  }
+  openNoticeModal({
+    title: 'Conteúdo já existente',
+    message: 'Este modo já possui categorias ou scriptz salvos. Deseja substituir o conteúdo atual ou mesclar somente os itens ainda inexistentes?',
+    note: 'Mesclar preserva o que já existe e adiciona apenas categorias, subcategorias e scriptz diferentes. Sobrepor substitui o conteúdo pessoal atual.',
+    confirmLabel: 'Sobrepor existentes',
+    secondaryLabel: 'Mesclar sem duplicar',
+    onConfirm: () => execute('replace'),
+    onSecondary: () => execute('merge')
+  });
 }
 
 function readImportFile(file) {
+  if (blockConflictingAction()) return;
   if (!file) return;
   if (!/\.json$/i.test(file.name || '')) {
     showToast('⚠️', 'Selecione um arquivo JSON válido.');
@@ -2997,7 +3140,8 @@ function readImportFile(file) {
   const reader = new FileReader();
   reader.onload = event => {
     try {
-      importProjectData(JSON.parse(event.target.result));
+      const data = JSON.parse(event.target.result);
+      requestImportResolution(data, { allowTemplate: true });
     } catch (error) {
       showToast('❌', error.message || 'Arquivo inválido');
     }
@@ -3036,6 +3180,7 @@ if (dropZone) {
 }
 
 function openTemplateBaseModal() {
+  if (blockConflictingAction()) return;
   document.getElementById('templateBaseModal')?.classList.add('show');
 }
 
@@ -3051,19 +3196,12 @@ async function loadStandardBaseIntoFree(division) {
   if (!workspace.mode || isStandardMode()) return;
   try {
     const template = await fetchStandardTemplate(division);
-    const incoming = template.scripts.map(script => normalizeScript({ ...script, isStandard: false }, 'template-base'));
-    if (scripts.length + incoming.length > SCRIPT_LIMITS.free) throw new Error(`O Modo Editor aceita até ${SCRIPT_LIMITS.free} scriptz.`);
-    scripts = [...scripts, ...incoming];
-    categoryRegistry = [...new Set([...categoryRegistry, ...(template.categories || []), ...allScriptCategories(incoming)])];
-    categoryParents = { ...categoryParents, ...normalizeCategoryParents(template.categoryParents) };
-    categoryLabels = { ...categoryLabels, ...normalizeCategoryLabels(template.categoryLabels) };
-    reconcileCategoryHierarchy();
-    customCategoryOrder = [...new Set([...customCategoryOrder, ...categoryRegistry])];
-    nextId = Math.max(...scripts.map(script => Number(script.id) || 0), 0) + 1;
-    saveToLocal();
     closeTemplateBaseModal();
-    refreshWorkspaceUI();
-    showToast('📂', `Base CAP · ${division} carregada no Modo Editor.`);
+    requestImportResolution(template, {
+      allowTemplate: true,
+      source: 'template-base',
+      successMessage: `Base CAP · ${division} carregada no Modo Editor.`
+    });
   } catch (error) {
     showToast('❌', error.message || 'Não foi possível carregar a base.');
   }
@@ -3108,8 +3246,10 @@ function openNoticeModal({
   inputValue = '',
   inputPlaceholder = '',
   confirmLabel = 'Continuar',
+  secondaryLabel = '',
   danger = false,
-  onConfirm = null
+  onConfirm = null,
+  onSecondary = null
 } = {}) {
   const modal = document.getElementById('noticeModal');
   if (!modal) return;
@@ -3121,6 +3261,7 @@ function openNoticeModal({
   const error = document.getElementById('noticeError');
   const confirmButton = document.getElementById('noticeConfirmBtn');
   const cancelButton = document.getElementById('noticeCancelBtn');
+  const secondaryButton = document.getElementById('noticeSecondaryBtn');
   titleNode.textContent = title || 'Aviso';
   messageNode.textContent = message || '';
   noteNode.textContent = note;
@@ -3132,9 +3273,11 @@ function openNoticeModal({
   input.placeholder = inputPlaceholder;
   error.textContent = '';
   confirmButton.textContent = confirmLabel;
+  secondaryButton.textContent = secondaryLabel;
+  secondaryButton.hidden = !secondaryLabel;
   cancelButton.hidden = false;
   modal.querySelector('.notice-modal')?.classList.toggle('is-danger', Boolean(danger));
-  noticeAction = { onConfirm, requiresInput: Boolean(inputLabel) };
+  noticeAction = { onConfirm, onSecondary, requiresInput: Boolean(inputLabel) };
   modal.classList.add('show');
   window.setTimeout(() => (inputLabel ? input : confirmButton)?.focus(), 30);
 }
@@ -3157,6 +3300,13 @@ function confirmNoticeModal() {
   const action = noticeAction.onConfirm;
   closeNoticeModal();
   action?.(value);
+}
+
+function confirmSecondaryNoticeModal() {
+  if (!noticeAction?.onSecondary) return;
+  const action = noticeAction.onSecondary;
+  closeNoticeModal();
+  action();
 }
 
 function showToast(icon, msg) {
