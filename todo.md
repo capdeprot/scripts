@@ -578,3 +578,12 @@
 - [x] Organizar a documentação sem remover arquivos exigidos pela hospedagem ou pelo projeto.
 - [x] Validar referências, sintaxe e integridade do pacote após a organização.
 
+
+## Diagnóstico da fonte escolhida
+
+- [x] Verificar a declaração da fonte no HTML e no CSS.
+- [x] Confirmar carregamento da fonte e possíveis falhas de rede ou CSP.
+- [x] Identificar regras que sobrescrevem a fonte escolhida.
+- [x] Corrigir o carregamento ou a aplicação da fonte sem alterar a identidade visual indevidamente.
+- [x] Validar a fonte no navegador em desktop e mobile.
+
