@@ -130,6 +130,12 @@ try {
     const structuredPlainTextRemovesInlineBreaks = metricPlainText === 'Verificamos que a área [[especificar o tipo de área e quantidade]] apontada no projeto.\\n\\nAssim, pedimos a correção.';
     const structuredPlainTextPreservesListItems = htmlToStructuredPlainText('<div>Documentos necessários:</div><ul><li>Requerimento\\npreenchido</li><li>Documento de identificação</li></ul>') === 'Documentos necessários:\\n\\n• Requerimento preenchido\\n• Documento de identificação';
     const clipboardPlainTextUsesCrLf = metricPlainText.replace(/\\n/g, '\\r\\n').includes('\\r\\n\\r\\n');
+    const rejectsCorruptStoredJson = (() => {
+      try { parseStoredJson('{', 'Dados locais'); return false; } catch (_) { return true; }
+    })();
+    localStorage.setItem('category_order', JSON.stringify({ invalid: true }));
+    loadCustomOrder();
+    const rejectsInvalidStoredOrder = Array.isArray(customCategoryOrder) && customCategoryOrder.length === 0;
     let rejectsDangerousJson = false;
     let rejectsExcessiveJson = false;
     try { validateProjectPayload(JSON.parse('{"scripts":[],"__proto__":{"polluted":true}}')); } catch (_) { rejectsDangerousJson = true; }
@@ -477,6 +483,8 @@ try {
       clipboardPlainTextUsesCrLf,
       rejectsDangerousJson,
       rejectsExcessiveJson,
+      rejectsCorruptStoredJson,
+      rejectsInvalidStoredOrder,
       initialLandingVisible,
       initialListControlsHidden,
       newScriptAvailableOnAllWithCategories,
@@ -1040,6 +1048,8 @@ try {
     && desktop.clipboardPlainTextUsesCrLf
     && desktop.rejectsDangerousJson
     && desktop.rejectsExcessiveJson
+    && desktop.rejectsCorruptStoredJson
+    && desktop.rejectsInvalidStoredOrder
     && signatureWide.visible
     && signatureWide.fixed
     && signatureWide.nearViewportRight

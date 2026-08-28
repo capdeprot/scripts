@@ -47,7 +47,8 @@ const SECURITY_LIMITS = Object.freeze({
   maxCategoryChars: 180,
   maxCategories: 2000,
   maxLinkChars: 2048,
-  maxJsonKeys: 80
+  maxJsonKeys: 80,
+  maxStoredChars: 8 * 1024 * 1024
 });
 const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 const DANGEROUS_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
@@ -306,7 +307,11 @@ function loadCustomOrder() {
   const saved = localStorage.getItem('category_order');
   if (saved) {
     try {
-      customCategoryOrder = JSON.parse(saved);
+      const parsedOrder = parseStoredJson(saved, 'Ordem de categorias');
+      if (!Array.isArray(parsedOrder) || parsedOrder.length > SECURITY_LIMITS.maxCategories || parsedOrder.some(category => typeof category !== 'string' || !category.trim() || category.length > SECURITY_LIMITS.maxCategoryChars)) {
+        throw new Error('Ordem de categorias inválida.');
+      }
+      customCategoryOrder = parsedOrder;
       isCustomOrderActive = customCategoryOrder.length > 0;
     } catch (e) {
       customCategoryOrder = [];
@@ -456,6 +461,28 @@ function isSafeRecord(value, label = 'Objeto') {
   if (keys.length > SECURITY_LIMITS.maxJsonKeys) throw new Error(`${label} excede a quantidade permitida de campos.`);
   if (keys.some(key => DANGEROUS_OBJECT_KEYS.has(key))) throw new Error(`${label} contém uma chave não permitida.`);
   return value;
+}
+
+function parseStoredJson(raw, label = 'Dados locais') {
+  if (!raw) return null;
+  if (raw.length > SECURITY_LIMITS.maxStoredChars) throw new Error(`${label} excedem o limite de armazenamento.`);
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    throw new Error(`${label} estão corrompidos.`);
+  }
+}
+
+function validateStoredWorkspaceState(savedState) {
+  if (savedState === null || savedState === undefined) return null;
+  if (Array.isArray(savedState)) {
+    if (savedState.length > SCRIPT_LIMITS.free) throw new Error('Dados locais excedem o limite de scriptz.');
+    savedState.forEach((script, index) => validateScriptPayload(script, index, SCRIPT_LIMITS.free));
+    return savedState;
+  }
+  const record = isSafeRecord(savedState, 'Dados locais');
+  if (record.scripts !== undefined) validateProjectPayload(record, { allowTemplate: false });
+  return record;
 }
 
 function sanitizeLinkUrl(rawUrl, { allowRelativeAsset = true } = {}) {
@@ -683,7 +710,7 @@ function normalizeScript(script, source = 'user') {
 }
 
 function normalizeWorkspaceState(savedState) {
-  const state = savedState && !Array.isArray(savedState) ? savedState : {};
+  const state = validateStoredWorkspaceState(savedState) || {};
   const savedScripts = Array.isArray(savedState) ? savedState : state.scripts || [];
   const source = isStandardMode() ? 'user' : 'user';
   scripts = savedScripts.map(script => normalizeScript(script, script.source || source));
@@ -701,7 +728,7 @@ function normalizeWorkspaceState(savedState) {
 async function fetchStandardTemplate(division) {
   const source = STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=92`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=93`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template') throw new Error('Template inválido');
@@ -753,7 +780,7 @@ async function loadWorkspace(showFeedback = true) {
       standardCategoryParents = normalizeCategoryParents(template.categoryParents);
       standardCategoryLabels = normalizeCategoryLabels(template.categoryLabels);
       standardScripts = template.scripts.map(script => normalizeScript({ ...script, isStandard: true }, 'standard'));
-      const saved = local ? JSON.parse(local) : null;
+      const saved = validateStoredWorkspaceState(parseStoredJson(local, 'Dados locais'));
       normalizeWorkspaceState(saved);
       scripts = [...standardScripts, ...scripts.filter(script => !isStandardScript(script))];
       reconcileCategoryHierarchy();
@@ -763,7 +790,7 @@ async function loadWorkspace(showFeedback = true) {
         : [...new Set([...standardCategoryOrder, ...templateCategoryOrder])];
       originalScripts = JSON.parse(JSON.stringify(standardScripts));
     } else {
-      const saved = local ? JSON.parse(local) : null;
+      const saved = validateStoredWorkspaceState(parseStoredJson(local, 'Dados locais'));
       normalizeWorkspaceState(saved);
       scripts = scripts.map(script => ({ ...script, isStandard: false, source: script.source || 'user' }));
       categoryRegistry = [...new Set([...categoryRegistry, ...allScriptCategories()])];
@@ -812,7 +839,7 @@ function changeWorkspaceFromSelect(value) {
 
 function getStoredWorkspace() {
   try {
-    const saved = JSON.parse(localStorage.getItem('scriptz_workspace'));
+    const saved = parseStoredJson(localStorage.getItem('scriptz_workspace'), 'Contexto salvo');
     if (saved?.mode === 'free') return { mode: 'free', division: null };
     const normalizedDivision = LEGACY_DIVISIONS[saved?.division] || saved?.division;
     if (saved?.mode === 'standard' && STANDARD_DIVISIONS[normalizedDivision]) return { mode: 'standard', division: normalizedDivision };
@@ -933,7 +960,8 @@ function saveToLocal() {
   const userScripts = isStandardMode() ? scripts.filter(script => !isStandardScript(script)) : scripts;
   const userCategories = categoryRegistry;
   const persistedParents = { ...categoryParents };
-  localStorage.setItem(workspaceKey(), JSON.stringify({
+  try {
+    localStorage.setItem(workspaceKey(), JSON.stringify({
     schema: isStandardMode() ? 'scriptz-standard-changes' : 'scriptz-free-project',
     version: 6,
     mode: workspace.mode,
@@ -947,7 +975,10 @@ function saveToLocal() {
     standardCategoryOrder: isStandardMode() ? standardCategoryOrder : undefined,
     standardScriptOrders: isStandardMode() ? standardScriptOrderByCategory : undefined,
     expandedCategories: [...expandedCategories]
-  }));
+    }));
+  } catch (error) {
+    showToast('⚠️', error?.name === 'QuotaExceededError' ? 'O armazenamento local está cheio. Exporte seus scriptz para não perder alterações.' : 'Não foi possível salvar as alterações localmente.');
+  }
 }
 
 // ============================================================

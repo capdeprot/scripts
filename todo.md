@@ -537,3 +537,44 @@
 - [x] Incorporar o novo JSON enviado como template padrão de DEPROT.
 - [x] Atualizar o validador conforme a estrutura do novo template, se necessário.
 - [x] Validar o template e gerar pacote pronto para commit.
+
+## Nova rodada de segurança
+
+- [x] Auditar validação de JSON, limites de tamanho e proteção contra payloads excessivos.
+- [x] Auditar sanitização HTML, URLs, links e conteúdo colado/importado.
+- [x] Auditar armazenamento local, exportação, importação e isolamento entre contextos.
+- [x] Auditar cache e superfícies do service worker/PWA.
+- [x] Aplicar correções de segurança compatíveis sem alterar a estrutura institucional.
+- [x] Executar testes de segurança, sintaxe e regressão antes da entrega.
+- [x] Documentar as melhorias e gerar pacote revisado, se houver alterações.
+
+
+## Varredura funcional e UX após hardening
+
+- [x] Verificar carregamento inicial, troca de contexto e jornada de boas-vindas.
+- [x] Testar navegação, sidebar, categorias, subcategorias e reordenação.
+- [x] Testar criação, edição, cópia, favoritos e exclusão de scriptz.
+- [x] Testar importação, mesclagem, sobreposição, exportação e persistência local.
+- [x] Testar PWA, links, modais, acessibilidade básica e ausência de ações concorrentes.
+- [x] Executar varredura de console, rede, erros de runtime e overflow em desktop e mobile.
+- [x] Corrigir efeitos indesejados encontrados e repetir a regressão completa.
+
+
+## Testes ativos de segurança
+
+- [x] Tentar injeção de HTML, script, atributos e URLs perigosas em títulos, categorias, editores e JSON.
+- [x] Tentar corromper ou exceder limites do JSON importado e do localStorage.
+- [x] Tentar provocar duplicação, colisão de IDs e quebra da hierarquia durante mesclagem.
+- [x] Tentar acionar ações concorrentes durante edição, reordenação, modais e importação.
+- [x] Tentar provocar navegação indevida, abertura insegura de links e cache de recursos não aprovados.
+- [x] Corrigir cada vulnerabilidade ou efeito indesejado reproduzível e repetir os ataques.
+- [x] Documentar resultados e atualizar a versão somente após regressão final aprovada.
+
+
+## Organização da documentação
+
+- [x] Inventariar os arquivos Markdown na raiz e classificar sua finalidade.
+- [x] Identificar arquivos temporários ou específicos de auditorias anteriores.
+- [x] Organizar a documentação sem remover arquivos exigidos pela hospedagem ou pelo projeto.
+- [x] Validar referências, sintaxe e integridade do pacote após a organização.
+
