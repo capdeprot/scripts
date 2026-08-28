@@ -587,3 +587,11 @@
 - [x] Corrigir o carregamento ou a aplicação da fonte sem alterar a identidade visual indevidamente.
 - [x] Validar a fonte no navegador em desktop e mobile.
 
+
+## Versionamento oficial 1.0.0
+
+- [x] Criar `version.json` com versão oficial 1.0.0 e build 94.
+- [x] Atualizar o README com a política e os valores atuais de versão.
+- [x] Exibir versão 1.0.0 e build 94 no menu Informações, Ajuda e Feedback.
+- [x] Validar JSON, referências, carregamento e visualização no navegador.
+

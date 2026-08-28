@@ -2407,6 +2407,9 @@ body.ordering-locked .sort-select { opacity: .58; cursor: not-allowed; }
 .help-author-line { white-space: nowrap; font-size: 13.5px !important; letter-spacing: -.01em; }
 .help-info-modal a { color: var(--accent); font-weight: 700; word-break: break-word; }
 .help-info-kicker { color: var(--accent) !important; font: 700 11px/1 'Rajdhani', sans-serif !important; letter-spacing: .13em; }
+.help-version-line { margin: 10px 0 0; color: var(--text-secondary); font: 600 12px/1.35 'Inter', sans-serif; }
+.help-version-line strong { color: var(--text); }
+
 .help-license-note { margin-top: 18px; padding: 11px 12px; border-left: 3px solid var(--accent); background: var(--accent-light); color: var(--text); font-size: 13px; line-height: 1.45; }
 .help-info-modal .modal-btns { width: 100%; box-sizing: border-box; justify-content: flex-end; }
 .copy-signature-modal, .notice-modal { width: min(500px, calc(100vw - 28px)); padding: 28px 30px; }
