@@ -202,9 +202,22 @@
         "Encaminhamento"
       ],
       "title": "Encaminhamento interno",
-      "html": "Encaminhamos a presente solicitação recebida em&nbsp;<strong>CAP/DEPROT</strong>&nbsp;para ciência e providências, no que couber.",
+      "html": "Encaminhamos a presente solicitação recebida em&nbsp;<strong>CAP/DEPROT</strong>&nbsp;para ciência e providências, no que couber.<div><br></div>",
       "greetingMode": "formal",
       "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 100,
+      "cat": "Encaminhamento",
+      "cats": [
+        "Encaminhamento"
+      ],
+      "title": "Ofício do TJ/MP para ciência do Gabinete",
+      "html": "Encaminhamos a solicitação do Ministério Público para ciência e deliberação, conforme o artigo 2º da Ordem Interna SMUL nº 03/24.<div><br></div>",
+      "greetingMode": "off",
+      "hasGreeting": false,
       "hasSignature": true,
       "isFavorite": false
     },

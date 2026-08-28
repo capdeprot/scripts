@@ -595,3 +595,16 @@
 - [x] Exibir versão 1.0.0 e build 94 no menu Informações, Ajuda e Feedback.
 - [x] Validar JSON, referências, carregamento e visualização no navegador.
 
+
+## Troca exclusiva do template DEPROT
+
+- [x] Substituir somente `templates/DEPROT.JSON` pelo arquivo anexado.
+- [x] Validar o JSON substituído e confirmar que nenhum outro arquivo foi alterado.
+
+
+## Pacote e prévia após atualização de DEPROT
+
+- [ ] Gerar ZIP para commit com o novo `templates/DEPROT.JSON`.
+- [ ] Confirmar a integridade do ZIP e a presença do template atualizado.
+- [ ] Confirmar o link temporário da mesma base para teste.
+
