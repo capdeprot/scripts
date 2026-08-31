@@ -604,7 +604,27 @@
 
 ## Pacote e prévia após atualização de DEPROT
 
-- [ ] Gerar ZIP para commit com o novo `templates/DEPROT.JSON`.
-- [ ] Confirmar a integridade do ZIP e a presença do template atualizado.
-- [ ] Confirmar o link temporário da mesma base para teste.
+- [x] Gerar ZIP para commit com o novo `templates/DEPROT.JSON`.
+- [x] Confirmar a integridade do ZIP e a presença do template atualizado.
+- [x] Confirmar o link temporário da mesma base para teste.
+
+
+## Diagnóstico de Out of memory
+
+- [x] Auditar renderização, re-renderizações e possíveis referências acumuladas.
+- [x] Auditar tamanho de JSON, HTML, localStorage e conteúdo de clipboard.
+- [x] Auditar cache PWA, imagens, fontes e recursos carregados.
+- [x] Correlacionar o erro com os fluxos de uso e os limites do navegador.
+- [x] Apresentar diagnóstico e medidas recomendadas ao usuário.
+
+
+## Refatoração de renderização e atualização do DEPROT
+
+- [x] Auditar a renderização atual dos cards e os listeners instalados por card.
+- [x] Implementar delegação de eventos no container de cards.
+- [x] Implementar renderização incremental sem perder estados de cards abertos ou em edição.
+- [x] Corrigir o espaçamento visual entre o corpo do script e a assinatura.
+- [x] Substituir e validar o novo template padrão `templates/DEPROT.JSON`.
+- [x] Executar regressão funcional, testes de segurança e validação desktop/mobile.
+- [x] Gerar pacote e disponibilizar o código completo refatorado.
 

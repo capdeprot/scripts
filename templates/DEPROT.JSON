@@ -828,6 +828,32 @@
       "isFavorite": false
     },
     {
+      "id": 101,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Comprovante em resposta ao e-mail de origem da guia",
+      "html": "Pedimos&nbsp;que&nbsp;envie&nbsp;o&nbsp;comprovante&nbsp;de\npagamento em&nbsp;resposta&nbsp;ao e-mail pelo qual lhe enviamos a guia. Dessa\nforma, garantimos a organização do atendimento e que os documentos corretos serão anexados ao processo.<div><br><div><div>\nAgradecemos pela compreensão.</div></div></div>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 102,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Comprovantes em resposta ao e-mail de origem das guias",
+      "html": "Pedimos&nbsp;que&nbsp;envie&nbsp;os comprovantes de pagamento em&nbsp;resposta&nbsp;ao e-mail pelo qual lhe enviamos as guias. Dessa forma, garantimos a organização do atendimento e que os documentos corretos serão anexados ao processo.<div><br>Agradecemos pela compreensão.</div>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
       "id": 43,
       "cat": "Rádio-Base (ERB)",
       "cats": [

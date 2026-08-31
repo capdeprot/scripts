@@ -2254,6 +2254,77 @@ function buildSubcategoryNavigator() {
   </section>`;
 }
 
+function initCardsEventDelegation(container) {
+  if (!container || container.dataset.eventsBound === 'true') return;
+  container.dataset.eventsBound = 'true';
+  let draggedCard = null;
+  container.addEventListener('click', event => {
+    const actionTarget = event.target.closest('[data-card-action]');
+    if (!actionTarget || !container.contains(actionTarget)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const id = Number(actionTarget.dataset.id);
+    const action = actionTarget.dataset.cardAction;
+    if (!Number.isInteger(id)) return;
+    if (action === 'toggle') toggleCard(id);
+    if (action === 'copy') copyScript(id);
+    if (action === 'edit') startEdit(id);
+    if (action === 'delete') deleteScript(id);
+    if (action === 'favorite') toggleFavorite(id);
+    if (action === 'move') moveScriptOrder(id, Number(actionTarget.dataset.direction || 0));
+  });
+  container.addEventListener('dragstart', event => {
+    const card = event.target.closest('.card[draggable="true"]');
+    if (!card || !container.contains(card) || sortBy !== 'custom' || activeEditId !== null) return;
+    draggedCard = card;
+    card.classList.add('dragging');
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  });
+  container.addEventListener('dragover', event => {
+    const card = event.target.closest('.card[draggable="true"]');
+    if (!card || !draggedCard || card === draggedCard || !container.contains(card)) return;
+    event.preventDefault();
+    const rect = card.getBoundingClientRect();
+    container.insertBefore(draggedCard, event.clientY < rect.top + rect.height / 2 ? card : card.nextSibling);
+  });
+  container.addEventListener('dragend', () => {
+    if (!draggedCard) return;
+    draggedCard.classList.remove('dragging');
+    setLibraryScriptOrder(activeCat, [...container.querySelectorAll('.card')].map(card => card.id.slice(1)));
+    draggedCard = null;
+    saveToLocal();
+    render();
+    showToast('✨', 'Ordem dos scriptz atualizada!');
+  });
+}
+
+function normalizedCardMarkup(card) {
+  return card.outerHTML.replace(/\s(?:open|dragging)(?=[\s">])/g, '');
+}
+
+function mountCardsMarkup(container, markup, { preserveOpen = true } = {}) {
+  if (!container) return;
+  const openIds = preserveOpen
+    ? new Set([...container.querySelectorAll('.card.open')].map(card => card.id))
+    : new Set();
+  const existingCards = new Map([...container.querySelectorAll('.card')].map(card => [card.id, card]));
+  const template = document.createElement('template');
+  template.innerHTML = markup;
+  const fragment = document.createDocumentFragment();
+
+  [...template.content.childNodes].forEach(node => {
+    if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('card')) {
+      const existing = existingCards.get(node.id);
+      fragment.appendChild(existing && normalizedCardMarkup(existing) === normalizedCardMarkup(node) ? existing : node);
+      return;
+    }
+    fragment.appendChild(node);
+  });
+
+  container.replaceChildren(fragment);
+  openIds.forEach(id => document.getElementById(id)?.classList.add('open'));
+}
+
 function render() {
   syncExclusiveInteractionState();
   const list = getFilteredScripts();
@@ -2262,13 +2333,14 @@ function render() {
   const container = document.getElementById('cards');
   const subcategoryNavigator = buildSubcategoryNavigator();
   const main = document.querySelector('main');
+  initCardsEventDelegation(container);
   syncNewScriptButton();
 
   if (isInitialLanding && !searchQ) {
     badge.hidden = true;
     empty.style.display = 'none';
     main?.classList.add('is-initial-landing');
-    container.innerHTML = '<section class="scriptz-initial-landing" aria-label="Scriptz"><img src="assets/scriptz_icone_branco_transparente.png" alt="Logo Scriptz"></section>';
+    mountCardsMarkup(container, '<section class="scriptz-initial-landing" aria-label="Scriptz"><img src="assets/scriptz_icone_branco_transparente.png" alt="Logo Scriptz"></section>', { preserveOpen: false });
     syncOrderingControls();
     return;
   }
@@ -2282,16 +2354,15 @@ function render() {
   badge.hidden = list.length === 0;
   badge.textContent = list.length === 0 ? '' : list.length === 1 ? '1 script' : `${list.length} scriptz`;
   if (list.length === 0) {
-    container.innerHTML = initialPersonalArea
-      ? `<section class="category-empty-choice personal-library-empty" aria-label="${initialAreaName} vazio"><div class="category-empty-choice-copy"><span class="subcategory-navigator-kicker">${initialAreaName} vazio</span><p>${hasExistingCategoryForInitialScript ? 'Escolha uma categoria ou subcategoria existente para criar um novo script.' : 'Crie uma categoria para começar a organizar seus próprios scripts.'}</p></div><div class="category-empty-choice-actions${hasExistingCategoryForInitialScript ? '' : ' single-action'}">${hasExistingCategoryForInitialScript ? '<button type="button" class="category-empty-primary" onclick="openModal()"><span aria-hidden="true">✚</span><strong>Criar script</strong><small>Escolher categoria ou subcategoria existente</small></button>' : ''}<button type="button" class="category-empty-secondary" onclick="createPersonalCategoryFromMain()"><span aria-hidden="true">⌘</span><strong>Criar categoria</strong><small>Organizar um novo grupo de scripts</small></button></div></section>`
-      : subcategoryNavigator;
+        mountCardsMarkup(container, initialPersonalArea
+      ? `<section class="category-empty-choice personal-library-empty" aria-label="${initialAreaName} vazio"><div class="category-empty-choice-copy"><span class="subcategory-navigator-kicker">${initialAreaName} vazio</span><p>${hasExistingCategoryForInitialScript ? 'Escolha uma categoria ou subcategoria existente para criar um novo script.' : 'Crie uma categoria para começar a organizar seus próprios scripts.'}</p></div><div class="category-empty-choice-actions${hasExistingCategoryForInitialScript ? '' : ' single-action'}">${hasExistingCategoryForInitialScript ? '<button type="button" class="category-empty-primary" onclick="openModal()"><span aria-hidden="true">✚</span><strong>Criar script</strong><small>Escolher categoria ou subcategoria existente</small></button>' : ''}<button type="button" class="category-empty-secondary" onclick="createPersonalCategoryFromMain()"><span aria-hidden="true">⌘</span><strong>Criar categoria</strong><small>Organizar um novo grupo de scripts</small></button></div></section>` : subcategoryNavigator, { preserveOpen: false });
     empty.style.display = (subcategoryNavigator || initialPersonalArea) ? 'none' : 'block';
     setTimeout(initSubcategoryDragDrop, 30);
     syncOrderingControls();
     return;
   }
   empty.style.display = 'none';
-  container.innerHTML = subcategoryNavigator + list.map(s => cardHTML(s)).join('');
+  mountCardsMarkup(container, subcategoryNavigator + list.map(s => cardHTML(s)).join(''));
   setTimeout(() => {
     initScriptDragDrop();
     initSubcategoryDragDrop();
@@ -2321,7 +2392,7 @@ function buildFullText(script) {
   
   if (hasSignature(script)) {
     const signature = escapeHtml(getSignature());
-    htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
+    htmlContent = htmlContent + '<p class="script-signature" style="margin-top:1em;">Atenciosamente,<br>' + signature + '</p>';
   }
   
   return htmlContent;
@@ -2380,20 +2451,20 @@ function cardHTML(s) {
   
   return `
   <div class="card ${locked ? 'standard-script' : ''}" id="c${s.id}" draggable="${sortBy === 'custom' && activeEditId === null ? 'true' : 'false'}">
-    <div class="card-hd" onclick="toggleCard(${s.id})">
+    <div class="card-hd" data-card-action="toggle" data-id="${s.id}">
       <div class="card-info">
         <div class="card-title">
           ${escapeHtml(s.title)} ${lockedBadge}
         </div>
         <span class="card-tag">${escapeHtml(categoryLabel(s))}</span>
       </div>
-      ${activeEditId === null ? `<div class="card-btns" onclick="event.stopPropagation()">
-        <button class="btn btn-copy" id="cb${s.id}" onclick="event.stopPropagation(); copyScript(${s.id})">📋 Copiar</button>
-        <button class="btn btn-ghost" onclick="startEdit(${s.id})" ${lockAttrs}>✏️ Editar</button>
-        <button class="btn btn-del" onclick="deleteScript(${s.id})" ${lockAttrs}>🗑️ Excluir</button>
-        <button class="fav-star ${isFav ? 'active' : ''}" onclick="toggleFavorite(${s.id})">${isFav ? '⭐' : '☆'}</button>
+      ${activeEditId === null ? `<div class="card-btns">
+        <button class="btn btn-copy" id="cb${s.id}" data-card-action="copy" data-id="${s.id}">📋 Copiar</button>
+        <button class="btn btn-ghost" data-card-action="edit" data-id="${s.id}" ${lockAttrs}>✏️ Editar</button>
+        <button class="btn btn-del" data-card-action="delete" data-id="${s.id}" ${lockAttrs}>🗑️ Excluir</button>
+        <button class="fav-star ${isFav ? 'active' : ''}" data-card-action="favorite" data-id="${s.id}">${isFav ? '⭐' : '☆'}</button>
       </div>` : ''}
-      ${sortBy === 'custom' && activeEditId === null ? `<span class="script-order-controls" onclick="event.stopPropagation()"><button type="button" onclick="moveScriptOrder(${s.id}, -1)" aria-label="Mover script para cima">↑</button><button type="button" onclick="moveScriptOrder(${s.id}, 1)" aria-label="Mover script para baixo">↓</button></span>` : ''}
+      ${sortBy === 'custom' && activeEditId === null ? `<span class="script-order-controls"><button type="button" data-card-action="move" data-direction="-1" data-id="${s.id}" aria-label="Mover script para cima">↑</button><button type="button" data-card-action="move" data-direction="1" data-id="${s.id}" aria-label="Mover script para baixo">↓</button></span>` : ''}
       <svg class="chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="card-body">
@@ -2432,27 +2503,8 @@ function moveScriptOrder(id, direction) {
 }
 
 function initScriptDragDrop() {
-  if (sortBy !== 'custom' || activeEditId !== null) return;
-  const container = document.getElementById('cards');
-  if (!container) return;
-  let dragged = null;
-  container.querySelectorAll('.card[draggable="true"]').forEach(card => {
-    card.addEventListener('dragstart', () => { dragged = card; card.classList.add('dragging'); });
-    card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
-      setLibraryScriptOrder(activeCat, [...container.querySelectorAll('.card')].map(el => el.id.slice(1)));
-      saveToLocal();
-      render();
-      showToast('✨', 'Ordem dos scriptz atualizada!');
-    });
-    card.addEventListener('dragover', e => {
-      e.preventDefault();
-      if (!dragged || dragged === card) return;
-      const rect = card.getBoundingClientRect();
-      if (e.clientY < rect.top + rect.height / 2) container.insertBefore(dragged, card);
-      else container.insertBefore(dragged, card.nextSibling);
-    });
-  });
+  // O drag-and-drop agora é delegado pelo container #cards em
+  // initCardsEventDelegation; esta função é mantida como compatibilidade.
 }
 
 // ============================================================
@@ -2546,7 +2598,7 @@ function livePreview(id) {
   
   if (chkSignature && chkSignature.checked) {
     const signature = escapeHtml(getSignature());
-    htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
+    htmlContent = htmlContent + '<p class="script-signature" style="margin-top:1em;">Atenciosamente,<br>' + signature + '</p>';
   }
   
   content.innerHTML = htmlContent || '<span style="color:var(--text-secondary);opacity:.5;">Nenhum conteúdo ainda</span>';
@@ -2644,7 +2696,7 @@ async function copyScript(id) {
   // Aplica assinatura se ativa (sem negrito)
   if (hasSignature(s)) {
     const signature = escapeHtml(getSignature());
-    htmlContent = htmlContent + '<p>Atenciosamente,<br>' + signature + '</p>';
+    htmlContent = htmlContent + '<p class="script-signature" style="margin-top:1em;">Atenciosamente,<br>' + signature + '</p>';
   }
   
   htmlContent = htmlContent.replace(/^\s+/, '');
