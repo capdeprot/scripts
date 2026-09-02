@@ -241,7 +241,7 @@
         "Andamento de Processo"
       ],
       "title": "Resposta 2",
-      "html": "<p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba&nbsp;<strong>\"Localização Atual\"</strong>&nbsp;após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Atenciosamente,</p>",
+      "html": "<p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba&nbsp;<strong>\"Localização Atual\"</strong>&nbsp;após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p>",
       "greetingMode": "auto",
       "hasGreeting": true,
       "hasSignature": true,
