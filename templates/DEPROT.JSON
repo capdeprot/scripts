@@ -556,7 +556,7 @@
         "Alvará de Reforma"
       ],
       "title": "Somente área a reformar",
-      "html": "<p>(MB) / Área a reformar: _ m²</p>",
+      "html": "<p>(MB) / Área a reformar: _ m² / Área total: _ m²</p>",
       "greetingMode": "off",
       "hasGreeting": false,
       "hasSignature": false,
