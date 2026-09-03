@@ -4,7 +4,7 @@ O **Scriptz** é uma aplicação web estática e instalável para organizar, cri
 
 ## Versão do projeto
 
-A versão oficial atual do Projeto Scriptz é **1.0.0** e o pacote de referência atual é o **build 95**. A versão semântica identifica compatibilidade funcional: correções sem mudança estrutural incrementam o patch; funcionalidades compatíveis incrementam o minor; mudanças incompatíveis no formato JSON, na persistência ou nos fluxos principais incrementam o major. O build é mantido separadamente para rastrear cada pacote distribuído.
+A versão oficial atual do Projeto Scriptz é **1.0.0** e o pacote de referência atual é o **build 97**. A versão semântica identifica compatibilidade funcional: correções sem mudança estrutural incrementam o patch; funcionalidades compatíveis incrementam o minor; mudanças incompatíveis no formato JSON, na persistência ou nos fluxos principais incrementam o major. O build é mantido separadamente para rastrear cada pacote distribuído.
 
 Esses valores também estão disponíveis em [`version.json`](version.json), que funciona como fonte simples de metadados para ferramentas e integrações.
 
@@ -38,7 +38,7 @@ Os arquivos-base desta distribuição começam vazios e estão prontos para rece
 
 | Unidade | Arquivo-base |
 |---|---|
-| DEPROT | `templates/DEPROT.JSON` — base institucional com 10 scripts e 5 categorias. |
+| DEPROT | `templates/DEPROT.JSON` — template institucional atualizado no build 97. |
 | DPCI | `templates/DPCI.JSON` |
 | DPD | `templates/DPD.JSON` |
 | CAP-G | `templates/CAP-G.JSON` |
@@ -55,7 +55,7 @@ O formulário de **Novo script** usa o mesmo editor rico da edição de scripts 
 
 Ao colar conteúdo com formatação, o Scriptz preserva elementos seguros de texto, incluindo parágrafos, negrito, itálico, sublinhado, listas e links. Também reconhece estilos comuns de clipboard para negrito, itálico e sublinhado. Elementos potencialmente inseguros, como scripts e iframes, são removidos antes do salvamento.
 
-O seletor de saudação está disponível nos dois fluxos e oferece **Desabilitar**, uma saudação automática conforme o horário e **Prezado(a),**. A assinatura permanece opcional e é mantida separadamente como preferência local.
+O seletor de saudação está disponível nos dois fluxos e oferece **Nenhuma**, uma saudação automática conforme o horário e **Prezado(a),**. A assinatura permanece opcional e é mantida separadamente como preferência local.
 
 ### Categorias, subcategorias e rolagem na criação
 
@@ -105,7 +105,7 @@ A edição é exclusiva: enquanto um card estiver em edição, outro script não
 
 O aplicativo inclui `manifest.webmanifest`, service worker e ícones próprios. O botão **Instalar Scriptz como app** aciona o prompt nativo quando disponível; em navegadores que não o disponibilizam, a aplicação orienta a adicionar o site à tela inicial.
 
-O cache PWA atual é `scriptz-shell-v95` e inclui os recursos de interface, os ícones e os seis JSONs-base. Em smartphone, um contexto salvo agora abre o menu lateral automaticamente quando a tela inicial do envelope está ativa, mantendo uma rota de navegação imediata. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone. A v59 também reforça a exportação, a persistência da ordenação, a transição de temas e o foco de teclado dos modais. A v60 adota os indicadores ▲ e ▼ nas bibliotecas de Scriptz Padrão, com recolhimento sincronizado do conteúdo. A v61 estende o mesmo padrão a Ações e aos seletores nativos compatíveis. Em telas amplas, a assinatura ocupa o apoio ao lado dos cards; em smartphone, a v64 restaura o mesmo bloco à sidebar, antes de Ações e da importação.
+O cache PWA atual é `scriptz-shell-v97` e inclui os recursos de interface, os ícones e os seis JSONs-base. Em smartphone, um contexto salvo agora abre o menu lateral automaticamente quando a tela inicial do envelope está ativa, mantendo uma rota de navegação imediata. A jornada inicial, a recepção diária institucional, o editor rico, a busca, os controles de contexto e o menu Ações foram adaptados para uso em smartphone. A v59 também reforça a exportação, a persistência da ordenação, a transição de temas e o foco de teclado dos modais. A v60 adota os indicadores ▲ e ▼ nas bibliotecas de Scriptz Padrão, com recolhimento sincronizado do conteúdo. A v61 estende o mesmo padrão a Ações e aos seletores nativos compatíveis. Em telas amplas, a assinatura ocupa o apoio ao lado dos cards; em smartphone, a v64 restaura o mesmo bloco à sidebar, antes de Ações e da importação.
 
 ## Estrutura do projeto
 
@@ -117,6 +117,7 @@ templates/               JSONs-base das seis unidades CAP
 index.html                Estrutura da interface, modais e jornada inicial
 manifest.webmanifest     Metadados do aplicativo instalável
 version.json             Versão oficial e build atual do projeto
+  Hierarquia institucional SMUL/CAP e unidades
 sw.js                    Cache offline do PWA
 ```
 
@@ -145,4 +146,4 @@ Para publicar modelos institucionais, edite exclusivamente o JSON da unidade cor
 }
 ```
 
-Depois de modificar um template, atualize a versão de cache em `sw.js` antes de publicar para que instalações existentes recebam o conteúdo novo.
+Depois de modificar um template, atualize a versão de cache em `sw.js` antes de publicar para que instalações existentes recebam o conteúdo novo. Para a hierarquia institucional preparada, consulte [`docs/INSTITUTIONAL-STRUCTURE.md`](docs/INSTITUTIONAL-STRUCTURE.md) e mantenha os identificadores estáveis de ``.

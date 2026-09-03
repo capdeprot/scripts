@@ -2717,3 +2717,36 @@ body.sidebar-category-creation-active #sidebarNav .sidebar-category-manager { po
   }
   main > .signature-dock input::placeholder { text-align: left; }
 }
+
+/* Hover system for the historical build: feedback only on actionable surfaces. */
+.card {
+  transition: transform .16s cubic-bezier(.23,1,.32,1), border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+.card:hover:not(.editing) {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 68%, var(--border));
+  box-shadow: 0 12px 28px rgba(2, 8, 31, .22);
+}
+.card-hd { transition: background-color .16s ease; }
+.card-hd:hover { background-color: color-mix(in srgb, var(--accent) 9%, transparent); }
+.card .btn, .card .fav-star, .card .script-order-controls button,
+.sidebar-tool-btn, .sidebar-library-overview, .category-root-btn, .cat-btn {
+  transition: transform .14s cubic-bezier(.23,1,.32,1), background-color .14s ease, border-color .14s ease, color .14s ease, box-shadow .14s ease;
+}
+.card .btn:hover, .sidebar-tool-btn:hover, .sidebar-library-overview:hover,
+.category-root-btn:hover, .cat-btn:hover { transform: translateY(-1px); }
+.card .fav-star:hover { transform: scale(1.12); color: var(--accent); }
+.card .script-order-controls button:hover { transform: translateY(-1px); color: var(--accent); background: var(--accent-light); }
+.options-menu summary:hover, .actions-menu summary:hover { border-color: var(--accent); color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .card-hd, .card .btn, .card .fav-star, .card .script-order-controls button,
+  .sidebar-tool-btn, .sidebar-library-overview, .category-root-btn, .cat-btn {
+    transition: none !important;
+  }
+  .card:hover:not(.editing), .card .btn:hover, .card .fav-star:hover,
+  .card .script-order-controls button:hover, .sidebar-tool-btn:hover,
+  .sidebar-library-overview:hover, .category-root-btn:hover, .cat-btn:hover {
+    transform: none;
+  }
+}

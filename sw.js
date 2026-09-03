@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scriptz-shell-v95';
+const CACHE_NAME = 'scriptz-shell-v97';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const APP_SHELL = [
   './js/app.js',
   './manifest.webmanifest',
   './version.json',
+  './',
   './templates/DEPROT.JSON',
   './templates/DPCI.JSON',
   './templates/DPD.JSON',

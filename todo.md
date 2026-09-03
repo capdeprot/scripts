@@ -628,3 +628,35 @@
 - [x] Executar regressão funcional, testes de segurança e validação desktop/mobile.
 - [x] Gerar pacote e disponibilizar o código completo refatorado.
 
+
+## Preparação da estrutura institucional
+
+- [x] Validar e substituir o novo `templates/DEPROT.JSON` enviado.
+- [x] Definir a hierarquia institucional de unidades, divisões e contextos sem misturar dados entre eles.
+- [x] Criar a camada de configuração institucional e seus contextos iniciais.
+- [x] Integrar a seleção de contexto à aplicação atual sem quebrar Modo Editor, Meus Scriptz ou Scriptz Padrão.
+- [x] Garantir fallback compatível para a configuração antiga e dados locais existentes.
+- [x] Validar rotas/contextos, segurança, responsividade e persistência.
+- [x] Documentar a estrutura e gerar o pacote preparado para commit.
+
+
+## Bug de cópia em Meus Scriptz após commit
+
+- [x] Mapear a origem do ID e do elemento acionado na cópia em cada biblioteca.
+- [x] Reproduzir a cópia incorreta com scripts pessoais e scripts padrão coexistindo.
+- [x] Verificar se commits, cache PWA, índices DOM ou IDs duplicados alteram a referência do script.
+- [x] Corrigir a resolução do script copiado para usar identidade estável e biblioteca/contexto correto.
+- [x] Preservar dados locais existentes e adicionar migração/fallback quando necessário.
+- [x] Executar testes de regressão para cópia, edição, favorito e separação entre bibliotecas.
+- [x] Documentar a causa, a correção e a orientação para atualização da instalação.
+
+
+## Novo DEPROT e hover effects na base build 97
+
+- [x] Substituir e validar `templates/DEPROT.JSON` pelo arquivo anexado.
+- [x] Analisar botões, links, categorias, subcategorias, cards e controles adequados para hover.
+- [x] Aplicar hover effects discretos aos elementos interativos, sem alterar o fluxo funcional.
+- [x] Manter foco de teclado visível e compatibilidade com `prefers-reduced-motion`.
+- [x] Validar desktop, mobile, cópia, edição, favoritos, ordenação e carregamento do DEPROT.
+- [x] Versionar e gerar pacote atualizado da base build 97.
+

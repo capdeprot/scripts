@@ -26,6 +26,7 @@ let reorderMode = false;
 let deferredInstallPrompt = null;
 let activeEditId = null;
 let workspace = { mode: null, division: null };
+let institutionConfig = null;
 let standardCategories = [];
 let standardScripts = [];
 let standardCategoryParents = {};
@@ -33,7 +34,7 @@ let standardCategoryLabels = {};
 let newScriptLinkRange = null;
 let themeTransitionTimer = null;
 let newScriptModalTrigger = null;
-let pendingSignatureCopyId = null;
+let pendingSignatureCopy = null;
 let noticeAction = null;
 const librarySectionOpen = { standard: true, personal: true };
 const PDF_GUIDE_CATEGORY = 'Instruções de escrita no campo “Observações” das guias do AD';
@@ -275,9 +276,17 @@ function loadUserName() {
 // ============================================================
 //  FAVORITOS
 // ============================================================
-function toggleFavorite(id) {
+function resolveScriptByIdentity(id, source = '') {
+  const numericId = Number(id);
+  if (!Number.isInteger(numericId)) return null;
+  const expectedSource = source === 'standard' ? 'standard' : source === 'user' ? 'user' : (isStandardLibrary() ? 'standard' : 'user');
+  return scripts.find(script => script.id === numericId && (expectedSource === 'standard' ? isStandardScript(script) : !isStandardScript(script))) || null;
+}
+
+function toggleFavorite(id, source = '') {
   if (blockConflictingAction()) return;
-  const idx = scripts.findIndex(s => s.id === id);
+  const target = resolveScriptByIdentity(id, source);
+  const idx = target ? scripts.indexOf(target) : -1;
   if (idx === -1) return;
 
   const currentCard = document.getElementById('c' + id);
@@ -725,10 +734,32 @@ function normalizeWorkspaceState(savedState) {
   reconcileCategoryHierarchy();
 }
 
+async function loadInstitutionConfig() {
+  try {
+    const response = await fetch('?v=97', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data || data.schema !== 'scriptz-institution-config' || data.version !== 1) throw new Error('Configuração institucional inválida');
+    const units = data.organization?.departments?.flatMap(department => department.units || []) || [];
+    if (!data.organization?.id || !Array.isArray(units) || units.some(unit => !unit.id || !unit.label || !unit.path || !unit.template)) {
+      throw new Error('Configuração institucional incompleta');
+    }
+    institutionConfig = data;
+  } catch (error) {
+    institutionConfig = null;
+    console.warn('[Scriptz] Configuração institucional indisponível; usando compatibilidade local.', error);
+  }
+}
+
+function getInstitutionUnit(division) {
+  const units = institutionConfig?.organization?.departments?.flatMap(department => department.units || []) || [];
+  return units.find(unit => unit.label === division) || null;
+}
+
 async function fetchStandardTemplate(division) {
-  const source = STANDARD_DIVISIONS[division];
+  const source = getInstitutionUnit(division)?.template || STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=93`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=97`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template') throw new Error('Template inválido');
@@ -818,7 +849,7 @@ async function selectWorkspace(value) {
   else {
     const [, division] = String(value).split(':');
     const normalizedDivision = LEGACY_DIVISIONS[division] || division;
-    if (!STANDARD_DIVISIONS[normalizedDivision]) return;
+    if (!STANDARD_DIVISIONS[normalizedDivision] && !getInstitutionUnit(normalizedDivision)) return;
     workspace = { mode: 'standard', division: normalizedDivision };
   }
   localStorage.setItem('scriptz_workspace', JSON.stringify(workspace));
@@ -842,7 +873,7 @@ function getStoredWorkspace() {
     const saved = parseStoredJson(localStorage.getItem('scriptz_workspace'), 'Contexto salvo');
     if (saved?.mode === 'free') return { mode: 'free', division: null };
     const normalizedDivision = LEGACY_DIVISIONS[saved?.division] || saved?.division;
-    if (saved?.mode === 'standard' && STANDARD_DIVISIONS[normalizedDivision]) return { mode: 'standard', division: normalizedDivision };
+    if (saved?.mode === 'standard' && (STANDARD_DIVISIONS[normalizedDivision] || getInstitutionUnit(normalizedDivision))) return { mode: 'standard', division: normalizedDivision };
   } catch (_) {}
   return null;
 }
@@ -921,6 +952,7 @@ function showCoordinatorStep() {
 }
 
 async function loadData() {
+  await loadInstitutionConfig();
   loadUserName();
   loadCustomOrder();
   const savedWorkspace = getStoredWorkspace();
@@ -2264,14 +2296,15 @@ function initCardsEventDelegation(container) {
     event.preventDefault();
     event.stopPropagation();
     const id = Number(actionTarget.dataset.id);
+    const source = actionTarget.dataset.source || '';
     const action = actionTarget.dataset.cardAction;
     if (!Number.isInteger(id)) return;
-    if (action === 'toggle') toggleCard(id);
-    if (action === 'copy') copyScript(id);
-    if (action === 'edit') startEdit(id);
-    if (action === 'delete') deleteScript(id);
-    if (action === 'favorite') toggleFavorite(id);
-    if (action === 'move') moveScriptOrder(id, Number(actionTarget.dataset.direction || 0));
+    if (action === 'toggle') toggleCard(id, source);
+    if (action === 'copy') copyScript(id, source);
+    if (action === 'edit') startEdit(id, source);
+    if (action === 'delete') deleteScript(id, source);
+    if (action === 'favorite') toggleFavorite(id, source);
+    if (action === 'move') moveScriptOrder(id, Number(actionTarget.dataset.direction || 0), source);
   });
   container.addEventListener('dragstart', event => {
     const card = event.target.closest('.card[draggable="true"]');
@@ -2446,12 +2479,13 @@ function cardHTML(s) {
   const fullHTML = buildFullText(s);
   const isFav = isFavorite(s);
   const locked = isStandardScript(s);
+  const source = locked ? 'standard' : 'user';
   const lockedBadge = locked ? '<span class="standard-lock" role="img" aria-label="Script padrão protegido" title="Script padrão protegido"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v2"></path></svg></span>' : '';
   const lockAttrs = locked ? 'disabled aria-disabled="true" title="Script padrão protegido"' : '';
   
   return `
-  <div class="card ${locked ? 'standard-script' : ''}" id="c${s.id}" draggable="${sortBy === 'custom' && activeEditId === null ? 'true' : 'false'}">
-    <div class="card-hd" data-card-action="toggle" data-id="${s.id}">
+  <div class="card ${locked ? 'standard-script' : ''}" id="c${s.id}" data-source="${source}" draggable="${sortBy === 'custom' && activeEditId === null ? 'true' : 'false'}">
+    <div class="card-hd" data-card-action="toggle" data-id="${s.id}" data-source="${source}">
       <div class="card-info">
         <div class="card-title">
           ${escapeHtml(s.title)} ${lockedBadge}
@@ -2459,12 +2493,12 @@ function cardHTML(s) {
         <span class="card-tag">${escapeHtml(categoryLabel(s))}</span>
       </div>
       ${activeEditId === null ? `<div class="card-btns">
-        <button class="btn btn-copy" id="cb${s.id}" data-card-action="copy" data-id="${s.id}">📋 Copiar</button>
-        <button class="btn btn-ghost" data-card-action="edit" data-id="${s.id}" ${lockAttrs}>✏️ Editar</button>
-        <button class="btn btn-del" data-card-action="delete" data-id="${s.id}" ${lockAttrs}>🗑️ Excluir</button>
-        <button class="fav-star ${isFav ? 'active' : ''}" data-card-action="favorite" data-id="${s.id}">${isFav ? '⭐' : '☆'}</button>
+        <button class="btn btn-copy" id="cb${s.id}" data-card-action="copy" data-id="${s.id}" data-source="${source}">📋 Copiar</button>
+        <button class="btn btn-ghost" data-card-action="edit" data-id="${s.id}" data-source="${source}" ${lockAttrs}>✏️ Editar</button>
+        <button class="btn btn-del" data-card-action="delete" data-id="${s.id}" data-source="${source}" ${lockAttrs}>🗑️ Excluir</button>
+        <button class="fav-star ${isFav ? 'active' : ''}" data-card-action="favorite" data-id="${s.id}" data-source="${source}">${isFav ? '⭐' : '☆'}</button>
       </div>` : ''}
-      ${sortBy === 'custom' && activeEditId === null ? `<span class="script-order-controls"><button type="button" data-card-action="move" data-direction="-1" data-id="${s.id}" aria-label="Mover script para cima">↑</button><button type="button" data-card-action="move" data-direction="1" data-id="${s.id}" aria-label="Mover script para baixo">↓</button></span>` : ''}
+      ${sortBy === 'custom' && activeEditId === null ? `<span class="script-order-controls"><button type="button" data-card-action="move" data-direction="-1" data-id="${s.id}" data-source="${source}" aria-label="Mover script para cima">↑</button><button type="button" data-card-action="move" data-direction="1" data-id="${s.id}" data-source="${source}" aria-label="Mover script para baixo">↓</button></span>` : ''}
       <svg class="chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="card-body">
@@ -2478,7 +2512,7 @@ function cardHTML(s) {
   </div>`;
 }
 
-function toggleCard(id) {
+function toggleCard(id, source = '') {
   if (activeEditId !== null) {
     showToast('⚠️', 'Conclua ou cancele a edição antes de abrir outro script.');
     return;
@@ -2487,12 +2521,12 @@ function toggleCard(id) {
   card.classList.toggle('open');
 }
 
-function moveScriptOrder(id, direction) {
+function moveScriptOrder(id, direction, source = '') {
   if (activeEditId !== null) {
     showToast('⚠️', 'Conclua ou cancele a edição antes de reordenar scripts.');
     return;
   }
-  const list = getFilteredScripts().map(s => String(s.id));
+  const list = getFilteredScripts().filter(script => !source || (source === 'standard' ? isStandardScript(script) : !isStandardScript(script))).map(s => String(s.id));
   const index = list.indexOf(String(id));
   const next = index + direction;
   if (index < 0 || next < 0 || next >= list.length) return;
@@ -2532,13 +2566,13 @@ function editCategorySelectMarkup(id, categories = [], locked = false) {
 
 function populateEditCategorySelects(id, categories = []) {
   const container = document.getElementById(`catSelectList${id}`);
-  const script = scripts.find(item => item.id === id);
+  const script = resolveScriptByIdentity(id);
   if (!container || !script) return;
   container.innerHTML = editCategorySelectMarkup(id, categories, isStandardScript(script));
 }
 
 function onEditCategoryChange(id, slot) {
-  const script = scripts.find(item => item.id === id);
+  const script = resolveScriptByIdentity(id);
   if (isStandardScript(script)) {
     showToast('🔒', 'A categoria de um Script Padrão não pode ser alterada.');
     return;
@@ -2551,13 +2585,13 @@ function onEditCategoryChange(id, slot) {
 // ============================================================
 //  EDIÇÃO
 // ============================================================
-function startEdit(id) {
+function startEdit(id, source = '') {
   if (blockConflictingAction({ allowEdit: true })) return;
   if (activeEditId !== null && activeEditId !== id) {
     showToast('⚠️', 'Conclua ou cancele a edição atual antes de abrir outro script.');
     return;
   }
-  const s = scripts.find(x => x.id === id);
+  const s = resolveScriptByIdentity(id, source);
   if (isStandardScript(s)) {
     showToast('🔒', 'Scripts padrão não podem ser editados.');
     return;
@@ -2605,7 +2639,8 @@ function livePreview(id) {
 }
 
 function saveEdit(id) {
-  const idx = scripts.findIndex(x => x.id === id);
+  const target = resolveScriptByIdentity(id);
+  const idx = target ? scripts.indexOf(target) : -1;
   if (idx === -1 || isStandardScript(scripts[idx])) {
     showToast('🔒', 'Scripts padrão não podem ser alterados.');
     return;
@@ -2651,9 +2686,9 @@ function saveEdit(id) {
   showToast('💾', 'Script salvo!');
 }
 
-function deleteScript(id) {
+function deleteScript(id, source = '') {
   if (blockConflictingAction()) return;
-  const script = scripts.find(item => item.id === id);
+  const script = resolveScriptByIdentity(id, source);
   if (isStandardScript(script)) {
     showToast('🔒', 'Scripts padrão não podem ser excluídos.');
     return;
@@ -2665,7 +2700,7 @@ function deleteScript(id) {
     confirmLabel: 'Excluir script',
     danger: true,
     onConfirm: () => {
-      scripts = scripts.filter(x => x.id !== id);
+      scripts = scripts.filter(x => !(x.id === Number(id) && (source === 'standard' ? isStandardScript(x) : !isStandardScript(x))));
       saveToLocal();
       buildSidebar();
       render();
@@ -2677,13 +2712,13 @@ function deleteScript(id) {
 // ============================================================
 //  COPIAR (preserva formatação - sem negrito)
 // ============================================================
-async function copyScript(id) {
+async function copyScript(id, source = '') {
   if (blockConflictingAction()) return;
-  const s = scripts.find(x => x.id === id);
+  const s = resolveScriptByIdentity(id, source);
   if (!s) return;
 
   if (hasSignature(s) && !getSignatureName()) {
-    openCopySignatureModal(id);
+    openCopySignatureModal(id, source);
     return;
   }
 
@@ -2723,8 +2758,8 @@ async function copyScript(id) {
   }
 }
 
-function openCopySignatureModal(scriptId) {
-  pendingSignatureCopyId = scriptId;
+function openCopySignatureModal(scriptId, source = '') {
+  pendingSignatureCopy = { id: Number(scriptId), source };
   const modal = document.getElementById('copySignatureModal');
   const input = document.getElementById('copySignatureName');
   const error = document.getElementById('copySignatureError');
@@ -2737,7 +2772,7 @@ function openCopySignatureModal(scriptId) {
 
 function closeCopySignatureModal() {
   document.getElementById('copySignatureModal')?.classList.remove('show');
-  pendingSignatureCopyId = null;
+  pendingSignatureCopy = null;
 }
 
 function confirmCopySignature() {
@@ -2749,11 +2784,13 @@ function confirmCopySignature() {
     input?.focus();
     return;
   }
-  const scriptId = pendingSignatureCopyId;
+  const pending = pendingSignatureCopy;
+  const scriptId = pending?.id;
+  const source = pending?.source || '';
   setSignatureName(name);
   closeCopySignatureModal();
   render();
-  if (scriptId !== null) copyScript(scriptId);
+  if (scriptId !== undefined && scriptId !== null) copyScript(scriptId, source);
 }
 
 // ============================================================
