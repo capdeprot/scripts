@@ -2750,3 +2750,40 @@ body.sidebar-category-creation-active #sidebarNav .sidebar-category-manager { po
     transform: none;
   }
 }
+
+/* Cross-browser editor controls: keep greeting and signature readable at every width. */
+.editor-meta {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+.editor-meta .title-field,
+.editor-meta .category-select-stack { min-width: 0; }
+.editor-meta .editor-checkboxes {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 10px 16px;
+  min-width: 0;
+  padding-top: 2px;
+}
+.editor-meta .editor-checkboxes > label {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  line-height: 1.35;
+}
+.editor-meta .editor-checkboxes select {
+  flex: 1 1 150px;
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 900px) {
+  .editor-meta .editor-checkboxes { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .editor-meta { grid-template-columns: 1fr; }
+  .editor-meta .editor-checkboxes { grid-column: 1; gap: 9px; }
+}

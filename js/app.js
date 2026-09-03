@@ -736,7 +736,7 @@ function normalizeWorkspaceState(savedState) {
 
 async function loadInstitutionConfig() {
   try {
-    const response = await fetch('?v=97', { cache: 'no-store' });
+    const response = await fetch('?v=98', { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     if (!data || data.schema !== 'scriptz-institution-config' || data.version !== 1) throw new Error('Configuração institucional inválida');
@@ -759,7 +759,7 @@ function getInstitutionUnit(division) {
 async function fetchStandardTemplate(division) {
   const source = getInstitutionUnit(division)?.template || STANDARD_DIVISIONS[division];
   if (!source) throw new Error('Divisão inválida');
-  const response = await fetch(`${source}?v=97`, { cache: 'no-store' });
+  const response = await fetch(`${source}?v=98`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   if (!data || data.schema !== 'scriptz-standard-template') throw new Error('Template inválido');

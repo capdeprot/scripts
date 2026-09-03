@@ -660,3 +660,20 @@
 - [x] Validar desktop, mobile, cópia, edição, favoritos, ordenação e carregamento do DEPROT.
 - [x] Versionar e gerar pacote atualizado da base build 97.
 
+
+## Correção do formulário de edição
+
+- [x] Inspecionar o agrupamento de saudação e assinatura no editor.
+- [x] Remover sobreposição e compressão horizontal dos controles.
+- [x] Criar layout flexível com quebra segura entre linhas e colunas.
+- [x] Garantir enquadramento consistente em Brave, Edge e larguras intermediárias.
+- [x] Validar criação, edição, cópia, assinatura e saudação após a correção.
+- [x] Gerar pacote atualizado mantendo a base build 97.
+
+
+## Renumeração da entrega corrigida
+
+- [ ] Atualizar metadados da última entrega de build 97 para build 98.
+- [ ] Validar que nenhum arquivo funcional foi alterado além da versão.
+- [ ] Gerar o pacote final build 98 e manter a prévia sem estrutura institucional.
+

@@ -4,11 +4,6 @@
   "division": "DEPROT",
   "categories": [
     "E-mail",
-    "Emissão de guia",
-    "Envio de Protocolo",
-    "Alvará de Autorização Para Evento Temporário",
-    "Encaminhamento",
-    "Andamento de Processo",
     "Mensagens externas AD",
     "Guias AD",
     "Instruções de escrita no campo “Observações” das guias do AD",
@@ -25,12 +20,19 @@
     "Cadastro de Sistema Especial de Segurança",
     "Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro",
     "Cotas do SEI",
-    "Solicitando documentos e/ou ajustes",
     "Rádio-Base (ERB)",
     "Cotas do SEI::TCAEP",
     "Restituição de Guia",
     "Cotas do SEI::Busca Física",
-    "Cotas do SEI::Verificação de valores HIS/HMP"
+    "Cotas do SEI::Verificação de valores HIS/HMP",
+    "Emissão de guia",
+    "Envio de Protocolo",
+    "Alvará de Autorização Para Evento Temporário",
+    "E-mail::Certidão de Uso e Ocupação do Solo",
+    "Encaminhamento",
+    "Andamento de Processo",
+    "Solicitando documentos e/ou ajustes",
+    "Cotas do SEI::Certidão de Uso e Ocupação do Solo"
   ],
   "categoryParents": {
     "Alvará de Autorização Para Evento Temporário": "E-mail",
@@ -56,15 +58,12 @@
     "Rádio-Base (ERB)": "Guias AD",
     "Cotas do SEI::TCAEP": "Cotas do SEI",
     "Cotas do SEI::Busca Física": "Cotas do SEI",
-    "Cotas do SEI::Verificação de valores HIS/HMP": "Cotas do SEI"
+    "Cotas do SEI::Verificação de valores HIS/HMP": "Cotas do SEI",
+    "E-mail::Certidão de Uso e Ocupação do Solo": "E-mail",
+    "Cotas do SEI::Certidão de Uso e Ocupação do Solo": "Cotas do SEI"
   },
   "categoryLabels": {
     "E-mail": "E-mail",
-    "Emissão de guia": "Emissão de guia",
-    "Envio de Protocolo": "Envio de Protocolo",
-    "Alvará de Autorização Para Evento Temporário": "Alvará de Autorização Para Evento Temporário",
-    "Encaminhamento": "Encaminhamento",
-    "Andamento de Processo": "Andamento de Processo",
     "Mensagens externas AD": "Mensagens externas AD",
     "Guias AD": "Guias AD",
     "Instruções de escrita no campo “Observações” das guias do AD": "Instruções de escrita no campo “Observações” das guias do AD",
@@ -81,172 +80,21 @@
     "Cadastro de Sistema Especial de Segurança": "Cadastro de Sistema Especial de Segurança",
     "Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro": "Cadastro de Tanques, Bombas e Equipamentos / Manutenção do Cadastro",
     "Cotas do SEI": "Cotas do SEI",
-    "Solicitando documentos e/ou ajustes": "Solicitando documentos e/ou ajustes",
     "Rádio-Base (ERB)": "Rádio-Base (ERB)",
     "Cotas do SEI::TCAEP": "TCAEP",
     "Restituição de Guia": "Restituição de Guia",
     "Cotas do SEI::Busca Física": "Busca Física",
-    "Cotas do SEI::Verificação de valores HIS/HMP": "Verificação de valores HIS/HMP"
+    "Cotas do SEI::Verificação de valores HIS/HMP": "Verificação de valores HIS/HMP",
+    "Emissão de guia": "Emissão de guia",
+    "Envio de Protocolo": "Envio de Protocolo",
+    "Alvará de Autorização Para Evento Temporário": "Alvará de Autorização Para Evento Temporário",
+    "E-mail::Certidão de Uso e Ocupação do Solo": "Certidão de Uso e Ocupação do Solo",
+    "Encaminhamento": "Encaminhamento",
+    "Andamento de Processo": "Andamento de Processo",
+    "Solicitando documentos e/ou ajustes": "Solicitando documentos e/ou ajustes",
+    "Cotas do SEI::Certidão de Uso e Ocupação do Solo": "Certidão de Uso e Ocupação do Solo"
   },
   "scripts": [
-    {
-      "id": 2,
-      "cat": "Emissão de guia",
-      "cats": [
-        "Emissão de guia"
-      ],
-      "title": "Enviando Guia - Padrão",
-      "html": "<p>Segue a guia referente ao seu pedido.</p><p>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 1,
-      "cat": "Emissão de guia",
-      "cats": [
-        "Emissão de guia"
-      ],
-      "title": "Enviando Duas Guias",
-      "html": "<p>Seguem as guias referentes ao seu pedido.</p><p>Após o pagamento, responda essa mensagem encaminhando os comprovantes de pagamento com o código de barras e autenticação bancária.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 3,
-      "cat": "Emissão de guia",
-      "cats": [
-        "Emissão de guia"
-      ],
-      "title": "Guia de Autuação",
-      "html": "<p>Segue a guia para pagamento do preço público referente à recepção de documentos para autuação de processo eletrônico (até 50 megabytes: R$ 30,20; por megabyte adicional: R$ 2,90).</p><p>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 26,
-      "cat": "Emissão de guia",
-      "cats": [
-        "Emissão de guia",
-        "Alvará de Autorização Para Evento Temporário"
-      ],
-      "title": "Guia de autuação - Alvará de Autorização",
-      "html": "<p>Segue a guia para pagamento do preço público referente à recepção de documentos para autuação de processo eletrônico (até 50 megabytes: R$ 30,20; por megabyte adicional: R$ 2,90).<br><br>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.<br>A data limite para envio do comprovante é __/__/____, até as 15h.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 5,
-      "cat": "Envio de Protocolo",
-      "cats": [
-        "Envio de Protocolo"
-      ],
-      "title": "Protocolo Padrão",
-      "html": "<p>Segue anexo a esse e-mail o protocolo do processo&nbsp;<strong>________</strong>, gerado conforme sua solicitação.</p><p>Você pode acompanhar o andamento pelo Portal de Processos, acessível pelo link: 🔗&nbsp;<a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos do processo estão com acesso restrito, em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal nº 13.709/2018, e ao Decreto Municipal nº 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação; sua resposta contribuirá para a melhoria dos serviços prestados. Basta clicar no link: <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\" target=\"_blank\" rel=\"noopener noreferrer\">https://forms.gle/TUDGEFhjugvUKhRVA</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 6,
-      "cat": "Envio de Protocolo",
-      "cats": [
-        "Envio de Protocolo"
-      ],
-      "title": "Dois protocolos",
-      "html": "<p>Seguem anexos a este e-mail os protocolos dos processos <b>________________ </b>e <b>_______________</b>, gerados conforme sua solicitação.</p><p>Você pode acompanhar o andamento pelo Portal de Processos, acessível pelo link: 🔗 <a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos dos processos estão com acesso restrito, em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal nº 13.709/2018, e ao Decreto Municipal nº 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação; sua resposta contribuirá para a melhoria dos serviços prestados. Basta clicar no link: <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\" target=\"_blank\" rel=\"noopener noreferrer\">https://forms.gle/TUDGEFhjugvUKhRVA</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 4,
-      "cat": "Alvará de Autorização Para Evento Temporário",
-      "cats": [
-        "Alvará de Autorização Para Evento Temporário",
-        "Emissão de guia"
-      ],
-      "title": "Guia SISACOE - Alvará de Autorização",
-      "html": "<p>Segue a guia referente ao seu pedido.</p><p>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.</p><p>A data limite para envio do comprovante é __/__/____, até as 15h.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 9,
-      "cat": "Alvará de Autorização Para Evento Temporário",
-      "cats": [
-        "Alvará de Autorização Para Evento Temporário"
-      ],
-      "title": "Evento Fora do Prazo",
-      "html": "<p>Em atenção à solicitação de protocolo de&nbsp;<strong>Alvará de Autorização para Evento Temporário</strong>, informamos que o pedido não poderá ser recepcionado, tendo em vista o não atendimento ao prazo mínimo exigido.</p><p>Nos termos do&nbsp;<strong>Decreto Municipal nº 49.969/2008</strong>, o requerimento deve ser protocolado com antecedência mínima de&nbsp;<strong>30 (trinta) dias</strong>&nbsp;da data do evento, condição indispensável para análise pelos órgãos competentes.</p><p>Assim, por determinação da gestão desta Pasta, em consonância com as normas vigentes e com as diretrizes de governança, integridade e padronização de procedimentos administrativos, não é possível a flexibilização do prazo estabelecido, sob pena de violação aos princípios que regem a Administração Pública, especialmente os da isonomia, impessoalidade e segurança jurídica.</p><p>Orientamos que novos pedidos sejam apresentados dentro do prazo regulamentar.</p>",
-      "greetingMode": "formal",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 8,
-      "cat": "Encaminhamento",
-      "cats": [
-        "Encaminhamento"
-      ],
-      "title": "Encaminhamento interno",
-      "html": "Encaminhamos a presente solicitação recebida em&nbsp;<strong>CAP/DEPROT</strong>&nbsp;para ciência e providências, no que couber.<div><br></div>",
-      "greetingMode": "formal",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 100,
-      "cat": "Encaminhamento",
-      "cats": [
-        "Encaminhamento"
-      ],
-      "title": "Ofício do TJ/MP para ciência do Gabinete",
-      "html": "Encaminhamos a solicitação do Ministério Público para ciência e deliberação, conforme o artigo 2º da Ordem Interna SMUL nº 03/24.<div><br></div>",
-      "greetingMode": "off",
-      "hasGreeting": false,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 7,
-      "cat": "Andamento de Processo",
-      "cats": [
-        "Andamento de Processo"
-      ],
-      "title": "Resposta 1",
-      "html": "<p>Para acompanhar o andamento você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba&nbsp;<strong>\"Localização Atual\"</strong>.<br><br>Agradecemos pela compreensão.</p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 10,
-      "cat": "Andamento de Processo",
-      "cats": [
-        "Andamento de Processo"
-      ],
-      "title": "Resposta 2",
-      "html": "<p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba&nbsp;<strong>\"Localização Atual\"</strong>&nbsp;após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
     {
       "id": 11,
       "cat": "Mensagens externas AD",
@@ -775,85 +623,6 @@
       "isFavorite": false
     },
     {
-      "id": 27,
-      "cat": "Solicitando documentos e/ou ajustes",
-      "cats": [
-        "Solicitando documentos e/ou ajustes"
-      ],
-      "title": "Falta de documentos",
-      "html": "<p>Para darmos prosseguimento ao seu pedido, solicitamos o\nencaminhamento dos seguintes documentos:</p><div><ul><li><i>[[Documento faltante]];</i></li><li><i>[[Documento faltante]];</i></li></ul></div>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 28,
-      "cat": "Solicitando documentos e/ou ajustes",
-      "cats": [
-        "Solicitando documentos e/ou ajustes"
-      ],
-      "title": "Falta de dados no requerimento",
-      "html": "<p>Para darmos prosseguimento ao seu pedido, solicitamos que os\nseguintes campos sejam devidamente preenchidos:</p>\n\n<ul><li><i>[[listar e anexar imagem dos campos]];</i></li></ul><ul><li><i>[[listar e anexar imagem dos campos]].</i></li></ul>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 30,
-      "cat": "Solicitando documentos e/ou ajustes",
-      "cats": [
-        "Solicitando documentos e/ou ajustes",
-        "Emissão de guia"
-      ],
-      "title": "Comprovante de pagamento incompleto",
-      "html": "<p>Verificamos que o comprovante de pagamento encaminhado não segue os padrões estabelecidos.</p><p>É necessário encaminhar o comprovante de pagamento completo, com código de barras e código verificador / autenticador.</p>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 56,
-      "cat": "Solicitando documentos e/ou ajustes",
-      "cats": [
-        "Solicitando documentos e/ou ajustes"
-      ],
-      "title": "Vistas de Processo",
-      "html": "<div>Para protocolar um Pedido de Vistas, é necessário apresentar:</div><ul><li><div>Requerimento solicitando vistas do processo, devidamente preenchido e assinado (formulário em anexo);</div></li><li><div>Documento oficial de identificação com foto (RG, CNH ou OAB)&nbsp;do requerente;</div></li><li>CPF, caso não conste no documento de identificação;</li><li>Procuração, quando o pedido for realizado por representante legal, acompanhada do documento de identidade do procurador;</li><li><div>Documento que comprove a representação da empresa, quando o interessado for pessoa jurídica (Contrato Social, Estatuto, Ata de Eleição ou Cartão CNPJ, conforme o caso).</div></li></ul>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 101,
-      "cat": "Solicitando documentos e/ou ajustes",
-      "cats": [
-        "Solicitando documentos e/ou ajustes"
-      ],
-      "title": "Comprovante em resposta ao e-mail de origem da guia",
-      "html": "Pedimos&nbsp;que&nbsp;envie&nbsp;o&nbsp;comprovante&nbsp;de\npagamento em&nbsp;resposta&nbsp;ao e-mail pelo qual lhe enviamos a guia. Dessa\nforma, garantimos a organização do atendimento e que os documentos corretos serão anexados ao processo.<div><br><div><div>\nAgradecemos pela compreensão.</div></div></div>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
-      "id": 102,
-      "cat": "Solicitando documentos e/ou ajustes",
-      "cats": [
-        "Solicitando documentos e/ou ajustes"
-      ],
-      "title": "Comprovantes em resposta ao e-mail de origem das guias",
-      "html": "Pedimos&nbsp;que&nbsp;envie&nbsp;os comprovantes de pagamento em&nbsp;resposta&nbsp;ao e-mail pelo qual lhe enviamos as guias. Dessa forma, garantimos a organização do atendimento e que os documentos corretos serão anexados ao processo.<div><br>Agradecemos pela compreensão.</div>",
-      "greetingMode": "auto",
-      "hasGreeting": true,
-      "hasSignature": true,
-      "isFavorite": false
-    },
-    {
       "id": 43,
       "cat": "Rádio-Base (ERB)",
       "cats": [
@@ -952,6 +721,270 @@
       ],
       "title": "Vendas ilegais",
       "html": "<p><strong>SMUL/PARHIS</strong></p>\n\n<p><strong>Sr. Coordenador,</strong></p>\n\n<p>Em atenção ao solicitado em documento&nbsp;___,\ntemos a informar que as taxas devidas atualizadas para o exercício de&nbsp;<strong>2026</strong>&nbsp;são\nas seguintes:</p>\n\n<p><strong>AD ___ / SEI ___\n(Aprovação e Execução de Edificação Nova)</strong></p>\n\n<p>Área a construir / total: ___ m².</p>\n\n<p>Cálculo: ___ m² x R$ ___ = R$ ___\n(valor aprovação)</p>\n\n<p>&nbsp; &nbsp; &nbsp; &nbsp;\n&nbsp; &nbsp; &nbsp; R$ 1116,27 (valor execução)</p>\n\n<p>&nbsp; &nbsp; &nbsp; &nbsp;\n&nbsp; &nbsp; &nbsp; R$ 627,00 (serviço administrativo de Outorga Onerosa)</p>\n\n<p>&nbsp; &nbsp; &nbsp; &nbsp;\n&nbsp; &nbsp; &nbsp; R$ 30,20 (valor autuação para ___ MB)</p>\n\n<p>Total: ___ + ___ + ___ + ___\n=&nbsp;<strong>R$ ___</strong>&nbsp;</p>\n\n<p>&nbsp;</p>\n\n<p><strong>AD ___ / SEI ___\n(Certificado de Conclusão)&nbsp;</strong>&nbsp;&nbsp;</p>\n\n<p>Taxa de autuação por ___ MB.</p>\n\n<p>Cálculo:&nbsp;<strong>R$ 30,20</strong>&nbsp;</p>\n\n<p>&nbsp;</p>\n\n<p>Com os cálculos acima efetuados,\npercebemos o valor devido de&nbsp;<strong>R$ ___</strong>&nbsp;para o\nprocesso&nbsp;<strong>SEI ___</strong>&nbsp;e o valor de&nbsp;<strong>R$ ___</strong>&nbsp;para\no&nbsp;<strong>SEI ___</strong>, totalizando o montante de&nbsp;<strong>R$___</strong>.</p>\n\n<p>Sem mais considerações,\nencaminhamos para as providências que se fizerem necessárias.</p>\n\n<p>Atenciosamente,</p>",
+      "greetingMode": "off",
+      "hasGreeting": false,
+      "hasSignature": false,
+      "isFavorite": false
+    },
+    {
+      "id": 2,
+      "cat": "Emissão de guia",
+      "cats": [
+        "Emissão de guia"
+      ],
+      "title": "Enviando Guia - Padrão",
+      "html": "<p>Segue a guia referente ao seu pedido.</p><p>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 1,
+      "cat": "Emissão de guia",
+      "cats": [
+        "Emissão de guia"
+      ],
+      "title": "Enviando Duas Guias",
+      "html": "<p>Seguem as guias referentes ao seu pedido.</p><p>Após o pagamento, responda essa mensagem encaminhando os comprovantes de pagamento com o código de barras e autenticação bancária.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 3,
+      "cat": "Emissão de guia",
+      "cats": [
+        "Emissão de guia"
+      ],
+      "title": "Guia de Autuação",
+      "html": "<p>Segue a guia para pagamento do preço público referente à recepção de documentos para autuação de processo eletrônico (até 50 megabytes: R$ 30,20; por megabyte adicional: R$ 2,90).</p><p>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 26,
+      "cat": "Emissão de guia",
+      "cats": [
+        "Emissão de guia",
+        "Alvará de Autorização Para Evento Temporário"
+      ],
+      "title": "Guia de autuação - Alvará de Autorização",
+      "html": "<p>Segue a guia para pagamento do preço público referente à recepção de documentos para autuação de processo eletrônico (até 50 megabytes: R$ 30,20; por megabyte adicional: R$ 2,90).<br><br>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.<br>A data limite para envio do comprovante é __/__/____, até as 15h.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 5,
+      "cat": "Envio de Protocolo",
+      "cats": [
+        "Envio de Protocolo"
+      ],
+      "title": "Protocolo Padrão",
+      "html": "<p>Segue anexo a esse e-mail o protocolo do processo&nbsp;<strong>________</strong>, gerado conforme sua solicitação.</p><p>Você pode acompanhar o andamento pelo Portal de Processos, acessível pelo link: 🔗&nbsp;<a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos do processo estão com acesso restrito, em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal nº 13.709/2018, e ao Decreto Municipal nº 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação; sua resposta contribuirá para a melhoria dos serviços prestados. Basta clicar no link: <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\" target=\"_blank\" rel=\"noopener noreferrer\">https://forms.gle/TUDGEFhjugvUKhRVA</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 6,
+      "cat": "Envio de Protocolo",
+      "cats": [
+        "Envio de Protocolo"
+      ],
+      "title": "Dois protocolos",
+      "html": "<p>Seguem anexos a este e-mail os protocolos dos processos <b>________________ </b>e <b>_______________</b>, gerados conforme sua solicitação.</p><p>Você pode acompanhar o andamento pelo Portal de Processos, acessível pelo link: 🔗 <a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Os documentos dos processos estão com acesso restrito, em atendimento à Lei Geral de Proteção de Dados Pessoais (LGPD), Lei Federal nº 13.709/2018, e ao Decreto Municipal nº 59.767/2020.</p><p>Por fim, gostaríamos de saber sua opinião sobre este atendimento por meio de uma breve pesquisa de satisfação; sua resposta contribuirá para a melhoria dos serviços prestados. Basta clicar no link: <a href=\"https://forms.gle/TUDGEFhjugvUKhRVA\" target=\"_blank\" rel=\"noopener noreferrer\">https://forms.gle/TUDGEFhjugvUKhRVA</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 4,
+      "cat": "Alvará de Autorização Para Evento Temporário",
+      "cats": [
+        "Alvará de Autorização Para Evento Temporário",
+        "Emissão de guia"
+      ],
+      "title": "Guia SISACOE - Alvará de Autorização",
+      "html": "<p>Segue a guia referente ao seu pedido.</p><p>Após o pagamento, responda essa mensagem encaminhando o comprovante de pagamento com o código de barras e autenticação bancária.</p><p>A data limite para envio do comprovante é __/__/____, até as 15h.</p><p>A lista de bancos credenciados está disponível através do link:<b>&nbsp;</b>&nbsp;<a href=\"https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522\" target=\"_blank\" rel=\"noopener noreferrer\">https://capital.sp.gov.br/web/fazenda/w/servicos/pagamentodetributos/2522</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 9,
+      "cat": "Alvará de Autorização Para Evento Temporário",
+      "cats": [
+        "Alvará de Autorização Para Evento Temporário"
+      ],
+      "title": "Evento Fora do Prazo",
+      "html": "<p>Em atenção à solicitação de protocolo de&nbsp;<strong>Alvará de Autorização para Evento Temporário</strong>, informamos que o pedido não poderá ser recepcionado, tendo em vista o não atendimento ao prazo mínimo exigido.</p><p>Nos termos do&nbsp;<strong>Decreto Municipal nº 49.969/2008</strong>, o requerimento deve ser protocolado com antecedência mínima de&nbsp;<strong>30 (trinta) dias</strong>&nbsp;da data do evento, condição indispensável para análise pelos órgãos competentes.</p><p>Assim, por determinação da gestão desta Pasta, em consonância com as normas vigentes e com as diretrizes de governança, integridade e padronização de procedimentos administrativos, não é possível a flexibilização do prazo estabelecido, sob pena de violação aos princípios que regem a Administração Pública, especialmente os da isonomia, impessoalidade e segurança jurídica.</p><p>Orientamos que novos pedidos sejam apresentados dentro do prazo regulamentar.</p>",
+      "greetingMode": "formal",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 103,
+      "cat": "E-mail::Certidão de Uso e Ocupação do Solo",
+      "cats": [
+        "E-mail::Certidão de Uso e Ocupação do Solo",
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Questionar enquadramento nas especificações alteradas pela Portaria SMUL.GAB nº 87, de 2 de setembro de 2026",
+      "html": "<p>Tendo em vista a publicação da Portaria SMUL.GAB nº 87, de 2 de setembro de 2026, que altera a Portaria nº 12/2023/SMUL, solicitamos esclarecer se o referido pedido se enquadra nas especificações dos artigos 1º e 2º.</p><p>Deverá ser anexado o “comunique-se” da CETESB solicitando a Certidão, bem como apresentada a devida justificativa.</p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 8,
+      "cat": "Encaminhamento",
+      "cats": [
+        "Encaminhamento"
+      ],
+      "title": "Encaminhamento interno",
+      "html": "Encaminhamos a presente solicitação recebida em&nbsp;<strong>CAP/DEPROT</strong>&nbsp;para ciência e providências, no que couber.<div><br></div>",
+      "greetingMode": "formal",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 100,
+      "cat": "Encaminhamento",
+      "cats": [
+        "Encaminhamento"
+      ],
+      "title": "Ofício do TJ/MP para ciência do Gabinete",
+      "html": "Encaminhamos a solicitação do Ministério Público para ciência e deliberação, conforme o artigo 2º da Ordem Interna SMUL nº 03/24.<div><br></div>",
+      "greetingMode": "off",
+      "hasGreeting": false,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 7,
+      "cat": "Andamento de Processo",
+      "cats": [
+        "Andamento de Processo"
+      ],
+      "title": "Resposta 1",
+      "html": "<p>Para acompanhar o andamento você deve utilizar o Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p><p>Caso precise de mais detalhes, recomendamos que entre em contato com a unidade indicada na aba&nbsp;<strong>\"Localização Atual\"</strong>.<br><br>Agradecemos pela compreensão.</p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 10,
+      "cat": "Andamento de Processo",
+      "cats": [
+        "Andamento de Processo"
+      ],
+      "title": "Resposta 2",
+      "html": "<p>Recomendamos que entre em contato com o departamento que está em poder do processo. Você pode obter as informações de contato do departamento ao acessar a aba&nbsp;<strong>\"Localização Atual\"</strong>&nbsp;após consultar o andamento no Portal de Processos, acessível pelo link abaixo:</p><p><a href=\"https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx\" target=\"_blank\" rel=\"noopener noreferrer\">https://processos.prefeitura.sp.gov.br/Forms/consultarProcessos.aspx</a></p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 27,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Falta de documentos",
+      "html": "<p>Para darmos prosseguimento ao seu pedido, solicitamos o\nencaminhamento dos seguintes documentos:</p><div><ul><li><i>[[Documento faltante]];</i></li><li><i>[[Documento faltante]];</i></li></ul></div>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 28,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Falta de dados no requerimento",
+      "html": "<p>Para darmos prosseguimento ao seu pedido, solicitamos que os\nseguintes campos sejam devidamente preenchidos:</p>\n\n<ul><li><i>[[listar e anexar imagem dos campos]];</i></li></ul><ul><li><i>[[listar e anexar imagem dos campos]].</i></li></ul>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 30,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes",
+        "Emissão de guia"
+      ],
+      "title": "Comprovante de pagamento incompleto",
+      "html": "<p>Verificamos que o comprovante de pagamento encaminhado não segue os padrões estabelecidos.</p><p>É necessário encaminhar o comprovante de pagamento completo, com código de barras e código verificador / autenticador.</p>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 56,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Vistas de Processo",
+      "html": "<div>Para protocolar um Pedido de Vistas, é necessário apresentar:</div><ul><li><div>Requerimento solicitando vistas do processo, devidamente preenchido e assinado (formulário em anexo);</div></li><li><div>Documento oficial de identificação com foto (RG, CNH ou OAB)&nbsp;do requerente;</div></li><li>CPF, caso não conste no documento de identificação;</li><li>Procuração, quando o pedido for realizado por representante legal, acompanhada do documento de identidade do procurador;</li><li><div>Documento que comprove a representação da empresa, quando o interessado for pessoa jurídica (Contrato Social, Estatuto, Ata de Eleição ou Cartão CNPJ, conforme o caso).</div></li></ul>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 101,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Comprovante em resposta ao e-mail de origem da guia",
+      "html": "Pedimos&nbsp;que&nbsp;envie&nbsp;o&nbsp;comprovante&nbsp;de\npagamento em&nbsp;resposta&nbsp;ao e-mail pelo qual lhe enviamos a guia. Dessa\nforma, garantimos a organização do atendimento e que os documentos corretos serão anexados ao processo.<div><br><div><div>\nAgradecemos pela compreensão.</div></div></div>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 102,
+      "cat": "Solicitando documentos e/ou ajustes",
+      "cats": [
+        "Solicitando documentos e/ou ajustes"
+      ],
+      "title": "Comprovantes em resposta ao e-mail de origem das guias",
+      "html": "Pedimos&nbsp;que&nbsp;envie&nbsp;os comprovantes de pagamento em&nbsp;resposta&nbsp;ao e-mail pelo qual lhe enviamos as guias. Dessa forma, garantimos a organização do atendimento e que os documentos corretos serão anexados ao processo.<div><br>Agradecemos pela compreensão.</div>",
+      "greetingMode": "auto",
+      "hasGreeting": true,
+      "hasSignature": true,
+      "isFavorite": false
+    },
+    {
+      "id": 104,
+      "cat": "Cotas do SEI::Certidão de Uso e Ocupação do Solo",
+      "cats": [
+        "Cotas do SEI::Certidão de Uso e Ocupação do Solo"
+      ],
+      "title": "Encaminhamento para pedidos com guias emitidas antes da publicação da Portaria SMUL.GAB nº 87, de 02 de setembro de 2026",
+      "html": "<b>SMUL/DEUSO</b><div><br>Encaminhamos o pedido de Certidão de Uso e Ocupação do Solo, com emissão de guia anterior à publicação da Portaria SMUL.GAB nº 87, de 02 de setembro de 2026.</div>",
       "greetingMode": "off",
       "hasGreeting": false,
       "hasSignature": false,
